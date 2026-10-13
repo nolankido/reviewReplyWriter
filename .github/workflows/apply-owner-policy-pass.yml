@@ -1,0 +1,59 @@
+name: Apply verified owner-policy pass
+
+on:
+  push:
+    branches: [improve/owner-authorized-drafts]
+    paths:
+      - .development/apply_owner_changes.py
+      - .github/workflows/apply-owner-policy-pass.yml
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    if: github.repository == 'nolankido/reviewReplyWriter' && github.ref == 'refs/heads/improve/owner-authorized-drafts'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Apply exact locally verified source changes
+        run: python .development/apply_owner_changes.py
+      - name: Generate honestly credited safety examples
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import random
+          import review_reply as rr
+          out = Path('examples/safety')
+          out.mkdir(parents=True, exist_ok=True)
+          cases = [('01-glowing-cafe', "Moe's Coffee", 5, 'cafe'),
+                   ('02-angry-cafe', "Moe's Coffee", 2, 'cafe'),
+                   ('03-mixed-stay', 'Kai Loft', 3, 'stay')]
+          for stem, business, stars, kind in cases:
+              review = Path('examples', stem + '.txt').read_text().strip()
+              reply = rr.template_reply(review, business, 'professional', stars,
+                  kind, random.Random(0), platform='google')
+              path = rr.save_reply_file(str(out), business, review, reply,
+                  'template engine (offline, safety regression example)',
+                  'professional', kind, rr.review_tier(review, stars),
+                  'google', stars=stars)
+              Path(path).replace(out / (stem + '-reply.md'))
+          PY
+      - name: Verify before committing
+        run: |
+          python -m unittest -v
+          python check_submission.py
+          git diff --check
+      - name: Commit only verified code and examples to the development branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add review_reply.py test_review_reply.py test_import_reliability.py EVALUATION.md examples/safety/
+          git commit -m 'Enforce owner authorization across drafting paths and bind approvals to content'
+          git push origin HEAD:improve/owner-authorized-drafts
