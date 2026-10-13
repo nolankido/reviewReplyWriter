@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review Reply Writer | Local workspace</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to workspace</a>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Draft library">
+    <a class="brand" href="/" aria-label="Review Reply Writer home"><span class="brand-mark" aria-hidden="true">r.</span><span>Review Reply<span class="brand-sub">WRITER</span></span></a>
+    <button id="new-draft" class="button primary wide" type="button">+ New reply</button>
+    <div class="library-heading"><h2>Your workspace</h2><button id="refresh-queue" class="text-button" type="button">Refresh</button></div>
+    <label class="sr-only" for="queue-search">Search saved drafts</label>
+    <input id="queue-search" type="search" placeholder="Search drafts..." autocomplete="off">
+    <div class="queue-control"><label class="sr-only" for="queue-filter">Filter drafts</label><select id="queue-filter"><option value="all">All drafts</option><option value="pending">Needs review</option><option value="approved">Approved</option><option value="blocked">Needs changes</option><option value="aside">Set aside</option></select><span id="queue-count" class="count">0</span></div>
+    <div id="queue-list" class="queue-list" aria-label="Saved drafts"></div>
+    <div class="sidebar-foot"><span class="local-dot" aria-hidden="true"></span><div>Stored on this computer<small>No automatic posting. You decide.</small></div></div>
+  </aside>
+  <main id="main">
+    <header class="page-header"><div><p class="eyebrow">THE OWNER'S WORKSPACE</p><h1>A thoughtful reply.<br>A human decision.</h1><p class="intro">Draft with local AI. Check every commitment. Keep your voice.</p></div><div class="model-box"><span id="model-status" class="badge neutral">Checking Ollama</span><button id="refresh-model" class="text-button" type="button">Check connection</button></div></header>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <div class="workspace-grid">
+      <section class="card compose-card" aria-labelledby="compose-title">
+        <header class="card-heading"><span class="step">01</span><div><p class="eyebrow">COMPOSE</p><h2 id="compose-title">Start with the review</h2></div></header>
+        <form id="compose-form">
+          <div class="profile-row"><div class="field grow"><label for="profile-select">Business profile</label><select id="profile-select"><option value="">New / unsaved business</option></select></div><span class="local-tag">LOCAL</span></div>
+          <div class="field"><label for="business">Business name</label><input id="business" maxlength="150" value="Demo Cafe" required autocomplete="off"></div>
+          <div class="fields three"><div class="field"><label for="kind">Business type</label><select id="kind"><option value="cafe">Cafe</option><option value="shop">Shop</option><option value="stay">Rental / stay</option><option value="service">Service</option></select></div><div class="field"><label for="tone">Voice</label><select id="tone"><option value="professional">Professional</option><option value="warm">Warm</option><option value="playful">Playful</option></select></div><div class="field"><label for="platform">Reply style</label><select id="platform"><option value="google">Google</option><option value="yelp">Yelp</option><option value="airbnb">Airbnb</option><option value="etsy">Etsy</option><option value="generic">General</option></select></div></div>
+          <div class="divider"></div>
+          <div class="fields two"><div class="field"><label for="reply-type">Conversation</label><select id="reply-type"><option value="first">First reply</option><option value="followup">Follow-up</option></select></div><div class="field"><label for="stars">Customer rating</label><select id="stars"><option value="">Not provided</option><option value="1">1 star</option><option value="2">2 stars</option><option value="3">3 stars</option><option value="4">4 stars</option><option value="5">5 stars</option></select></div></div>
+          <div id="thread-fields" hidden><div class="field"><label for="original">Original review</label><textarea id="original" rows="3" maxlength="20000"></textarea></div><div class="field"><label for="previous">Your previously posted reply</label><textarea id="previous" rows="3" maxlength="20000"></textarea><small>Context only. An earlier promise is not new authorization.</small></div></div>
+          <div class="field"><div class="label-row"><label id="review-label" for="review">Customer review</label><span id="review-count" class="muted">0 / 20,000</span></div><textarea id="review" rows="6" maxlength="20000" placeholder="Paste the customer's review here..." required></textarea></div>
+          <div class="sample-row"><span>Try a fictional example</span><button type="button" data-sample="positive">Positive</button><button type="button" data-sample="negative">Complaint</button><button type="button" data-sample="mixed">Mixed</button></div>
+          <details id="owner-policy" class="policy-box"><summary>Owner policy <span id="policy-summary">No commitments enabled</span></summary><p class="helper">Only enter promises you are authorized to make. Blank fields mean no refunds, free items, or operational promises.</p><div class="field"><label for="offer">Authorized offer <span class="muted">optional</span></label><textarea id="offer" rows="2" maxlength="2000" placeholder="Exact wording of an owner-approved offer"></textarea></div><div class="field"><label for="approved-actions">Confirmed actions or contact instructions</label><textarea id="approved-actions" rows="3" placeholder="One exact owner-approved statement per line"></textarea><small>Up to eight statements. The tool does not verify that they are true.</small></div><div class="field"><label for="signoff">Sign-off <span class="muted">optional</span></label><input id="signoff" maxlength="200" placeholder="The Demo Cafe team" autocomplete="off"></div><label id="policy-confirm-row" class="check-row" hidden><input id="policy-confirmed" type="checkbox"><span>I am authorized to use these statements for this business.</span></label></details>
+          <details class="save-profile-box"><summary>Save these business settings</summary><div class="profile-row"><div class="field grow"><label for="profile-name">Profile key</label><input id="profile-name" maxlength="40" placeholder="my-cafe" pattern="[a-z0-9][a-z0-9_-]{0,39}"></div><button id="save-profile" class="button secondary" type="button">Save profile</button></div><small>Saved privately on this computer. Does not change existing drafts.</small></details>
+          <div class="generate-row"><div class="field grow"><label for="engine-mode">Drafting engine</label><select id="engine-mode"><option value="offline">Template preview (no AI)</option><option value="gemma">Local Gemma 3 (4B)</option></select></div><button id="generate" type="submit" class="button primary">Generate draft <span aria-hidden="true">↗</span></button></div>
+          <p id="engine-note" class="helper">Template preview lets you try the workflow without a model. Nothing is posted.</p>
+          <details class="setup-box"><summary>Set up local Gemma</summary><p class="helper">Install and start Ollama, then run this in your terminal:</p><pre>ollama pull gemma3:4b</pre><p class="helper">Enable Ollama's local-only mode, then click Check connection above. The first download needs internet access. This app cannot audit model aliases or every server setting.</p></details>
+        </form>
+      </section>
+      <section class="card editor-card" aria-labelledby="editor-title">
+        <header class="card-heading"><span class="step">02</span><div class="grow"><p class="eyebrow">REVIEW &amp; APPROVE</p><h2 id="editor-title">Make it yours</h2></div><span id="draft-status" class="badge neutral">No draft yet</span></header>
+        <div id="editor-empty" class="editor-empty"><div class="empty-mark" aria-hidden="true">“</div><h3>Your next reply starts here.</h3><p>Add a review or try an example.<br>Every draft stays here until you decide what to do with it.</p><div class="mini-steps"><span>Draft</span><span aria-hidden="true">›</span><span>Check</span><span aria-hidden="true">›</span><span>You approve</span></div></div>
+        <div id="editor-content" hidden>
+          <div class="draft-meta"><strong id="draft-business"></strong><span id="draft-tier" class="badge neutral"></span><span id="draft-source" class="source-label"></span></div>
+          <details class="source-review"><summary>Review and owner policy used for this draft</summary><p id="saved-review" class="preserve"></p><div id="saved-thread" hidden><h4>Original review</h4><p id="saved-original" class="preserve"></p><h4>Previously posted reply</h4><p id="saved-previous" class="preserve"></p></div><h4>Authorized statements</h4><p id="saved-policy" class="preserve"></p><p class="helper">This saved policy belongs to this draft. Changing the compose form does not change it.</p></details>
+          <div class="field"><div class="label-row"><label for="reply-editor">Your reply</label><span id="reply-count" class="muted"></span></div><textarea id="reply-editor" rows="13" maxlength="20000" spellcheck="true"></textarea></div>
+          <p id="dirty-note" class="dirty-note" hidden>Unsaved changes. Save and recheck before approval or copying.</p>
+          <div id="findings-box" class="findings"><strong id="findings-title"></strong><ul id="findings-list"></ul><p>Pattern checks are not a factuality guarantee. Read the reply yourself.</p></div>
+          <div class="editor-tools"><button id="save-edit" type="button" class="button secondary">Save &amp; recheck</button><button id="reroll" type="button" class="text-button">Regenerate</button><button id="set-aside" type="button" class="text-button">Set aside</button></div>
+          <details id="trace-panel" class="trace-panel"><summary>Generation details</summary><div id="trace-content"></div></details>
+          <div class="approval-panel"><label class="check-row"><input id="human-reviewed" type="checkbox"><span>I reviewed the wording, facts, and owner commitments.</span></label><button id="approve" type="button" class="button primary wide" disabled>Approve this reply</button><div class="export-row"><button id="copy" type="button" class="button secondary" disabled>Copy approved reply</button><button id="download" type="button" class="text-button" disabled>Export .txt</button></div><p class="helper">Approval applies to this exact saved text. Edits require a new approval.</p></div>
+        </div>
+      </section>
+    </div>
+    <footer class="page-footer"><span>Local workspace. Human judgment.</span><span>English-language checks · No auto-posting · No external UI assets</span></footer>
+  </main>
+</div>
+</body>
+</html>

@@ -19,6 +19,12 @@ one coached retry, a checked template fallback, and a human approval queue.
 It does not post to review platforms. Its default response to an unhappy
 customer is an acknowledgment and apology, not an automatic refund.
 
+The local browser workspace puts that pipeline behind a single Python launch:
+review input, business settings, an editable draft, visible findings, explicit
+approval, and copy/export controls. Edited replies lose their approval, and a
+stale tab cannot copy an earlier version. No review-platform credentials or
+publishing integration are involved.
+
 ## Demo
 
 TODO: Add a public video showing real local Gemma generation, a rejected
@@ -71,9 +77,9 @@ configuration, which the application does not fully audit.
 
 The proposed customer is a small-business operator who wants consistent drafts
 without sending additional review and policy context to a hosted writing tool.
-The current terminal workflow is a prototype, not a market-ready dashboard.
-A local graphical interface and real operator feedback are the next product
-steps. No paying customer, time-saving measurement or adoption result is
+The local browser interface is now implemented, but remains a supervised
+prototype rather than a market-ready service. Real operator feedback and
+measured model quality are the next product steps. No paying customer, time-saving measurement or adoption result is
 claimed here.
 
 ## Prize Categories

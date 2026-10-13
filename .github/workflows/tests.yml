@@ -16,13 +16,39 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.10", "3.13"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run unit and regression tests
         run: python -m unittest -v
-      - name: Check gallery and submission metadata
+      - name: Check gallery and development metadata
         run: python check_submission.py
       - name: Exercise offline CLI
         run: python review_reply.py --file examples/02-angry-cafe.txt --profile moes --offline --seed 0
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install browser test tools only
+        run: |
+          python -m pip install playwright==1.63.0
+          python -m playwright install --with-deps chromium
+      - name: Exercise real browser interactions and responsive layout
+        run: |
+          mkdir -p evidence/browser
+          set -o pipefail
+          python scripts/browser_smoke.py --screenshots evidence/browser | tee evidence/browser/results.json
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: browser-workspace-${{ github.sha }}
+          path: evidence/browser/
+          retention-days: 7
