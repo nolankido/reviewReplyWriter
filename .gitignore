@@ -8,3 +8,7 @@ venv/
 .env.*
 !.env.example
 .DS_Store
+
+# Private owner profiles and local run artifacts
+.rrw/
+evidence/

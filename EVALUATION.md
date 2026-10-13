@@ -128,3 +128,10 @@ The first import commit preserves all 17 supplied files byte for byte.
 The follow-up commit contains this evaluation and the focused fixes. The
 existing `.gitattributes` is retained. The repository remains private.
 Neither a public release nor a DEV submission was requested or performed.
+
+## Follow-up: owner-policy development pass
+
+This document above describes the import baseline. The subsequent implementation
+addresses its first two priorities and part of its state/input priority. See
+[docs/SAFETY_PASS.md](docs/SAFETY_PASS.md) for the current design and executable
+evidence. The original unsafe gallery is historical, not the active test gallery.
