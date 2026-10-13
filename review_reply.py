@@ -1,28 +1,8 @@
 #!/usr/bin/env python3
-"""Review Reply Writer - local Gemma drafts replies to customer reviews.
+"""Local model drafts with owner-authorized statements and human approval.
 
-    python3 review_reply.py "The latte was great but we waited 25 minutes..." \
-        --business "Moe's Coffee" --kind cafe --stars 3
-    python3 review_reply.py --file review.txt --profile moes
-    python3 review_reply.py --batch reviews.csv
-    python3 review_reply.py --doctor
-
-Built for DEV Hacktoberfest Week 2 ("Side Hustle"): the kind of tool a
-cafe, an Etsy seller, or a vacation-rental host would pay a few dollars
-a month for - except this one runs entirely on the owner's machine.
-Customer reviews never leave the laptop, there is no subscription, and
-there is no API bill. Gemma 3 (via Ollama) writes the reply; a format
-validator checks it the way a good owner would - opens with thanks,
-names the business, answers a specific point from the review, grades
-the review (negative, mixed, or positive) and answers at that pitch,
-and if the review is unhappy, apologises and offers something
-concrete. A failed draft gets one coached retry (the validator names
-what was missing, and the retry runs cool); if the model still
-misses, a template engine writes the reply instead. Owners can save
-a profile (their business, tone, sign-off, and standing offer -
-which the validator then requires word for word), and a batch mode
-drafts a whole inbox of reviews at once. Every saved reply says
-which engine wrote it.
+All generation routes, including templates, validate their final output.
+Checks are conservative heuristics, not a factual or legal guarantee.
 """
 import argparse
 import csv
@@ -34,7 +14,10 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, datetime, timezone
+from reply_safety import (DraftBlocked, SAFETY_VERSION, MAX_REVIEW_CHARS,
+                          policy_gaps, policy_instructions, require_valid,
+                          validate_owner_statements, content_fingerprint)
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_TAGS_URL = "http://localhost:11434/api/tags"
@@ -80,10 +63,6 @@ TOPIC_PHRASES = [
 THANKS_MARKERS = ("thank", "mahalo", "appreciate", "grateful")
 APOLOGY_MARKERS = ("sorry", "apolog", "that's on us", "our mistake",
                    "we fell short", "not the experience")
-OFFER_MARKERS = ("be on us", "is on us", "on the house", "refund",
-                 "replace", "make it right", "credit", "free",
-                 "complimentary", "reach out", "message us directly",
-                 "another chance")
 INVITE_MARKERS = ("see you", "welcome back", "hope you'll", "visit again",
                   "stop by", "back soon", "host you again", "serve you")
 FIX_MARKERS = ("addressing", "working on", "passed this on", "looking into",
@@ -107,6 +86,36 @@ monday tuesday wednesday thursday friday saturday sunday january
 february march april may june july august september october november
 december google yelp airbnb etsy tripadvisor
 """.split())
+
+
+
+def validate_input(review, stars=None, platform="generic", offer=None, approved_actions=None):
+    if not isinstance(review, str) or not review.strip():
+        raise ValueError("review must be non-empty text")
+    if len(review) > MAX_REVIEW_CHARS:
+        raise ValueError(f"review exceeds {MAX_REVIEW_CHARS} characters")
+    if stars is not None and (type(stars) is not int or stars not in range(1, 6)):
+        raise ValueError("star rating must be an integer from 1 to 5")
+    if platform not in PLATFORMS:
+        raise ValueError(f"unknown platform: {platform}")
+    validate_owner_statements(offer, approved_actions)
+
+
+def draft_findings(draft):
+    """Recheck the current text and saved owner policy, not stale check labels."""
+    common = dict(offer=draft.get("offer"), signoff=draft.get("signoff"),
+                  platform=draft.get("platform", "generic"),
+                  approved_actions=draft.get("approved_actions"))
+    try:
+        validate_input(draft.get("review"), draft.get("stars"),
+                       common["platform"], common["offer"], common["approved_actions"])
+        if draft.get("original") is not None and draft.get("previous") is not None:
+            return followup_gaps(draft["reply"], draft["original"], draft["previous"],
+                                 draft["review"], draft.get("business"), **common)
+        return reply_gaps(draft["reply"], draft["review"], draft.get("business"),
+                          draft.get("stars", _TIER_STARS.get(draft.get("tier"))), **common)
+    except (ValueError, KeyError, TypeError) as exc:
+        return [f"invalid saved draft: {exc}"]
 
 
 def _tokens(text):
@@ -140,7 +149,7 @@ def review_tier(review, stars=None):
 
 
 def is_negative(review, stars=None):
-    """True when the reply must apologise and offer a fix."""
+    """True when the reply should acknowledge an unhappy experience."""
     return review_tier(review, stars) == "negative"
 
 
@@ -226,7 +235,7 @@ def invented_details(reply, review, business, signoff=None, offer=None):
         grounded_text += " the team"
     grounded = set(_tokens(grounded_text))
     found = []
-    for sentence in re.split(r"(?<=[.!?])\s+", reply):
+    for sentence in re.split(r"(?<=[.!?])\s+|\n+", reply):
         words = re.findall(r"[A-Za-z][A-Za-z'’-]*", sentence)
         for i, word in enumerate(words):
             if i == 0 or not word[0].isupper():
@@ -237,16 +246,18 @@ def invented_details(reply, review, business, signoff=None, offer=None):
             if word not in found:
                 found.append(word)
     haystack = " ".join(x for x in (review, offer) if x)
+    number_tokens = {n.lstrip("$").replace(",", "") for n in
+                     re.findall(r"\$?\d[\d,]*(?:\.\d+)?", haystack)}
     for num in re.findall(r"\$?\d[\d,]*(?:\.\d+)?", reply):
-        if num not in haystack and num.lstrip("$") not in haystack:
+        if num.lstrip("$").replace(",", "") not in number_tokens:
             if num not in found:
                 found.append(num)
     return found
 
 
 def reply_gaps(reply, review, business, stars=None, offer=None,
-               signoff=None, platform="generic"):
-    """What a reply is missing, in plain words; empty list means good.
+               signoff=None, platform="generic", approved_actions=None):
+    """Heuristic findings; an empty list still requires human review.
 
     When the owner has a standing offer (a profile, or --offer), a
     negative or mixed reply must use it word for word - a generic
@@ -254,6 +265,10 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
     """
     if not isinstance(reply, str) or not reply.strip():
         return ["a non-empty text reply"]
+    try:
+        validate_owner_statements(offer, approved_actions)
+    except ValueError as exc:
+        return [f"policy: {exc}"]
     gaps = []
     low = _norm(reply)
     head = low[:160]
@@ -276,8 +291,7 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
             if _norm(offer) not in low:
                 gaps.append("your standing offer, word for word "
                             f"('{offer}')")
-        elif not any(m in low for m in OFFER_MARKERS):
-            gaps.append("a concrete offer to make it right")
+
     elif tier == "mixed":
         if not any(m in low for m in APOLOGY_MARKERS + FIX_MARKERS):
             gaps.append("an honest acknowledgment of the problem")
@@ -293,10 +307,9 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
         gaps.append(f"brevity (at most {hi} words for {platform})")
     if "[" in reply or "]" in reply:
         gaps.append("no bracketed placeholders")
-    if re.search(r"[\w.+-]+@[\w-]+\.[\w.]+|https?://|www\.", low):
-        gaps.append("no invented contact details (no email or website - "
-                    "the owner adds those)")
-    invented = invented_details(reply, review, business, signoff, offer)
+    gaps.extend(policy_gaps(reply, offer, approved_actions))
+    owner_context = "\n".join([offer or ""] + list(approved_actions or []))
+    invented = invented_details(reply, review, business, signoff, owner_context)
     if invented:
         gaps.append("an invented detail the customer never gave you "
                     "(%s) - only use names and facts from the review"
@@ -307,32 +320,31 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
 
 
 def validate_reply(reply, review, business, stars=None, offer=None,
-                   signoff=None, platform="generic"):
+                   signoff=None, platform="generic", approved_actions=None):
     return not reply_gaps(reply, review, business, stars, offer, signoff,
-                          platform)
+                          platform, approved_actions)
 
 
 def build_prompt(review, business, tone, stars, kind, offer=None,
                  signoff=None, platform="generic", emphasis=None,
-                 voice=None):
+                 voice=None, approved_actions=None):
     who = business or "a small local business"
     rating = f"The customer rated it {stars} out of 5 stars.\n" if stars else ""
     lo, hi = PLATFORMS.get(platform, PLATFORMS["generic"])
     tier = review_tier(review, stars)
     if tier == "negative":
-        guidance = ("- The review is unhappy: apologise plainly and "
-                    "offer something concrete (a replacement, a refund, "
-                    "the next one on us, a direct way to reach the "
-                    "owner).\n")
+        guidance = ("- The review is unhappy: acknowledge the concern and "
+                    "apologise plainly. Do not promise compensation or actions "
+                    "unless the owner explicitly authorized the exact statement.\n")
     elif tier == "mixed":
         guidance = ("- The review is mixed: they liked real things and "
                     "hit a real problem. Lead with what they loved, own "
-                    "the problem plainly without grovelling, and say "
-                    "what you are doing about it.\n")
+                    "the problem plainly without claiming a fix or "
+                    "inventing an operational action.\n")
     else:
         guidance = ("- The review is glowing: thank them warmly, name "
-                    "what delighted them, and pass the praise to the "
-                    "team. Do not invent a problem to apologise for.\n")
+                    "what delighted them. Do not promise to pass anything "
+                    "to the team or invent a problem to apologise for.\n")
     offer_line = ""
     if offer and tier != "positive":
         offer_line = (f"- Use the owner's standing offer, word for "
@@ -380,7 +392,7 @@ def build_prompt(review, business, tone, stars, kind, offer=None,
         f"- {lo} to {hi} words (this reply is for {platform}). "
         "No brackets, no placeholders, no subject line.\n"
         + sign_line +
-        "Write only the reply.")
+        "Write only the reply." + policy_instructions(offer, approved_actions))
 
 
 def call_ollama(prompt, model, temperature=0.8):
@@ -409,7 +421,7 @@ def specificity_score(reply, review):
 def generate_with_model(review, business, tone, stars, kind, model,
                         caller=None, offer=None, signoff=None,
                         platform="generic", ledger_path=None, voice=None,
-                        choices=1):
+                        choices=1, approved_actions=None):
     """(reply, engine) from the model, or (None, reason) to fall back.
 
     The first answer is checked by the validator; if it misses, the
@@ -418,6 +430,7 @@ def generate_with_model(review, business, tone, stars, kind, model,
     When a ledger path is given, the gaps are recorded per business,
     and repeat misses are emphasised in the next prompt.
     """
+    validate_input(review, stars, platform, offer, approved_actions)
     if caller is None:
         caller = call_ollama
     if voice and voice.get("signoff") and not signoff:
@@ -425,13 +438,13 @@ def generate_with_model(review, business, tone, stars, kind, model,
     emphasis = top_gaps(business, ledger_path) if ledger_path else None
     prompt = build_prompt(review, business, tone, stars, kind, offer,
                           signoff, platform, emphasis=emphasis,
-                          voice=voice)
+                          voice=voice, approved_actions=approved_actions)
     try:
         candidate = caller(prompt, model, 0.8)
     except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable: {exc}"
     if validate_reply(candidate, review, business, stars, offer, signoff,
-                      platform):
+                      platform, approved_actions):
         if choices and choices > 1:
             # Best of two: one more sample, cooler; keep whichever
             # covers more of the review's actual specifics.
@@ -441,14 +454,14 @@ def generate_with_model(review, business, tone, stars, kind, model,
                 second = None
             if second and validate_reply(second, review, business,
                                           stars, offer, signoff,
-                                          platform):
+                                          platform, approved_actions):
                 if specificity_score(second, review) > \
                         specificity_score(candidate, review):
                     candidate = second
                 return candidate, f"{model} via Ollama (local, best of 2)"
         return candidate, f"{model} via Ollama (local)"
     gaps = reply_gaps(candidate, review, business, stars, offer, signoff,
-                      platform)
+                      platform, approved_actions)
     if ledger_path:
         record_gaps(business, gaps, ledger_path)
     retry_prompt = (
@@ -460,91 +473,20 @@ def generate_with_model(review, business, tone, stars, kind, model,
     except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable on retry: {exc}"
     if validate_reply(candidate, review, business, stars, offer, signoff,
-                      platform):
+                      platform, approved_actions):
         return candidate, f"{model} via Ollama (local, after one format retry)"
     if ledger_path:
         record_gaps(business, reply_gaps(candidate, review, business,
                                          stars, offer, signoff,
-                                         platform), ledger_path)
+                                         platform, approved_actions), ledger_path)
     return None, "model missed the reply format twice"
 
 
 # ---------------------------------------------------------------- templates
 
-OPENERS = {
-    "warm": [
-        "Thank you so much for taking the time to write this - it truly "
-        "means a lot to our little team.",
-        "Mahalo for the honest words - we read every single review "
-        "together, and yours got a real conversation going.",
-    ],
-    "professional": [
-        "Thank you for taking the time to share this feedback with us.",
-        "Thank you for your review - we appreciate you letting us know "
-        "how your visit went.",
-    ],
-    "playful": [
-        "Well, thank you! Reviews like this are the fuel we run on "
-        "(that, and an unreasonable amount of espresso).",
-        "Thank you for this - you just made our whole day, and possibly "
-        "our whole week.",
-    ],
-}
-
-ECHOES = [
-    "You mentioned the {spec}, and that detail stuck with us.",
-    "Your note about the {spec} is exactly the kind of thing we want "
-    "to hear about.",
-    "We keep coming back to what you said about the {spec}.",
-]
-
-DELIGHTED = [
-    "Hearing that it landed well is the best part of doing this - it is "
-    "why we show up early and stay late.",
-    "That is precisely the experience we hope everyone walks away with, "
-    "and we will pass your words straight to the team.",
-    "We put a lot of quiet care into the small things, so it means the "
-    "world when someone notices.",
-]
-
-SORRY = [
-    "We are genuinely sorry - that is not the experience we want anyone "
-    "to have with us, and we have already talked it through as a team.",
-    "Please accept our apology. We fell short here, plain and simple, "
-    "and we are sorry for the frustration it caused.",
-]
-
-OFFERS = {
-    "cafe": "Please come back and let the next one be on us - just tell "
-            "the counter it is the make-up round, and it is sorted.",
-    "shop": "Message us directly and we will make it right with a "
-            "replacement or a full refund - whichever you prefer, no "
-            "return shipping, no fuss.",
-    "stay": "Reach out to us directly before your next trip and we will "
-            "add a credit to your stay, on the house - we would love "
-            "another chance to host you properly.",
-    "service": "Message us directly and we will put it right - a free "
-               "redo or a full refund, your call entirely.",
-}
-
-CLOSERS = [
-    "We hope you'll stop by again soon - the door is open and we would "
-    "love to see you.",
-    "You are welcome back any time - we hope you'll stop by again soon "
-    "and say hello.",
-]
-
-MIXED_ACK = [
-    "On the {issue} - you are right, and we are sorry. That one is "
-    "ours to fix, and we are already addressing it.",
-    "The {issue} is on us, and we are sorry - we have passed this on "
-    "and are working on it properly.",
-]
-
-
 def _offer_sentence(offer):
-    """The owner's standing offer, word for word, in a sentence."""
-    return f"To make it right: {offer} - just mention this reply."
+    """Exact owner authorization on its own line, without invented conditions."""
+    return offer.strip()
 
 
 def _signoff_line(business, signoff):
@@ -560,32 +502,30 @@ def _signoff_line(business, signoff):
 
 
 def template_reply(review, business, tone, stars, kind, rng, offer=None,
-                   signoff=None):
-    """A complete, validator-passing reply with no model involved."""
-    who = business or "our shop"
-    specs = specifics(review)
-    spec = specs[0] if specs else "visit"
+                   signoff=None, platform="generic", approved_actions=None):
+    """Conservative fallback, checked with the same rules as model output."""
+    validate_input(review, stars, platform, offer, approved_actions)
+    spec = (specifics(review) or ["experience"])[0]
+    who = business or "our business"
     tier = review_tier(review, stars)
-    parts = [rng.choice(OPENERS[tone])]
-    if tier == "mixed":
-        delights, issues = split_specifics(review)
-        delight = delights[0] if delights else spec
-        issue = issues[0] if issues else (
-            specs[-1] if specs else "details")
-        parts.append(rng.choice(ECHOES).format(spec=delight))
-        parts.append(rng.choice(MIXED_ACK).format(issue=issue))
-        if offer:
-            parts.append(_offer_sentence(offer))
-    elif tier == "negative":
-        parts.append(rng.choice(ECHOES).format(spec=spec))
-        parts.append(rng.choice(SORRY))
-        parts.append(_offer_sentence(offer) if offer else OFFERS[kind])
+    opener = "Mahalo" if tone == "warm" else "Thank you"
+    parts = [f"{opener} for sharing your feedback about {who}.",
+             f"Your comments about the {spec} help us understand your experience."]
+    if tier == "positive":
+        parts.append("We appreciate hearing what you enjoyed and the time you "
+                     "took to describe it. Your perspective is valuable to us.")
     else:
-        parts.append(rng.choice(ECHOES).format(spec=spec))
-        parts.append(rng.choice(DELIGHTED))
-    parts.append(rng.choice(CLOSERS))
+        parts.append("We are sorry that parts of your experience did not meet "
+                     "your expectations. Thank you for explaining what mattered "
+                     "to you in your own words.")
     body = " ".join(parts)
-    return f"{body}\n\n{_signoff_line(business, signoff)}"
+    statements = ([offer] if offer and tier != "positive" else []) + list(approved_actions or [])
+    reply = "\n\n".join([body] + statements + [
+        "We hope you'll visit again. Thank you for taking the time to share your perspective.",
+        _signoff_line(business, signoff)])
+    require_valid(reply_gaps(reply, review, business, stars, offer, signoff,
+                             platform, approved_actions))
+    return reply
 
 
 # ---------------------------------------------------------------- follow-ups
@@ -594,24 +534,25 @@ UPDATE_MARKERS = ("update", "came back", "come back", "coming back",
                   "returned", "another shot", "another chance",
                   "second", "still", "replacement", "fixed",
                   "resolved", "glad")
-ESCALATION_MARKERS = ("owner", "manager", "personally", "directly",
-                      "refund", "on the house", "make this right",
-                      "ask for me")
 WARM_CLOSERS = INVITE_MARKERS + ("anytime", "always welcome",
                                  "door is open")
 
 
 def followup_gaps(reply, original, previous, update, business,
-                  offer=None, signoff=None, platform="generic"):
+                  offer=None, signoff=None, platform="generic", approved_actions=None):
     """What a follow-up reply is missing, in plain words.
 
-    The thread is the ground truth: facts may come from the original
+    The thread supplies context: quoted details may come from the original
     review, the owner's first reply, or the update. An offer already
-    made must not be made again - an unhappy update wants an
-    escalation, not a repeat.
+    made must not be made again. An unhappy update does not authorize
+    a refund or escalation. Explicit new owner authorization is required.
     """
     if not isinstance(reply, str) or not reply.strip():
         return ["a non-empty text reply"]
+    try:
+        validate_owner_statements(offer, approved_actions)
+    except ValueError as exc:
+        return [f"policy: {exc}"]
     gaps = []
     low = _norm(reply)
     # The opening only: an 'again' buried in the closing invitation
@@ -641,15 +582,12 @@ def followup_gaps(reply, original, previous, update, business,
                 gaps.append("no repeat of the standing offer - it was "
                             "already made in your first reply; "
                             "escalate instead")
-            if not any(m in low for m in ESCALATION_MARKERS):
-                gaps.append("an escalation (the owner personally, a "
-                            "direct way to reach them, a refund)")
+
         elif offer:
             if _norm(offer) not in low:
                 gaps.append("your standing offer, word for word "
                             f"('{offer}')")
-        elif not any(m in low for m in OFFER_MARKERS):
-            gaps.append("a concrete next step to make it right")
+
     lo, hi = PLATFORMS.get(platform, PLATFORMS["generic"])
     words = len(reply.split())
     if words < lo:
@@ -659,10 +597,9 @@ def followup_gaps(reply, original, previous, update, business,
         gaps.append(f"brevity (at most {hi} words for {platform})")
     if "[" in reply or "]" in reply:
         gaps.append("no bracketed placeholders")
-    if re.search(r"[\w.+-]+@[\w-]+\.[\w.]+|https?://|www\.", low):
-        gaps.append("no invented contact details (no email or website - "
-                    "the owner adds those)")
-    invented = invented_details(reply, thread, business, signoff, offer)
+    gaps.extend(policy_gaps(reply, None if offer_spent else offer, approved_actions))
+    owner_context = "\n".join([offer or ""] + list(approved_actions or []))
+    invented = invented_details(reply, thread, business, signoff, owner_context)
     if invented:
         gaps.append("an invented detail the customer never gave you "
                     "(%s) - only use names and facts from the thread"
@@ -673,27 +610,26 @@ def followup_gaps(reply, original, previous, update, business,
 
 
 def validate_followup(reply, original, previous, update, business,
-                      offer=None, signoff=None, platform="generic"):
+                      offer=None, signoff=None, platform="generic", approved_actions=None):
     return not followup_gaps(reply, original, previous, update,
-                             business, offer, signoff, platform)
+                             business, offer, signoff, platform, approved_actions)
 
 
 def build_followup_prompt(original, previous, update, business, tone,
                           kind, offer=None, signoff=None,
-                          platform="generic", emphasis=None, voice=None):
+                          platform="generic", emphasis=None, voice=None, approved_actions=None):
     who = business or "a small local business"
     lo, hi = PLATFORMS.get(platform, PLATFORMS["generic"])
     tier = review_tier(update)
     offer_spent = bool(offer) and _norm(offer) in _norm(previous)
     if tier == "negative":
-        guidance = ("- The update is still unhappy: apologise again, "
-                    "acknowledge plainly that the first fix did not "
-                    "land, and escalate - the owner personally, a "
-                    "direct way to reach them, a refund.\n")
+        guidance = ("- The update is still unhappy: acknowledge the ongoing "
+                    "concern and apologise. Never invent a stronger offer or "
+                    "an escalation. A neutral acknowledgment is acceptable.\n")
         if offer_spent:
             guidance += ("- Your first reply already made your "
-                         "standing offer. Do NOT repeat it - escalate "
-                         "instead.\n")
+                         "standing offer. Do NOT repeat it or invent an "
+                         "escalation.\n")
     elif tier == "mixed":
         guidance = ("- The update is mixed: thank them for it, "
                     "celebrate what is better, own what still is not, "
@@ -743,13 +679,15 @@ def build_followup_prompt(original, previous, update, business, tone,
         f"- {lo} to {hi} words (this reply is for {platform}). "
         "No brackets, no placeholders.\n"
         + sign_line +
-        "Write only the follow-up reply.")
+        "Write only the follow-up reply." + policy_instructions(
+            None if offer_spent else offer, approved_actions))
 
 
 def generate_followup(original, previous, update, business, tone, kind,
                       model, caller=None, offer=None, signoff=None,
-                      platform="generic", ledger_path=None, voice=None):
+                      platform="generic", ledger_path=None, voice=None, approved_actions=None):
     """(reply, engine) for a follow-up, or (None, reason)."""
+    validate_input(update, None, platform, offer, approved_actions)
     if caller is None:
         caller = call_ollama
     if voice and voice.get("signoff") and not signoff:
@@ -757,16 +695,16 @@ def generate_followup(original, previous, update, business, tone, kind,
     emphasis = top_gaps(business, ledger_path) if ledger_path else None
     prompt = build_followup_prompt(original, previous, update, business,
                                    tone, kind, offer, signoff, platform,
-                                   emphasis=emphasis, voice=voice)
+                                   emphasis=emphasis, voice=voice, approved_actions=approved_actions)
     try:
         candidate = caller(prompt, model, 0.8)
     except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable: {exc}"
     if validate_followup(candidate, original, previous, update, business,
-                         offer, signoff, platform):
+                         offer, signoff, platform, approved_actions):
         return candidate, f"{model} via Ollama (local)"
     gaps = followup_gaps(candidate, original, previous, update,
-                         business, offer, signoff, platform)
+                         business, offer, signoff, platform, approved_actions)
     if ledger_path:
         record_gaps(business, gaps, ledger_path)
     retry_prompt = (
@@ -778,90 +716,84 @@ def generate_followup(original, previous, update, business, tone, kind,
     except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable on retry: {exc}"
     if validate_followup(candidate, original, previous, update, business,
-                         offer, signoff, platform):
+                         offer, signoff, platform, approved_actions):
         return candidate, (f"{model} via Ollama (local, after one "
                            "format retry)")
     if ledger_path:
         record_gaps(business, followup_gaps(
             candidate, original, previous, update, business, offer,
-            signoff, platform), ledger_path)
+            signoff, platform, approved_actions), ledger_path)
     return None, "model missed the follow-up format twice"
 
 
-HAPPY_OPEN = [
-    "Thank you for coming back and updating this - it honestly "
-    "makes our day.",
-    "This update made our whole morning - thank you for giving us "
-    "another shot.",
-]
-
-HAPPY_MID = [
-    "That is the ending we were hoping for, and we will pass it "
-    "straight to the team.",
-    "Hearing it landed right this time is the best part of doing "
-    "this, truly.",
-]
-
-SAD_OPEN = [
-    "Thank you for telling us straight that it still is not right - "
-    "we would rather hear it than not.",
-    "We are sorry the first fix missed - thank you for the update, "
-    "and for saying it plainly.",
-]
-
-ESCALATION = ("This one comes to the owner personally: message us "
-              "directly and ask for the owner at the counter, and we "
-              "will sort it on the spot - a full refund if that is "
-              "what you would rather.")
-
-
 def template_followup(original, previous, update, business, tone, kind,
-                      rng, offer=None, signoff=None):
-    """A complete, checker-passing follow-up with no model involved."""
+                      rng, offer=None, signoff=None, platform="generic",
+                      approved_actions=None):
+    """Never escalate or repeat an already used offer without authorization."""
+    validate_input(update, None, platform, offer, approved_actions)
+    spec = (specifics(update) or specifics(original) or ["experience"])[0]
     tier = review_tier(update)
-    specs = specifics(update) or specifics(original)
-    spec = specs[0] if specs else "visit"
-    offer_spent = bool(offer) and _norm(offer) in _norm(previous)
+    spent = bool(offer) and _norm(offer) in _norm(previous)
+    parts = [f"Thank you for the update about your experience at {business or 'our business'}.",
+             f"Your comments about the {spec} help us understand how things went this time."]
     if tier == "positive":
-        parts = [rng.choice(HAPPY_OPEN),
-                 rng.choice(ECHOES).format(spec=spec),
-                 rng.choice(HAPPY_MID)]
+        parts.append("We appreciate hearing what you enjoyed and the time you took to explain it.")
     else:
-        _, issues = split_specifics(update)
-        issue = issues[0] if issues else spec
-        parts = [rng.choice(SAD_OPEN),
-                 rng.choice(MIXED_ACK).format(issue=issue)]
-        if offer and not offer_spent:
-            parts.append(_offer_sentence(offer))
-        else:
-            parts.append(ESCALATION)
-    parts.append(rng.choice(CLOSERS))
-    body = " ".join(parts)
-    return f"{body}\n\n{_signoff_line(business, signoff)}"
+        parts.append("We are sorry that you are still disappointed. Thank you for explaining "
+                     "your concerns and what matters to you.")
+    statements = ([offer] if offer and not spent and tier == "negative" else []) + list(approved_actions or [])
+    reply = "\n\n".join([" ".join(parts)] + statements + [
+        "We hope you'll visit again. Thank you for sharing your perspective.",
+        _signoff_line(business, signoff)])
+    require_valid(followup_gaps(reply, original, previous, update, business,
+                                offer, signoff, platform, approved_actions))
+    return reply
 
 
 # ---------------------------------------------------------------- profiles
 
 PROFILES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                             "profiles.json")
+                             ".rrw", "profiles.json")
+
+
+
+def atomic_json(path, data):
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    temp = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory,
+                                         delete=False) as fh:
+            temp = fh.name
+            json.dump(data, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(temp, path)
+    finally:
+        if temp and os.path.exists(temp):
+            os.unlink(temp)
 
 
 def load_profiles(path=None):
-    """All saved owner profiles; a missing or broken file means none."""
+    """Load local owner profiles. Shipped samples are used only when none exist."""
+    selected = path or PROFILES_PATH
+    if path is None and not os.path.exists(selected):
+        selected = os.path.join(os.path.dirname(os.path.abspath(__file__)), "profiles.json")
     try:
-        with open(path or PROFILES_PATH, encoding="utf-8") as fh:
+        with open(selected, encoding="utf-8") as fh:
             data = json.load(fh)
-        return data if isinstance(data, dict) else {}
-    except (OSError, ValueError):
+        if not isinstance(data, dict) or any(not isinstance(v, dict) for v in data.values()):
+            raise ValueError("profile file must contain named JSON objects; restore from backup")
+        return data
+    except FileNotFoundError:
         return {}
 
 
 def save_profile(name, profile, path=None):
     profiles = load_profiles(path)
     profiles[name] = profile
-    with open(path or PROFILES_PATH, "w", encoding="utf-8") as fh:
-        json.dump(profiles, fh, indent=2, ensure_ascii=False)
-        fh.write("\n")
+    atomic_json(path or PROFILES_PATH, profiles)
 
 
 # -------------------------------------------------------------------- voice
@@ -950,8 +882,10 @@ def load_ledger(path=None):
     try:
         with open(path or LEDGER_PATH, encoding="utf-8") as fh:
             data = json.load(fh)
-        return data if isinstance(data, dict) else {}
-    except (OSError, ValueError):
+        if not isinstance(data, dict):
+            raise ValueError("state file must contain a JSON object; restore from backup")
+        return data
+    except FileNotFoundError:
         return {}
 
 
@@ -964,9 +898,7 @@ def record_gaps(business, gaps, path=None):
     for gap in gaps:
         key = gap_key(gap)
         entry[key] = entry.get(key, 0) + 1
-    with open(path or LEDGER_PATH, "w", encoding="utf-8") as fh:
-        json.dump(ledger, fh, indent=2, ensure_ascii=False)
-        fh.write("\n")
+    atomic_json(path or LEDGER_PATH, ledger)
 
 
 def top_gaps(business, path=None, limit=2):
@@ -978,13 +910,16 @@ def top_gaps(business, path=None, limit=2):
 # -------------------------------------------------------------------- batch
 
 def read_batch_csv(path):
-    """Rows from a CSV with review,business,kind,tone,stars columns
-    (everything but review is optional per row)."""
-    rows = []
-    with open(path, newline="", encoding="utf-8") as fh:
-        for raw in csv.DictReader(fh):
-            rows.append({(k or "").strip().lower(): (v or "").strip()
-                         for k, v in raw.items() if k})
+    with open(path, newline="", encoding="utf-8-sig") as fh:
+        reader = csv.DictReader(fh)
+        fields = [name.strip().lower() for name in (reader.fieldnames or [])]
+        if "review" not in fields or len(fields) != len(set(fields)):
+            raise ValueError("CSV needs a unique review column and no duplicate headers")
+        rows = []
+        for row_no, raw in enumerate(reader, 2):
+            if None in raw:
+                raise ValueError(f"CSV row {row_no} has more values than its header")
+            rows.append({k.strip().lower(): (v or "").strip() for k, v in raw.items()})
     return rows
 
 
@@ -1019,6 +954,10 @@ def _write_reply_file(path, business, review, reply, engine, tone, kind,
     """
     metadata = dict(context, version=1, business=business, review=review,
                     tone=tone, kind=kind, tier=tier, platform=platform)
+    metadata["safety_version"] = SAFETY_VERSION
+    metadata["engine"] = engine
+    metadata["validation_findings"] = draft_findings(dict(metadata, reply=reply))
+    metadata["review_status"] = "blocked" if metadata["validation_findings"] else "needs_human_review"
     encoded = json.dumps(metadata, ensure_ascii=False).replace(
         "<", "\\u003c").replace(">", "\\u003e")
     quoted_review = "\n".join("> " + line for line in review.splitlines())
@@ -1041,70 +980,56 @@ def _write_reply_file(path, business, review, reply, engine, tone, kind,
             os.unlink(temp_path)
 
 
-def run_batch(rows, outdir, model, offline, seed=None, caller=None,
-              defaults=None):
-    """Draft a reply for every row; returns one result dict per row.
-
-    Row values win; `defaults` (from the CLI or a profile) fill gaps.
-    Empty reviews are reported as skipped, never silently dropped.
-    """
+def run_batch(rows, outdir, model, offline, seed=None, caller=None, defaults=None):
+    """Each row is validated independently. Failed rows are reported, never saved as ready."""
     defaults = defaults or {}
     os.makedirs(outdir, exist_ok=True)
     results = []
     for idx, row in enumerate(rows, 1):
-        review = (row.get("review") or "").strip()
         business = row.get("business") or defaults.get("business")
+        base = {"n": idx, "business": business or "-", "tier": "-", "file": None}
+        review = (row.get("review") or "").strip()
         if not review:
-            results.append({"n": idx, "business": business or "-",
-                            "tier": "-", "engine": "skipped - empty "
-                            "review", "file": None})
+            results.append(dict(base, engine="skipped - empty review", status="skipped"))
             continue
-        kind = row.get("kind") or defaults.get("kind") or "cafe"
-        if kind not in KINDS:
-            kind = defaults.get("kind") or "cafe"
-        tone = row.get("tone") or defaults.get("tone") or "warm"
-        if tone not in TONES:
-            tone = defaults.get("tone") or "warm"
-        stars = None
-        if row.get("stars"):
-            try:
-                stars = int(row["stars"])
-            except ValueError:
-                stars = None
-        if stars is None:
-            stars = defaults.get("stars")
-        offer = row.get("offer") or defaults.get("offer")
-        signoff = row.get("signoff") or defaults.get("signoff")
-        platform = row.get("platform") or defaults.get("platform") \
-            or "generic"
-        if platform not in PLATFORMS:
-            platform = defaults.get("platform") or "generic"
-        reply, engine = None, None
-        if not offline:
-            reply, engine = generate_with_model(
-                review, business, tone, stars, kind, model,
-                caller=caller, offer=offer, signoff=signoff,
-                platform=platform,
-                ledger_path=defaults.get("ledger_path"),
-                voice=defaults.get("voice"),
-                choices=defaults.get("choices", 1))
+        try:
+            kind = row.get("kind") or defaults.get("kind") or "cafe"
+            tone = row.get("tone") or defaults.get("tone") or "warm"
+            if kind not in KINDS or tone not in TONES:
+                raise ValueError("unknown business kind or tone")
+            raw_stars = row.get("stars")
+            stars = int(raw_stars) if raw_stars not in (None, "") else defaults.get("stars")
+            # Never apply one business's policy to another business in a batch.
+            same_business = _norm(business or "") == _norm(defaults.get("business") or "")
+            owner = defaults if same_business else {}
+            offer = row.get("offer") or owner.get("offer")
+            signoff = row.get("signoff") or owner.get("signoff")
+            actions = owner.get("approved_actions")
+            platform = row.get("platform") or defaults.get("platform") or "generic"
+            validate_input(review, stars, platform, offer, actions)
+            reply, reason = None, "offline mode selected"
+            if not offline:
+                reply, reason = generate_with_model(
+                    review, business, tone, stars, kind, model, caller=caller,
+                    offer=offer, signoff=signoff, platform=platform,
+                    ledger_path=defaults.get("ledger_path"), voice=owner.get("voice"),
+                    choices=defaults.get("choices", 1), approved_actions=actions)
+            engine = reason
             if reply is None:
-                reason, engine = engine, None
-        if reply is None:
-            rng = random.Random((seed + idx) if seed is not None else None)
-            reply = template_reply(review, business, tone, stars, kind,
-                                   rng, offer=offer, signoff=signoff)
-            engine = ("template engine (offline)" if offline else
-                      f"template engine (fallback: {reason})")
-        tier = review_tier(review, stars)
-        path = save_reply_file(outdir, business, review, reply, engine,
-                               tone, kind, tier, platform, stars=stars,
-                               offer=offer, signoff=signoff,
-                               voice=defaults.get("voice"),
-                               choices=defaults.get("choices", 1))
-        results.append({"n": idx, "business": business or "-",
-                        "tier": tier, "engine": engine,
-                        "file": os.path.basename(path)})
+                reply = template_reply(review, business, tone, stars, kind,
+                    random.Random(seed + idx if seed is not None else None),
+                    offer=offer, signoff=signoff, platform=platform, approved_actions=actions)
+                engine = "template engine (offline)" if offline else f"template engine (fallback: {reason})"
+            require_valid(reply_gaps(reply, review, business, stars, offer, signoff, platform, actions))
+            tier = review_tier(review, stars)
+            path = save_reply_file(outdir, business, review, reply, engine, tone, kind,
+                                  tier, platform, stars=stars, offer=offer, signoff=signoff,
+                                  voice=owner.get("voice"), choices=defaults.get("choices", 1),
+                                  approved_actions=actions)
+            results.append(dict(base, tier=tier, engine=engine,
+                                file=os.path.basename(path), status="needs_human_review"))
+        except (ValueError, TypeError, OSError) as exc:
+            results.append(dict(base, engine=f"blocked: {exc}", status="blocked"))
     return results
 
 
@@ -1129,20 +1054,31 @@ _TIER_STARS = {"negative": 2, "mixed": 3, "positive": 5}
 
 
 def load_triage(replies_dir):
+    path = os.path.join(replies_dir, TRIAGE_NAME)
     try:
-        with open(os.path.join(replies_dir, TRIAGE_NAME),
-                  encoding="utf-8") as fh:
-            data = json.load(fh)
-        return data if isinstance(data, dict) else {}
-    except (OSError, ValueError):
+        with open(path, encoding="utf-8") as fh:
+            state = json.load(fh)
+    except FileNotFoundError:
         return {}
+    if not isinstance(state, dict) or any(not isinstance(v, dict) for v in state.values()):
+        raise ValueError("invalid triage state; restore the file from backup")
+    for name, entry in state.items():
+        if os.path.basename(name) != name:
+            raise ValueError("invalid draft name in triage state")
+        if entry.get("status", "pending") not in ("pending", "approved", "aside"):
+            raise ValueError("invalid draft status in triage state")
+        if entry.get("status") == "approved":
+            draft_path = os.path.join(replies_dir, name)
+            if (entry.get("safety_version") != SAFETY_VERSION or
+                    not os.path.isfile(draft_path) or
+                    entry.get("content_sha256") != content_fingerprint(draft_path)):
+                entry["status"] = "pending"
+                entry["approval_invalidated"] = "draft content or safety policy changed"
+    return state
 
 
 def save_triage(replies_dir, state):
-    with open(os.path.join(replies_dir, TRIAGE_NAME), "w",
-              encoding="utf-8") as fh:
-        json.dump(state, fh, indent=2, ensure_ascii=False)
-        fh.write("\n")
+    atomic_json(os.path.join(replies_dir, TRIAGE_NAME), state)
 
 
 def list_drafts(replies_dir):
@@ -1196,6 +1132,7 @@ def reroll_draft(path, tone, model, offline, caller=None,
     business, kind = draft["business"], draft["kind"]
     platform = draft["platform"]
     offer, signoff = draft.get("offer"), draft.get("signoff")
+    approved_actions = draft.get("approved_actions")
     voice = draft.get("voice")
     if voice and voice.get("signoff") and not signoff:
         signoff = voice["signoff"]
@@ -1205,7 +1142,7 @@ def reroll_draft(path, tone, model, offline, caller=None,
     if not offline:
         common = dict(caller=caller, offer=offer, signoff=signoff,
                       platform=platform, ledger_path=ledger_path,
-                      voice=voice)
+                      voice=voice, approved_actions=approved_actions)
         if is_followup:
             reply, engine = generate_followup(
                 draft["original"], draft["previous"], draft["review"],
@@ -1221,17 +1158,18 @@ def reroll_draft(path, tone, model, offline, caller=None,
             reply = template_followup(
                 draft["original"], draft["previous"], draft["review"],
                 business, tone, kind, random.Random(), offer=offer,
-                signoff=signoff)
+                signoff=signoff, platform=platform, approved_actions=approved_actions)
         else:
             reply = template_reply(draft["review"], business, tone, stars,
                                    kind, random.Random(), offer=offer,
-                                   signoff=signoff)
+                                   signoff=signoff, platform=platform, approved_actions=approved_actions)
         engine = ("template engine (offline)" if offline else
                   f"template engine (fallback: {reason})")
     tier = review_tier(draft["review"], None if is_followup else stars)
     context = {key: draft[key] for key in
                ("stars", "offer", "signoff", "voice", "choices",
-                "original", "previous") if key in draft}
+                "original", "previous", "approved_actions") if key in draft}
+    require_valid(draft_findings(dict(draft, reply=reply, tone=tone)))
     _write_reply_file(path, business, draft["review"], reply, engine,
                       tone, kind, tier, platform, **context)
     return engine
@@ -1254,10 +1192,16 @@ def triage(replies_dir, model, offline, caller=None, input_fn=input,
     for name in pending:
         path = os.path.join(replies_dir, name)
         while True:
+            reviewed_hash = content_fingerprint(path)
             draft = parse_draft(path)
+            if reviewed_hash != content_fingerprint(path):
+                continue
             print_fn(f"\n=== {name} ({draft['tier'] or '?'}) ===")
             print_fn(f"Review: {draft['review']}")
             print_fn(f"Draft:  {draft['reply']}")
+            findings = draft_findings(draft)
+            print_fn("Checks: " + ("; ".join(findings) if findings else
+                     "passed heuristic checks; human review still required"))
             choice = input_fn(
                 "[a]pprove / [r]eroll / [t]one reroll / [s]et aside "
                 "/ [q]uit: ").strip().lower()
@@ -1265,7 +1209,17 @@ def triage(replies_dir, model, offline, caller=None, input_fn=input,
                 save_triage(replies_dir, state)
                 return state
             if choice == "a":
-                state[name] = {"status": "approved"}
+                if reviewed_hash != content_fingerprint(path):
+                    print_fn("Draft changed while being reviewed; review the current text again.")
+                    continue
+                findings = draft_findings(draft)
+                if findings:
+                    print_fn("Approval blocked: " + "; ".join(findings))
+                    continue
+                state[name] = {"status": "approved",
+                               "content_sha256": reviewed_hash,
+                               "safety_version": SAFETY_VERSION,
+                               "approved_at": datetime.now(timezone.utc).isoformat()}
                 break
             if choice == "s":
                 state[name] = {"status": "aside"}
@@ -1326,8 +1280,11 @@ def tour(model, offline, drafts_dir, caller=None, print_fn=print):
                                prof.get("tone", "warm"), 2,
                                prof.get("kind", "cafe"), random.Random(3),
                                offer=prof.get("offer"),
-                               signoff=prof.get("signoff"))
+                               signoff=prof.get("signoff"), platform=prof.get("platform", "generic"))
         engine = "template engine (offline)"
+    require_valid(reply_gaps(reply, review, prof.get("business"), 2,
+                             prof.get("offer"), prof.get("signoff"),
+                             prof.get("platform", "generic")))
     p(reply)
     p(f"  [{engine}]")
     p("\n— Step 3: the whole inbox at once (into a scratch folder)")
@@ -1421,7 +1378,7 @@ def unique_path(path):
     return f"{base}-{n}{ext}"
 
 
-def main(argv=None):
+def _main(argv=None):
     ap = argparse.ArgumentParser(
         description="Draft a reply to a customer review, locally.")
     ap.add_argument("review", nargs="?", help="the review text")
@@ -1436,6 +1393,8 @@ def main(argv=None):
     ap.add_argument("--offer", default=None,
                     help="your standing offer, used word for word in "
                          "negative and mixed replies")
+    ap.add_argument("--approved-action", action="append", default=None,
+                    help="exact owner-approved operational or contact statement; repeatable")
     ap.add_argument("--signoff", default=None,
                     help="custom sign-off line (without the dash)")
     ap.add_argument("--platform", choices=list(PLATFORMS), default=None,
@@ -1483,6 +1442,12 @@ def main(argv=None):
     ap.add_argument("--doctor", action="store_true",
                     help="check the local setup and exit")
     args = ap.parse_args(argv)
+    exclusive_modes = (args.doctor, args.batch is not None, args.batch_dir is not None,
+                       args.triage, args.tour, args.followup)
+    if sum(bool(x) for x in exclusive_modes) > 1:
+        ap.error("choose only one of doctor, batch, batch-dir, triage, tour, or followup")
+    if args.review is not None and args.file is not None:
+        ap.error("choose a positional review or --file, not both")
 
     if args.doctor:
         return doctor(args.model)
@@ -1493,10 +1458,14 @@ def main(argv=None):
         if not prof:
             ap.error(f"no profile named '{args.profile}' in "
                      f"{PROFILES_PATH}")
+    if args.business and prof.get("business") and _norm(args.business) != _norm(prof["business"]):
+        ap.error("the selected profile belongs to another business; create a separate owner profile")
     business = args.business or prof.get("business")
     kind = args.kind or prof.get("kind") or "cafe"
     tone = args.tone or prof.get("tone") or "warm"
-    offer = args.offer or prof.get("offer")
+    offer = args.offer if args.offer is not None else prof.get("offer")
+    approved_actions = args.approved_action if args.approved_action is not None else prof.get("approved_actions")
+    validate_owner_statements(offer, approved_actions)
     signoff = args.signoff or prof.get("signoff")
     platform = args.platform or prof.get("platform") or "generic"
     choices = args.choices or prof.get("choices") or 1
@@ -1525,7 +1494,7 @@ def main(argv=None):
         entry = dict(prof)
         entry.update({k: v for k, v in
                       {"business": business, "kind": kind, "tone": tone,
-                       "offer": offer, "signoff": signoff,
+                       "offer": offer, "approved_actions": approved_actions, "signoff": signoff,
                        "platform": platform}.items() if v})
         entry["voice"] = voice
         save_profile(target, entry)
@@ -1538,7 +1507,7 @@ def main(argv=None):
     if args.save_profile:
         entry = {k: v for k, v in
                  {"business": business, "kind": kind, "tone": tone,
-                  "offer": offer, "signoff": signoff,
+                  "offer": offer, "approved_actions": approved_actions, "signoff": signoff,
                   "platform": platform}.items() if v}
         save_profile(args.save_profile, entry)
         print(f"Saved profile '{args.save_profile}' to {PROFILES_PATH}",
@@ -1552,13 +1521,13 @@ def main(argv=None):
                 else read_batch_dir(args.batch_dir))
         defaults = {"business": business, "kind": kind, "tone": tone,
                     "stars": args.stars,
-                    "offer": offer, "signoff": signoff,
+                    "offer": offer, "approved_actions": approved_actions, "signoff": signoff,
                     "platform": platform, "ledger_path": LEDGER_PATH,
                     "voice": voice, "choices": choices}
         results = run_batch(rows, outdir, args.model, args.offline,
                             seed=args.seed, defaults=defaults)
         print_batch_summary(results)
-        return 0
+        return 2 if any(r.get("status") == "blocked" for r in results) else 0
 
     if args.triage:
         triage(outdir, args.model, args.offline,
@@ -1577,6 +1546,8 @@ def main(argv=None):
     else:
         ap.error("give a review as an argument or with --file")
 
+    validate_input(review, args.stars, platform, offer, approved_actions)
+
     if args.followup:
         if not args.original or not args.previous:
             ap.error("--followup needs --original FILE and "
@@ -1590,7 +1561,7 @@ def main(argv=None):
             reply, engine = generate_followup(
                 original, previous, review, business, tone, kind,
                 args.model, offer=offer, signoff=signoff,
-                platform=platform, ledger_path=LEDGER_PATH, voice=voice)
+                platform=platform, ledger_path=LEDGER_PATH, voice=voice, approved_actions=approved_actions)
             if reply is None:
                 print(f"note: {engine}; using templates instead",
                       file=sys.stderr)
@@ -1598,17 +1569,19 @@ def main(argv=None):
             rng = random.Random(args.seed)
             reply = template_followup(original, previous, review,
                                       business, tone, kind, rng,
-                                      offer=offer, signoff=signoff)
-            engine = "template engine (offline)"
+                                      offer=offer, signoff=signoff, platform=platform, approved_actions=approved_actions)
+            engine = "template engine (offline)" if args.offline else "template engine (fallback)"
+        require_valid(followup_gaps(reply, original, previous, review, business,
+                                     offer, signoff, platform, approved_actions))
         print(reply)
-        print(f"\n[{engine}]", file=sys.stderr)
+        print(f"\n[{engine}; checks passed; human review required]", file=sys.stderr)
         if args.save:
             os.makedirs(outdir, exist_ok=True)
             tier = review_tier(review)
             path = save_reply_file(outdir, business, review, reply,
                                    engine, tone, kind, tier, platform,
                                    offer=offer, signoff=signoff, voice=voice,
-                                   original=original, previous=previous)
+                                   original=original, previous=previous, approved_actions=approved_actions)
             print(f"Saved to {path}", file=sys.stderr)
         return 0
 
@@ -1617,18 +1590,20 @@ def main(argv=None):
         reply, engine = generate_with_model(
             review, business, tone, args.stars, kind, args.model,
             offer=offer, signoff=signoff, platform=platform,
-            ledger_path=LEDGER_PATH, voice=voice, choices=choices)
+            ledger_path=LEDGER_PATH, voice=voice, choices=choices, approved_actions=approved_actions)
         if reply is None:
             print(f"note: {engine}; using templates instead",
                   file=sys.stderr)
     if reply is None:
         rng = random.Random(args.seed)
         reply = template_reply(review, business, tone, args.stars, kind,
-                               rng, offer=offer, signoff=signoff)
-        engine = "template engine (offline)"
+                               rng, offer=offer, signoff=signoff, platform=platform, approved_actions=approved_actions)
+        engine = "template engine (offline)" if args.offline else "template engine (fallback)"
 
+    require_valid(reply_gaps(reply, review, business, args.stars, offer,
+                             signoff, platform, approved_actions))
     print(reply)
-    print(f"\n[{engine}]", file=sys.stderr)
+    print(f"\n[{engine}; checks passed; human review required]", file=sys.stderr)
 
     if args.save:
         os.makedirs(outdir, exist_ok=True)
@@ -1636,9 +1611,17 @@ def main(argv=None):
         path = save_reply_file(outdir, business, review, reply, engine,
                                tone, kind, tier, platform,
                                stars=args.stars, offer=offer,
-                               signoff=signoff, voice=voice, choices=choices)
+                               signoff=signoff, voice=voice, choices=choices, approved_actions=approved_actions)
         print(f"Saved to {path}", file=sys.stderr)
     return 0
+
+
+def main(argv=None):
+    try:
+        return _main(argv)
+    except (ValueError, OSError, TypeError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

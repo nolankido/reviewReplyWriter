@@ -64,14 +64,14 @@ class SavedDraftTests(unittest.TestCase):
             path = rr.save_reply_file(
                 tmp, "Moe's Coffee", UPDATE_STILL_BAD, "old", "test",
                 "warm", "cafe", "negative", original=ANGRY,
-                previous=GOOD_NEGATIVE_REPLY, offer=offer)
+                previous=GOOD_NEGATIVE_REPLY + "\n" + offer, offer=offer)
             rr.reroll_draft(path, "warm", "test", True)
             draft = rr.parse_draft(path)
             self.assertEqual(draft["original"], ANGRY)
-            self.assertEqual(draft["previous"], GOOD_NEGATIVE_REPLY)
+            self.assertEqual(draft["previous"], GOOD_NEGATIVE_REPLY + "\n" + offer)
             self.assertNotIn(offer, draft["reply"])
             self.assertTrue(rr.validate_followup(
-                draft["reply"], ANGRY, GOOD_NEGATIVE_REPLY,
+                draft["reply"], ANGRY, GOOD_NEGATIVE_REPLY + "\n" + offer,
                 UPDATE_STILL_BAD, "Moe's Coffee", offer=offer))
 
     def test_followup_reroll_uses_model_thread(self):

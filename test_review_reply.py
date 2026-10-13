@@ -21,10 +21,11 @@ MIXED = ("Beautiful room and a stunning ocean view, but check-in took "
 
 GOOD_NEGATIVE_REPLY = (
     "Thank you for telling us straight - we appreciate the honesty. "
-    "You mentioned the coffee and the wait, and you are right on both. "
-    "We are genuinely sorry; that's on us. Please message us directly "
-    "and the next round is on us, no fuss. We hope you'll stop by "
+    "You mentioned the coffee and the wait, and those details matter. "
+    "We are genuinely sorry; that's on us. Your explanation tells us "
+    "what did not meet your expectations. We hope you'll stop by "
     "again soon.\n\n- The Moe's Coffee team")
+
 
 
 class SentimentTests(unittest.TestCase):
@@ -63,12 +64,11 @@ class ValidatorTests(unittest.TestCase):
         gaps = rr.reply_gaps(reply, ANGRY, "Moe's Coffee", 2)
         self.assertTrue(any("specific detail" in g for g in gaps))
 
-    def test_negative_without_offer_fails(self):
-        reply = GOOD_NEGATIVE_REPLY.replace(
-            "Please message us directly and the next round is on us, "
-            "no fuss.", "We have talked about it as a team already.")
-        gaps = rr.reply_gaps(reply, ANGRY, "Moe's Coffee", 2)
-        self.assertTrue(any("offer" in g for g in gaps))
+    def test_negative_without_offer_is_valid(self):
+        self.assertEqual(rr.reply_gaps(GOOD_NEGATIVE_REPLY, ANGRY, "Moe's Coffee", 2), [])
+        fabricated = GOOD_NEGATIVE_REPLY + "\nWe have repaired the coffee machine."
+        self.assertTrue(any("policy:" in g for g in rr.reply_gaps(
+            fabricated, ANGRY, "Moe's Coffee", 2)))
 
     def test_placeholder_fails(self):
         reply = GOOD_NEGATIVE_REPLY.replace("Moe's Coffee", "[NAME]")
@@ -82,15 +82,11 @@ class ValidatorTests(unittest.TestCase):
         self.assertTrue(rr.validate_reply(reply, GLOWING, "Moe's Coffee",
                                           5))
 
-    def test_complimentary_offer_counts(self):
-        # "A complimentary upgrade on your next visit" is a concrete
-        # offer in plain English; the checker must recognise it.
-        reply = GOOD_NEGATIVE_REPLY.replace(
-            "Please message us directly and the next round is on us, "
-            "no fuss.", "Please accept a complimentary upgrade on your "
-            "next visit, with our thanks.")
-        self.assertTrue(rr.validate_reply(reply, ANGRY, "Moe's Coffee",
-                                          2))
+    def test_complimentary_offer_requires_authorization(self):
+        offer = "a complimentary upgrade on your next visit"
+        reply = GOOD_NEGATIVE_REPLY + "\n\n" + offer
+        self.assertFalse(rr.validate_reply(reply, ANGRY, "Moe's Coffee", 2))
+        self.assertTrue(rr.validate_reply(reply, ANGRY, "Moe's Coffee", 2, offer=offer))
 
     def test_invented_email_fails(self):
         reply = (GOOD_NEGATIVE_REPLY.replace(
@@ -327,9 +323,7 @@ class FactGuardTests(unittest.TestCase):
             "the coffee and the 25 minute wait")
         self.assertEqual(rr.invented_details(
             grounded, ANGRY, "Moe's Coffee"), [])
-        invented = GOOD_NEGATIVE_REPLY.replace(
-            "the next round is on us",
-            "a $50 credit toward your next visit, on us")
+        invented = GOOD_NEGATIVE_REPLY + " A $50 credit toward your next visit."
         self.assertIn("$50", rr.invented_details(
             invented, ANGRY, "Moe's Coffee"))
 
@@ -538,16 +532,18 @@ class FollowupTests(unittest.TestCase):
                              "Moe's Coffee", offer=STANDING_OFFER))
 
     def test_repeating_the_spent_offer_fails(self):
-        reply = ("Thank you for the update - we're sorry it still "
-                 "isn't right. The coffee being cold a second time "
-                 "is on us, truly. Come in and the next round is on "
-                 "us, just like we said. We hope you'll stop by "
-                 "again.\n\n- The Moe's Coffee team")
-        gaps = rr.followup_gaps(reply, ANGRY, GOOD_NEGATIVE_REPLY,
-                                UPDATE_STILL_BAD, "Moe's Coffee",
-                                offer=STANDING_OFFER)
+        previous = GOOD_NEGATIVE_REPLY + "\n\n" + STANDING_OFFER
+        reply = "Thank you for the update. We are sorry the coffee was still cold. " \
+                "We hope you'll visit again.\n\n" + STANDING_OFFER + "\n- The Moe's Coffee team"
+        gaps = rr.followup_gaps(reply, ANGRY, previous, UPDATE_STILL_BAD,
+                               "Moe's Coffee", offer=STANDING_OFFER)
         self.assertTrue(any("no repeat" in g for g in gaps))
-        self.assertTrue(any("escalation" in g for g in gaps))
+        self.assertTrue(any("unauthorized compensation" in g for g in gaps))
+        # An unhappy follow-up must NOT be forced to invent an escalation.
+        safe = rr.template_followup(ANGRY, previous, UPDATE_STILL_BAD,
+            "Moe's Coffee", "warm", "cafe", random.Random(1), offer=STANDING_OFFER)
+        self.assertNotIn("refund", safe)
+        self.assertNotIn(STANDING_OFFER, safe)
 
     def test_fresh_opener_without_acknowledgment_fails(self):
         reply = ("Thank you so much for your feedback, we appreciate "
@@ -591,7 +587,7 @@ class FollowupTests(unittest.TestCase):
 
     def test_followup_prompt_names_the_thread(self):
         prompt = rr.build_followup_prompt(
-            ANGRY, GOOD_NEGATIVE_REPLY, UPDATE_STILL_BAD,
+            ANGRY, GOOD_NEGATIVE_REPLY + "\n" + STANDING_OFFER, UPDATE_STILL_BAD,
             "Moe's Coffee", "warm", "cafe", offer=STANDING_OFFER)
         self.assertIn("continuing conversation", prompt)
         self.assertIn("Do NOT repeat it", prompt)
