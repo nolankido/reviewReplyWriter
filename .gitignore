@@ -1,0 +1,4 @@
+__pycache__/
+replies/
+gap_ledger.json
+*.pyc
