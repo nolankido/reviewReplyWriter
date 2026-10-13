@@ -1,5 +1,9 @@
 # Review Reply Writer
 
+> Status: command-line prototype for human-reviewed drafts. See
+> [EVALUATION.md](EVALUATION.md) for the import review, verified behavior,
+> and remaining product risks. Nothing is posted automatically.
+
 **Every customer review answered in minutes — on your own machine, with nothing sent anywhere.**
 
 A café, an Etsy seller, a vacation-rental host: all of them are told to
@@ -7,8 +11,7 @@ reply to every review, fast and gracefully. The tools that help with
 that charge a monthly subscription and read every review on someone
 else's server — including the angry ones with customer names in them.
 Review Reply Writer does the same job locally. Gemma 3 (via Ollama)
-drafts the reply; a format validator checks it the way a good owner
-would before anything gets posted; if the draft misses, the model gets
+drafts the reply; a format validator checks selected wording and length rules; if the draft misses, the model gets
 one coached retry; if it still misses, a template engine writes the
 reply instead. No subscription, no API bill, no data leaving the
 laptop.
@@ -18,8 +21,9 @@ someone would actually pay for, except it runs free and private.
 
 ## What a good reply means here
 
-The validator encodes what owners learn the hard way. A reply passes
-only if it:
+The validator encodes what owners learn the hard way. Model replies are checked against the following rules. These checks
+are heuristics, not a factual guarantee; template output currently bypasses
+this final validation step. The intended rules are:
 
 - opens with a genuine thank-you,
 - names the business,
@@ -37,8 +41,8 @@ only if it:
   or website the owner never gave it. Left alone, a model will
   cheerfully fabricate one ("reach me at owner@…"); the checker
   rejects it, and the retry gets told why,
-- and invents **no people or facts** — a fact guard flags any name
-  or number in the draft that traces to neither the review nor the
+- and passes a **heuristic name-and-number check** — a fact guard flags some names
+  and numbers in the draft that traces to neither the review nor the
   owner. It exists because Gemma once thanked a barista named
   "Leo" whom no customer had ever mentioned.
 
@@ -153,7 +157,7 @@ example, to the owner personally or a refund.
 
 ## Quick start
 
-Needs Python 3 and [Ollama](https://ollama.com) for model-written
+Use Python 3.10 or newer and [Ollama](https://ollama.com) for model-written
 replies (without it, the template engine still works):
 
 ```bash
@@ -221,7 +225,7 @@ open source.
 python3 -m unittest
 ```
 
-67 tests: tier grading by stars and by words, clause-level topic
+81 tests: tier grading by stars and by words, clause-level topic
 splitting for mixed reviews, a fact guard against invented names
 and numbers, per-platform word ranges, a gap ledger that learns
 which rules a business's drafts keep missing, voice learning from
@@ -239,6 +243,19 @@ twice or isn't there at all. A pre-flight checker
 submission post's claims against the code before posting.
 
 ## Honest limits
+
+- Fallback templates can make unapproved refund, replacement, or repair
+  promises. Review every draft against your actual business policy.
+- Platform word ranges are application style targets. Templates currently
+  bypass final validation and can exceed them when owner settings are long.
+- New saved drafts preserve owner settings and follow-up threads during
+  rerolls. Older files cannot recover settings they never stored.
+- `profiles.json` is tracked and stores profile edits and learned voice data.
+  Check it before committing personal profiles. Generated replies and the
+  gap ledger are excluded from Git.
+- The application calls Ollama on localhost. Privacy also depends on running
+  a local model and on your Ollama configuration; the app does not audit that
+  configuration or enforce local execution for arbitrary `--model` values.
 
 - Drafts still deserve a human read before posting — the validator
   checks form, not facts. If a reply claims the shop fixed the

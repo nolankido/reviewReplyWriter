@@ -1,3 +1,7 @@
+> Historical planning draft. Test counts and completed-run claims below
+> are retained from the supplied archive and are not current verification.
+> Use EVALUATION.md for the repository import assessment.
+
 # DEV Week 2 submission — outline
 
 **Challenge:** DEV Open-Source AI Challenge, Week 2 "Side Hustle"

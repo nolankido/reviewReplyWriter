@@ -4,10 +4,15 @@ published: false
 tags: devchallenge, hf26challenge
 ---
 
+> Draft provenance: imported from the supplied project archive. Repository
+> review verified the tests and gallery checks, but did not rerun live Gemma
+> inference or independently verify the real-review story below. Read
+> [EVALUATION.md](EVALUATION.md) and confirm those claims before publishing.
+
 <!-- SUBMISSION CHECKLIST (delete before posting)
   [x] Examples + engine credits verified 2026-10-13 (all gemma3:4b;
       the glowing one after one format retry - see its war story)
-  [x] 67/67 tests passing, --doctor output pasted below
+  [x] 81/81 tests passing, --doctor output pasted below
   [x] Batch mode, owner profiles, and the mixed-review tier added
       2026-10-12 evening; sections below include them
   [x] Real-review paragraph added 2026-10-13 from an actual public
@@ -229,12 +234,12 @@ Review Reply Writer - doctor
 $ python3 -m unittest
 ...................................................................
 ----------------------------------------------------------------------
-Ran 67 tests in 0.11s
+Ran 81 tests
 
 OK
 ```
 
-67 tests: tier grading by stars and by words, clause-level topic
+81 tests: tier grading by stars and by words, clause-level topic
 splitting, a fact guard that flags invented names and numbers,
 per-platform word ranges, a gap ledger that learns which rules a
 business's drafts keep missing (and emphasises them in the next

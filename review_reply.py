@@ -252,6 +252,8 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
     negative or mixed reply must use it word for word - a generic
     make-it-right is not the owner's promise.
     """
+    if not isinstance(reply, str) or not reply.strip():
+        return ["a non-empty text reply"]
     gaps = []
     low = _norm(reply)
     head = low[:160]
@@ -259,6 +261,8 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
         gaps.append("an opening thank-you")
     if business and _norm(business) not in low:
         gaps.append("the business name")
+    if signoff and _norm(signoff) not in _norm(reply.strip().splitlines()[-1]):
+        gaps.append("your custom sign-off on the closing line")
     specs = specifics(review)
     body = _norm(_body(reply, signoff))
     if specs and not any(_mentions(body, s) for s in specs):
@@ -390,7 +394,10 @@ def call_ollama(prompt, model, temperature=0.8):
         OLLAMA_URL, data=payload,
         headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=180) as resp:
-        return json.loads(resp.read().decode("utf-8"))["response"].strip()
+        data = json.loads(resp.read().decode("utf-8"))
+    if not isinstance(data, dict) or not isinstance(data.get("response"), str):
+        raise ValueError("Ollama returned no text response")
+    return data["response"].strip()
 
 
 def specificity_score(reply, review):
@@ -421,7 +428,7 @@ def generate_with_model(review, business, tone, stars, kind, model,
                           voice=voice)
     try:
         candidate = caller(prompt, model, 0.8)
-    except (urllib.error.URLError, OSError, KeyError) as exc:
+    except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable: {exc}"
     if validate_reply(candidate, review, business, stars, offer, signoff,
                       platform):
@@ -430,7 +437,7 @@ def generate_with_model(review, business, tone, stars, kind, model,
             # covers more of the review's actual specifics.
             try:
                 second = caller(prompt, model, 0.5)
-            except (urllib.error.URLError, OSError, KeyError):
+            except (urllib.error.URLError, OSError, KeyError, ValueError):
                 second = None
             if second and validate_reply(second, review, business,
                                           stars, offer, signoff,
@@ -450,7 +457,7 @@ def generate_with_model(review, business, tone, stars, kind, model,
         "complete reply now, fixing exactly those problems.")
     try:
         candidate = caller(retry_prompt, model, 0.3)
-    except (urllib.error.URLError, OSError, KeyError) as exc:
+    except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable on retry: {exc}"
     if validate_reply(candidate, review, business, stars, offer, signoff,
                       platform):
@@ -603,6 +610,8 @@ def followup_gaps(reply, original, previous, update, business,
     made must not be made again - an unhappy update wants an
     escalation, not a repeat.
     """
+    if not isinstance(reply, str) or not reply.strip():
+        return ["a non-empty text reply"]
     gaps = []
     low = _norm(reply)
     # The opening only: an 'again' buried in the closing invitation
@@ -610,6 +619,8 @@ def followup_gaps(reply, original, previous, update, business,
     head = low[:140]
     if business and _norm(business) not in low:
         gaps.append("the business name")
+    if signoff and _norm(signoff) not in _norm(reply.strip().splitlines()[-1]):
+        gaps.append("your custom sign-off on the closing line")
     thread = "\n".join([original, previous, update])
     specs = specifics(update) or specifics(original)
     body = _norm(_body(reply, signoff))
@@ -749,7 +760,7 @@ def generate_followup(original, previous, update, business, tone, kind,
                                    emphasis=emphasis, voice=voice)
     try:
         candidate = caller(prompt, model, 0.8)
-    except (urllib.error.URLError, OSError, KeyError) as exc:
+    except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable: {exc}"
     if validate_followup(candidate, original, previous, update, business,
                          offer, signoff, platform):
@@ -764,7 +775,7 @@ def generate_followup(original, previous, update, business, tone, kind,
         "complete follow-up now, fixing exactly those problems.")
     try:
         candidate = caller(retry_prompt, model, 0.3)
-    except (urllib.error.URLError, OSError, KeyError) as exc:
+    except (urllib.error.URLError, OSError, KeyError, ValueError) as exc:
         return None, f"model unavailable on retry: {exc}"
     if validate_followup(candidate, original, previous, update, business,
                          offer, signoff, platform):
@@ -989,18 +1000,45 @@ def read_batch_dir(path):
 
 
 def save_reply_file(outdir, business, review, reply, engine, tone, kind,
-                    tier, platform="generic"):
+                    tier, platform="generic", **context):
     path = unique_path(os.path.join(
         outdir, f"reply-{slugify(business or 'reply')}-"
                 f"{date.today().isoformat()}.md"))
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(f"<!-- Drafted {date.today().isoformat()} by {engine};"
-                 f" business={business or ''};"
-                 f" tone={tone}; kind={kind}; tier={tier}; "
-                 f"platform={platform} -->\n\n"
-                 f"## The review\n\n> {review}\n\n"
-                 f"## The reply\n\n{reply}\n")
+    _write_reply_file(path, business, review, reply, engine, tone, kind,
+                      tier, platform, **context)
     return path
+
+
+def _write_reply_file(path, business, review, reply, engine, tone, kind,
+                       tier, platform="generic", **context):
+    """Keep the generation inputs alongside the human-readable draft.
+
+    JSON avoids losing delimiters in names and preserves owner settings
+    and follow-up threads across a triage reroll. Replace atomically so a
+    failed write cannot truncate an existing draft.
+    """
+    metadata = dict(context, version=1, business=business, review=review,
+                    tone=tone, kind=kind, tier=tier, platform=platform)
+    encoded = json.dumps(metadata, ensure_ascii=False).replace(
+        "<", "\\u003c").replace(">", "\\u003e")
+    quoted_review = "\n".join("> " + line for line in review.splitlines())
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=os.path.dirname(
+                    os.path.abspath(path)), delete=False) as fh:
+            temp_path = fh.name
+            fh.write(f"<!-- Drafted {date.today().isoformat()} by {engine};"
+                     f" business={business or ''};"
+                     f" tone={tone}; kind={kind}; tier={tier}; "
+                     f"platform={platform} -->\n"
+                     f"<!-- review-reply-metadata: {encoded} -->\n\n"
+                     f"## The review\n\n{quoted_review}\n\n"
+                     f"## The reply\n\n{reply}\n")
+        os.replace(temp_path, path)
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 
 def run_batch(rows, outdir, model, offline, seed=None, caller=None,
@@ -1060,7 +1098,10 @@ def run_batch(rows, outdir, model, offline, seed=None, caller=None,
                       f"template engine (fallback: {reason})")
         tier = review_tier(review, stars)
         path = save_reply_file(outdir, business, review, reply, engine,
-                               tone, kind, tier, platform)
+                               tone, kind, tier, platform, stars=stars,
+                               offer=offer, signoff=signoff,
+                               voice=defaults.get("voice"),
+                               choices=defaults.get("choices", 1))
         results.append({"n": idx, "business": business or "-",
                         "tier": tier, "engine": engine,
                         "file": os.path.basename(path)})
@@ -1116,8 +1157,18 @@ def parse_draft(path):
     with open(path, encoding="utf-8") as fh:
         text = fh.read()
 
+    metadata = re.search(
+        r"^<!-- review-reply-metadata: (.+) -->$", text, re.MULTILINE)
+    if metadata:
+        draft = json.loads(metadata.group(1))
+        if not isinstance(draft, dict) or draft.get("version") != 1:
+            raise ValueError("unsupported saved draft metadata")
+        draft["reply"] = text.split("\n## The reply\n\n", 1)[-1].strip()
+        return draft
+
     def field(name):
-        m = re.search(rf"{name}=([^;]+);", text)
+        header = text.split("-->", 1)[0]
+        m = re.search(rf"(?:^|;)\s*{name}=([^;]*)(?:;|$)", header)
         return m.group(1).strip() if m else None
 
     review_block = text.split("## The review", 1)[-1] \
@@ -1139,29 +1190,50 @@ def reroll_draft(path, tone, model, offline, caller=None,
     """Regenerate one saved draft in place (same filename, new
     credit). Returns the engine that wrote the new draft."""
     draft = parse_draft(path)
-    stars = _TIER_STARS.get(draft["tier"])
+    stars = draft.get("stars")
+    if stars is None:
+        stars = _TIER_STARS.get(draft["tier"])
     business, kind = draft["business"], draft["kind"]
     platform = draft["platform"]
+    offer, signoff = draft.get("offer"), draft.get("signoff")
+    voice = draft.get("voice")
+    if voice and voice.get("signoff") and not signoff:
+        signoff = voice["signoff"]
+    is_followup = draft.get("original") is not None and \
+        draft.get("previous") is not None
     reply, engine = None, None
     if not offline:
-        reply, engine = generate_with_model(
-            draft["review"], business, tone, stars, kind, model,
-            caller=caller, platform=platform, ledger_path=ledger_path)
+        common = dict(caller=caller, offer=offer, signoff=signoff,
+                      platform=platform, ledger_path=ledger_path,
+                      voice=voice)
+        if is_followup:
+            reply, engine = generate_followup(
+                draft["original"], draft["previous"], draft["review"],
+                business, tone, kind, model, **common)
+        else:
+            reply, engine = generate_with_model(
+                draft["review"], business, tone, stars, kind, model,
+                choices=draft.get("choices", 1), **common)
         if reply is None:
             reason, engine = engine, None
     if reply is None:
-        reply = template_reply(draft["review"], business, tone, stars,
-                               kind, random.Random())
+        if is_followup:
+            reply = template_followup(
+                draft["original"], draft["previous"], draft["review"],
+                business, tone, kind, random.Random(), offer=offer,
+                signoff=signoff)
+        else:
+            reply = template_reply(draft["review"], business, tone, stars,
+                                   kind, random.Random(), offer=offer,
+                                   signoff=signoff)
         engine = ("template engine (offline)" if offline else
                   f"template engine (fallback: {reason})")
-    tier = review_tier(draft["review"], stars)
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(f"<!-- Drafted {date.today().isoformat()} by {engine};"
-                 f" business={business or ''};"
-                 f" tone={tone}; kind={kind}; tier={tier}; "
-                 f"platform={platform} -->\n\n"
-                 f"## The review\n\n> {draft['review']}\n\n"
-                 f"## The reply\n\n{reply}\n")
+    tier = review_tier(draft["review"], None if is_followup else stars)
+    context = {key: draft[key] for key in
+               ("stars", "offer", "signoff", "voice", "choices",
+                "original", "previous") if key in draft}
+    _write_reply_file(path, business, draft["review"], reply, engine,
+                      tone, kind, tier, platform, **context)
     return engine
 
 
@@ -1479,6 +1551,7 @@ def main(argv=None):
         rows = (read_batch_csv(args.batch) if args.batch
                 else read_batch_dir(args.batch_dir))
         defaults = {"business": business, "kind": kind, "tone": tone,
+                    "stars": args.stars,
                     "offer": offer, "signoff": signoff,
                     "platform": platform, "ledger_path": LEDGER_PATH,
                     "voice": voice, "choices": choices}
@@ -1533,7 +1606,9 @@ def main(argv=None):
             os.makedirs(outdir, exist_ok=True)
             tier = review_tier(review)
             path = save_reply_file(outdir, business, review, reply,
-                                   engine, tone, kind, tier, platform)
+                                   engine, tone, kind, tier, platform,
+                                   offer=offer, signoff=signoff, voice=voice,
+                                   original=original, previous=previous)
             print(f"Saved to {path}", file=sys.stderr)
         return 0
 
@@ -1559,7 +1634,9 @@ def main(argv=None):
         os.makedirs(outdir, exist_ok=True)
         tier = review_tier(review, args.stars)
         path = save_reply_file(outdir, business, review, reply, engine,
-                               tone, kind, tier, platform)
+                               tone, kind, tier, platform,
+                               stars=args.stars, offer=offer,
+                               signoff=signoff, voice=voice, choices=choices)
         print(f"Saved to {path}", file=sys.stderr)
     return 0
 

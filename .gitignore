@@ -2,3 +2,9 @@ __pycache__/
 replies/
 gap_ledger.json
 *.pyc
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.DS_Store
