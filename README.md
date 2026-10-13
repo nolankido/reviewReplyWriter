@@ -1,119 +1,113 @@
 # Review Reply Writer
 
-Local-model review drafts with explicit owner authorization and human approval.
-Python 3.10 or newer. Standard-library-only command-line application.
+Local-model review drafts, explicit owner authorization, and human approval.
+Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
-## Current status
+## Open the app
 
-The owner-policy pass adds conservative commitment checks, validated fallbacks,
-content-bound approvals and stricter input handling. It is still a prototype,
-not an autonomous customer-service system or a guarantee of factual accuracy.
-Read [the safety design and evidence](docs/SAFETY_PASS.md) before using real reviews.
+Requires Python 3.10 or newer. No extra runtime packages, framework installation,
+account, API key, or paid hosting are needed to try the template workflow.
 
-## Start without installing a model
+**Windows:** double-click `start_windows.bat`, or run:
 
 ```powershell
-py -m unittest -v
-py check_submission.py
-py review_reply.py "Cold coffee and a 25 minute wait. Disappointing." --business "Demo Cafe" --kind cafe --stars 2 --offline --platform google
+py rrw_web.py
 ```
 
-On macOS/Linux, use `python3` instead of `py`. Offline mode uses conservative
-fixed templates. No model is required to exercise the policy and approval flow.
-Tone customization is primarily supplied by the model; fallbacks deliberately
-favor neutral wording over creative or playful language.
+**macOS/Linux:** `python3 rrw_web.py`.
 
-## Use local Gemma
+The launcher opens a session link on `127.0.0.1`. Keep the terminal open and
+press Ctrl+C to stop. Do not share its link or expose the port. Use `--port 0`
+when the default port is occupied; `--no-browser` prints the link without
+opening a tab. `--data-dir PATH` selects a separate local workspace.
 
-Install and start Ollama, download the model once, then run:
+Start with a fictional example in **Template preview (no AI)**. Read the draft,
+edit it, use **Save & recheck**, then confirm human review and approve. Only the
+exact approved text can be copied or exported through the app. Edits clear
+approval; stale tabs cannot overwrite or copy a changed draft.
+
+The workspace includes saved business profiles, explicit policy confirmation,
+first replies and follow-ups, a searchable/filterable draft library, generation
+details, and approved-only clipboard/text export. It uses the same draft files
+and approval records as the CLI. Its UI assets are local, with no external
+fonts, scripts, analytics, or images.
+
+[Full browser guide and security boundaries](docs/BROWSER_WORKSPACE.md)
+
+## Use actual local Gemma
+
+Install/start Ollama, download the model once, then select **Local Gemma 3 (4B)**
+in the browser's drafting-engine control:
 
 ```powershell
 ollama pull gemma3:4b
 py review_reply.py --doctor
-py review_reply.py "Cold coffee and a 25 minute wait. Disappointing." --business "Demo Cafe" --kind cafe --stars 2 --platform google --save
-py review_reply.py --triage
+py rrw_web.py
 ```
 
-The application calls the Ollama server on localhost. This alone does not prove
-inference is local: arbitrary model aliases and the server configuration remain
-outside this application's audit. Use the downloaded `gemma3:4b` model and
-Ollama's local-only setting. The initial model download requires a network
-connection. Do not claim that the application verifies zero network traffic.
-Official configuration: <https://docs.ollama.com/faq#how-do-i-disable-ollama-cloud-features>.
+The browser starts in template mode deliberately. Engine credits and generation
+details distinguish real model calls, coached retries, and template fallbacks.
+A connection badge means the named model was listed, not that a live inference
+or a network-privacy audit passed.
 
-This development pass did not run live Gemma inference. Model-path tests use
-controlled stand-in callers, clearly distinguished from real model evaluation.
+Use Ollama's local-only setting. The first model download needs internet access.
+A loopback request does not by itself prove local inference: model aliases and
+Ollama's independent server configuration remain outside the app's audit.
+Configuration: https://docs.ollama.com/faq#how-do-i-disable-ollama-cloud-features
 
-## Owner authorization is explicit
+No fresh Gemma inference or real-business user study was performed in the browser
+pass. Model integration tests use controlled stand-in responses, not real-model
+quality or performance measurements.
 
-Without a configured offer, neither the model nor a fallback is asked to promise
-refunds, replacements or free products. An apology and acknowledgment are valid.
-The program never derives authorization from the review, previous reply or voice
-samples. Configure a real policy only when you are authorized to do so:
+## Owner policy is not customer text
+
+The default reply does not promise refunds, replacements, free goods, repairs,
+or staff action. Enter an offer or an approved action only when the business
+owner has actually authorized it. Exact statements are checked separately from
+review text, previous replies, or learned voice samples. One authorized offer
+does not authorize a bigger refund or new redemption instructions.
+
+These are conservative English-language pattern checks, not a factuality or
+safety guarantee. They can miss paraphrases and reject harmless wording. Every
+reply still needs a human read. The tool trusts owner statements; it does not
+prove that a repair, refund, or other authorized claim is true.
+
+[Safety design and earlier regression evidence](docs/SAFETY_PASS.md)
+
+## CLI workflows remain available
+
+```powershell
+py review_reply.py "Cold coffee and a 25 minute wait. Disappointing." --business "Demo Cafe" --stars 2 --offline --platform google --save
+py review_reply.py --triage
+py review_reply.py --batch examples/batch-sample.csv --offline
+```
+
+Exact owner authorization:
 
 ```powershell
 py review_reply.py "Cold coffee and a long wait." --business "Demo Cafe" --stars 2 --offer "a replacement coffee on your next visit" --offline
-```
-
-The offer must appear as an exact standalone sentence or line, without added
-conditions, larger amounts or invented redemption instructions. One authorized
-offer does not permit an extra refund. Previously used offers do not authorize
-escalation in follow-ups.
-
-Owner-confirmed actions and contact instructions use a repeatable flag:
-
-```powershell
 py review_reply.py "The coffee machine was broken." --business "Demo Cafe" --stars 2 --approved-action "We have repaired the coffee machine." --offline
 ```
 
-Only supply that statement if the owner actually confirmed it. The program does
-not verify the owner's claim. `--approved-action` grants permission for exact
-wording, not a general license to invent related facts. Policy checks are
-English-language heuristics, so false positives and missed paraphrases remain
-possible. Human approval is mandatory.
+`--approved-action` is repeatable. Only use the repair statement if it is true.
+Use `--save-profile NAME` and `--profile NAME` for saved settings. Personal
+profiles write to ignored `.rrw/profiles.json`. The CLI retains the tracked
+`profiles.json` as an initial read fallback; the browser does not silently
+import sample compensation policies. Audit any old personal data in that
+tracked file before making the repository public.
 
-## Profiles, batches and follow-ups
+`--followup --file update.txt --original original.txt --previous previous.txt`
+keeps a review thread. `--learn-voice FILE --profile NAME` learns recurring
+phrases from replies separated by `---`. `--choices 2` compares two passing
+model candidates. `--tour` demonstrates the existing workflow. The browser
+respects saved voice metadata for the same business, but batch import, voice
+training, and best-of-two controls remain CLI features in this pass.
 
-`--save-profile NAME` saves business, offer, approved actions, tone and sign-off.
-`--profile NAME` reuses them. Personal profiles now write to ignored
-`.rrw/profiles.json`, never the tracked `profiles.json`. The latter contains demo
-profiles and is used as an initial read fallback. Demo offers are not real
-business authorization. Existing root-level profiles are not deleted or
-rewritten automatically; review their contents before making the repository public.
-
-```powershell
-py review_reply.py --batch examples/batch-sample.csv --offline
-py review_reply.py --triage
-py review_reply.py --followup --file update.txt --original original.txt --previous previous.txt --profile mybusiness
-```
-
-CSV requires a unique `review` header. Supported fields include `business`,
-`kind`, `tone`, `stars`, `platform`, `offer` and `signoff`. Row-level offers are
-owner-controlled policy input; never treat an unreviewed third-party CSV as
-trusted policy. One business's default offer, actions, sign-off and voice are
-not inherited by a different business's row. Bad rows are reported as blocked;
-valid rows continue. A CLI batch with blocked rows exits nonzero.
-
-Every output path checks its final draft, including model retries, offline
-fallbacks, batches, follow-ups and rerolls. A policy or length failure blocks
-that output instead of silently truncating owner terms. Platform word ranges
-are application style targets, not official service limits.
-
-Approval is bound to a SHA-256 fingerprint of the saved draft and its policy
-context. Editing or rerolling the file, or changing the safety-version marker,
-invalidates approval. Legacy approvals without a fingerprint return to pending.
-Stored drafts with unresolved findings cannot be approved through triage.
-JSON state writes are atomic; corrupt state is reported rather than overwritten.
-This is a single-owner local workflow, not a concurrent multi-user database.
-
-## Other existing tools
-
-`--learn-voice FILE --profile NAME` extracts recurring phrases from previous
-replies separated by `---`. Voice samples are not authorization.
-`--choices 2` compares two valid model candidates for topic coverage.
-`--tour` demonstrates the workflow. `--seed` remains accepted for compatibility;
-the safety fallback is intentionally deterministic.
+CSV row-level offers are owner-controlled policy input. Do not import an
+unreviewed third-party CSV as authorization. Different businesses do not inherit
+one another's default commitments. Platform word ranges are application style
+targets, not official service limits.
 
 ## Verification and submission
 
@@ -123,17 +117,22 @@ py check_submission.py
 py check_submission.py --release
 ```
 
-Development checks cover tests and the explicitly template-generated safety
-gallery. They do not prove live model quality, eligibility or contest readiness.
-`--release` also checks `docs/submission_evidence.json`, post links, required
-sections and unresolved markers. It intentionally fails until real demo and
-owner-verification evidence have been added. Those fields are attestations,
-not independent verification by the checker.
+The deterministic suite includes workspace tests and real-loopback HTTP tests.
+GitHub checks run on Ubuntu and Windows, Python 3.10 and 3.13. A separate Chromium
+job exercises the browser workflow and retains screenshots/results. Read the
+actual workflow conclusion, not just its configuration, for passing evidence.
 
-Current examples: [examples/safety](examples/safety). Historical model-labelled
-examples are retained for provenance, not endorsed as current compliant drafts.
-[POST_FINAL.md](POST_FINAL.md) is an unpublished draft. The previous article is
-archived separately because its guarantees and examples no longer describe the
-current implementation. No contest submission or visibility change was performed.
+Development checks do not prove model quality, eligibility, or contest readiness.
+The separate `--release` check remains blocked until actual demo and owner
+evidence are supplied in `docs/submission_evidence.json`. Those entries are
+attestations, not independent external verification.
 
-MIT license covers this source code, not third-party model weights or terms.
+[POST_FINAL.md](POST_FINAL.md) is still unpublished. Current safety examples in
+[examples/safety](examples/safety) are explicitly template-generated. Historical
+model-labelled examples and the earlier article are retained for provenance,
+not endorsed as current compliant drafts. No contest submission or repository
+visibility change is performed by running the app.
+
+Local state is plaintext, not encrypted. Use one writer at a time; external CLI
+processes do not share the browser process lock. Do not host this prototype on
+the public internet. MIT covers this source, not third-party model terms.

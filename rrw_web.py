@@ -173,34 +173,42 @@ class InstanceLock:
 
     def __enter__(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.handle = self.path.open('a+b')
-        self.handle.seek(0)
-        if not self.handle.read(1):
-            self.handle.write(b'0')
-            self.handle.flush()
-        self.handle.seek(0)
         try:
+            self.handle = self.path.open('a+b')
+            self.handle.seek(0)
+            # Windows can deny even reading the byte held by another process.
+            # Keep initialization inside the error boundary and always close it.
+            if not self.handle.read(1):
+                self.handle.write(b'0')
+                self.handle.flush()
+            self.handle.seek(0)
             if os.name == 'nt':
                 import msvcrt
                 msvcrt.locking(self.handle.fileno(), msvcrt.LK_NBLCK, 1)
             else:
                 import fcntl
                 fcntl.flock(self.handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except OSError:
-            self.handle.close()
-            raise WorkspaceError('A browser workspace is already using this data directory. Close it first.')
+        except OSError as exc:
+            if self.handle is not None:
+                self.handle.close()
+                self.handle = None
+            raise WorkspaceError('Cannot lock this workspace. Close another browser instance '
+                                 'or check permissions for the data directory.') from exc
         return self
 
     def __exit__(self, *args):
-        if self.handle:
-            self.handle.seek(0)
-            if os.name == 'nt':
-                import msvcrt
-                msvcrt.locking(self.handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-                fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
-            self.handle.close()
+        if self.handle is not None:
+            try:
+                self.handle.seek(0)
+                if os.name == 'nt':
+                    import msvcrt
+                    msvcrt.locking(self.handle.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    import fcntl
+                    fcntl.flock(self.handle.fileno(), fcntl.LOCK_UN)
+            finally:
+                self.handle.close()
+                self.handle = None
 
 
 def main(argv=None):

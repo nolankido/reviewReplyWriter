@@ -233,7 +233,14 @@ $('reply-editor').addEventListener('input', () => {
   $('human-reviewed').checked = false;
   $('reply-count').textContent = $('reply-editor').value.trim().split(/\s+/).filter(Boolean).length + ' words' + (dirty ? ' · unsaved' : '');
   if (dirty) { $('draft-status').textContent = 'Unsaved edits'; $('draft-status').className = 'badge pending'; $('findings-title').textContent = 'Edits have not been checked yet.'; $('findings-box').className = 'findings blocked'; $('findings-list').replaceChildren(); }
-  else if (current) { $('draft-status').textContent = labels[current.status]; $('draft-status').className = 'badge ' + current.status; }
+  else if (current) {
+    $('draft-status').textContent = labels[current.status];
+    $('draft-status').className = 'badge ' + current.status;
+    $('findings-box').className = 'findings' + (current.findings.length ? ' blocked' : '');
+    $('findings-title').textContent = current.findings.length ? 'Changes needed before approval' : 'Passed the current checks. Your review comes next.';
+    $('findings-list').replaceChildren(...current.findings.map(f => node('li', f)));
+    $('human-reviewed').checked = current.status === 'approved';
+  }
   updateButtons();
 });
 $('save-edit').addEventListener('click', () => run(async () => {

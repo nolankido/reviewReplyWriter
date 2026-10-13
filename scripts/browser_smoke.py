@@ -57,6 +57,7 @@ def main():
                 original = page.locator('#reply-editor').input_value()
                 assertions.append('Offline example generates a saved unapproved draft with honest credit')
                 if args.screenshots:
+                    page.evaluate('window.scrollTo(0, 0)')
                     page.screenshot(path=str(args.screenshots / 'workspace-desktop.png'), full_page=True)
                 page.locator('#human-reviewed').check()
                 page.locator('#approve').click()
@@ -73,6 +74,10 @@ def main():
                 expect(page.locator('#copy')).to_be_disabled()
                 expect(page.locator('#approve')).to_be_disabled()
                 expect(page.locator('#findings-title')).to_have_text('Edits have not been checked yet.')
+                page.locator('#reply-editor').fill(original)
+                expect(page.locator('#findings-title')).to_contain_text('Passed the current checks')
+                expect(page.locator('#copy')).to_be_enabled()
+                page.locator('#reply-editor').fill(original + '\nWe will refund you.')
                 page.locator('#save-edit').click()
                 expect(page.locator('#draft-status')).to_have_text('Needs changes')
                 expect(page.locator('#human-reviewed')).to_be_disabled()
@@ -151,11 +156,13 @@ def main():
                 page.locator('#owner-policy').evaluate('(el) => el.open = false')
                 page.locator('#profile-name').evaluate("el => el.closest('details').open = false")
                 if args.screenshots:
+                    page.evaluate('window.scrollTo(0, 0)')
                     page.screenshot(path=str(args.screenshots / 'workspace-desktop.png'), full_page=True)
                 page.set_viewport_size({'width': 390, 'height': 844})
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
                 expect(page.locator('#reply-editor')).to_be_visible()
                 if args.screenshots:
+                    page.evaluate('window.scrollTo(0, 0)')
                     page.screenshot(path=str(args.screenshots / 'workspace-mobile.png'), full_page=True)
                 assertions.append('390px responsive layout has no horizontal overflow')
                 external = [url for url in requests if not url.startswith((server.origin, 'blob:' + server.origin))]
