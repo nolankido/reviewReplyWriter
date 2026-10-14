@@ -23,7 +23,7 @@ import uuid
 HERE = Path(__file__).resolve().parent
 MANIFEST = 'verification_sources.json'
 NODE_CHECKS = ('input_state_checks', 'connection_state_checks', 'save_recovery_checks', 'copy_state_checks',
-               'focus_checks', 'generation_status_checks', 'quality_recovery_checks',
+               'focus_checks', 'profile_state_checks', 'generation_status_checks', 'quality_recovery_checks',
                'inbox_input_checks')
 BROWSER_CHECKS = ('browser_smoke', 'quality_browser_smoke', 'submission_browser_smoke',
                   'inbox_browser_smoke')

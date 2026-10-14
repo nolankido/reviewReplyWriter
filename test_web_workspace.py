@@ -131,6 +131,53 @@ class WorkspaceTests(unittest.TestCase):
         with self.assertRaises(ws.WorkspaceError):
             self.workspace.dispatch('profile', dict(self.data, name='demo', business='Other Cafe', profiles_revision=revision))
 
+    def test_profile_receipt_matches_exact_private_state_and_supports_next_leased_save(self):
+        first = self.workspace.dispatch('profile', dict(self.data, business=' Demo Cafe ', name='demo',
+            offer=' a replacement coffee ', policy_confirmed=True, profiles_revision='new'))
+        state = self.workspace.dispatch('state')
+        self.assertEqual(first['profile'], state['profiles']['demo'])
+        self.assertEqual(first['profiles_revision'], content_fingerprint(self.workspace.profiles))
+        self.assertEqual(first['profile']['business'], 'Demo Cafe')
+        self.assertEqual(first['profile']['offer'], 'a replacement coffee')
+        self.assertNotIn('policy_confirmed', first['profile'])
+        second = self.workspace.dispatch('profile', dict(self.data, name='demo', tone='warm',
+            profiles_revision=first['profiles_revision']))
+        self.assertNotEqual(second['profiles_revision'], first['profiles_revision'])
+        before = self.workspace.profiles.read_bytes()
+        with self.assertRaises(ws.WorkspaceError):
+            self.workspace.dispatch('profile', dict(self.data, name='demo', profiles_revision=first['profiles_revision']))
+        self.assertEqual(self.workspace.profiles.read_bytes(), before)
+
+    def test_profile_read_rejects_changed_lease_without_writing(self):
+        self.workspace.dispatch('profile', dict(self.data, name='demo', profiles_revision='new'))
+        before = self.workspace.profiles.read_bytes()
+        with patch.object(ws, 'content_fingerprint', side_effect=['a' * 64, 'b' * 64]):
+            with self.assertRaises(ws.WorkspaceError) as error: self.workspace.dispatch('state')
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(self.workspace.profiles.read_bytes(), before)
+
+    def test_changed_profile_after_write_cannot_return_a_success_receipt(self):
+        original = rr.atomic_json
+        def changed(path, values):
+            original(path, values)
+            original(path, {'demo': dict(values['demo'], tone='playful')})
+        with patch.object(rr, 'atomic_json', side_effect=changed):
+            with self.assertRaises(ws.WorkspaceError) as error:
+                self.workspace.dispatch('profile', dict(self.data, name='demo', profiles_revision='new'))
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(rr.load_profiles(str(self.workspace.profiles))['demo']['tone'], 'playful')
+
+    def test_unreadable_post_write_profile_is_uncertain_and_preserved(self):
+        original = rr.atomic_json
+        def corrupted(path, values):
+            original(path, values)
+            Path(path).write_text('{CONTROLLED_POST_WRITE_CORRUPTION', encoding='utf-8')
+        with patch.object(rr, 'atomic_json', side_effect=corrupted):
+            with self.assertRaises(ws.WorkspaceError) as error:
+                self.workspace.dispatch('profile', dict(self.data, name='demo', profiles_revision='new'))
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(self.workspace.profiles.read_text(), '{CONTROLLED_POST_WRITE_CORRUPTION')
+
     def test_saved_voice_is_scoped_to_selected_business(self):
         self.workspace.dispatch('profile', dict(self.data, name='demo', profiles_revision='new'))
         profiles = rr.load_profiles(str(self.workspace.profiles))
@@ -301,6 +348,20 @@ class HttpBoundaryTests(unittest.TestCase):
         self.assertIn("frame-ancestors 'none'", headers['Content-Security-Policy'])
         self.assertEqual(headers['Cache-Control'], 'no-store')
         self.assertNotIn('Access-Control-Allow-Origin', headers)
+
+    def test_profile_receipt_and_asset_keep_existing_session_origin_and_private_boundaries(self):
+        data = dict(business='Demo Cafe', name='demo', profiles_revision='new')
+        self.assertEqual(self.request('POST', '/api/profile', data, headers={'Origin': 'https://example.com'})[0], 403)
+        status, headers, body = self.request('POST', '/api/profile', data)
+        self.assertEqual(status, 200); receipt = json.loads(body)
+        self.assertEqual(receipt['profiles_revision'], content_fingerprint(self.workspace.profiles))
+        self.assertEqual(receipt['profile']['business'], 'Demo Cafe')
+        self.assertNotIn('policy_confirmed', receipt['profile'])
+        self.assertEqual(headers['Cache-Control'], 'no-store')
+        self.assertNotIn(self.server.token, body.decode())
+        status, headers, body = self.request('GET', '/profiles.js')
+        self.assertEqual(status, 200); self.assertIn(b'window.rrwProfiles', body)
+        self.assertIn("script-src 'self'", headers['Content-Security-Policy'])
 
     def test_api_requires_session_token(self):
         for token in ('', 'wrong'):

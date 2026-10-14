@@ -179,8 +179,11 @@ class Workspace:
         if self.profiles.is_symlink() or (self.profiles.exists() and self.profiles.stat().st_size > MAX_FILE_BYTES):
             raise WorkspaceError('Profile state cannot be read safely.')
         # Do not silently import sample compensation policies from profiles.json.
+        before = content_fingerprint(self.profiles) if self.profiles.exists() else 'new'
         values = rr.load_profiles(str(self.profiles))
         revision = content_fingerprint(self.profiles) if self.profiles.exists() else 'new'
+        if before != revision:
+            raise WorkspaceError('Profiles changed while opening. Check saved profiles before saving.', 409)
         return values, revision
 
     def _inputs(self, data):
@@ -387,7 +390,13 @@ class Workspace:
                     raise WorkspaceError('Use a new profile key for a different business.')
                 values[name] = dict(old, **settings)
                 rr.atomic_json(str(self.profiles), values)
-                return {'name': name}
+                try:
+                    saved, saved_revision = self._profiles()
+                except (OSError, ValueError) as exc:
+                    raise WorkspaceError('Saved profile could not be checked after writing. Check saved profiles before another save.', 409) from exc
+                if saved != values:
+                    raise WorkspaceError('Profiles changed after saving. Check saved profiles before another save.', 409)
+                return {'name': name, 'profile': saved[name], 'profiles_revision': saved_revision}
             if action not in ('edit', 'validate', 'decision', 'approved-text'):
                 raise WorkspaceError('Unknown workspace action.', 404)
             name = data.get('id')

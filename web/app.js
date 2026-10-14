@@ -54,6 +54,7 @@ function setBusy(value) {
   $('generate').textContent = value ? 'Working...' : 'Generate draft ↗';
   if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); if (window.rrwFeedback) window.rrwFeedback.buttons(); if (window.rrwRecovery) window.rrwRecovery.buttons(); if (window.rrwGeneration) window.rrwGeneration.buttons(); if (window.rrwSaveRecovery) window.rrwSaveRecovery.buttons(); }
   if (!value && window.rrwFocus) window.rrwFocus.flush();
+  if (!value && window.rrwProfiles) window.rrwProfiles.buttons();
 }
 async function run(task) {
   if (busy) return;
@@ -240,6 +241,7 @@ function renderProfiles() {
 async function refreshWorkspace() {
   workspace = await api('state');
   renderProfiles(); renderQueue();
+  if (window.rrwProfiles) window.rrwProfiles.loaded(workspace);
 }
 function renderDraft(view, focusSource = false) {
   $('manual-copy-panel').hidden = true; $('manual-copy-text').value = '';
@@ -390,12 +392,6 @@ $('download').addEventListener('click', () => run(async () => {
   const link = node('a'); link.href = url; link.download = result.filename;
   document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   notify('Approved reply exported as plain text. Nothing has been posted.');
-}));
-$('save-profile').addEventListener('click', () => run(async () => {
-  const result = await api('profile', {...settings(), name: $('profile-name').value,
-    profiles_revision: workspace.profiles_revision});
-  await refreshWorkspace(); $('profile-select').value = result.name; notify('Business profile saved locally. Existing drafts keep their original policy.');
-  if (window.rrwRecovery) window.rrwRecovery.profileLoaded();
 }));
 $('profile-select').addEventListener('change', () => {
   const key = $('profile-select').value;

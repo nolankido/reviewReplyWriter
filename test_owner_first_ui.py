@@ -64,6 +64,15 @@ class OwnerFirstMarkupTests(unittest.TestCase):
         self.assertEqual(attributes['aria-describedby'], 'manual-copy-help')
         self.assertEqual(parser.ids['manual-copy-panel'][0][1]['aria-labelledby'], 'manual-copy-title')
 
+    def test_profile_check_status_has_live_and_keyboard_semantics(self):
+        parser = ElementCollector()
+        parser.feed((Path(__file__).parent / 'web/index.html').read_text(encoding='utf-8'))
+        for name in ('profile-save-state', 'profile-check', 'save-profile'):
+            self.assertEqual(len(parser.ids.get(name, [])), 1)
+        attributes = parser.ids['profile-save-state'][0][1]
+        self.assertEqual(attributes['aria-live'], 'polite'); self.assertEqual(attributes['tabindex'], '-1')
+        self.assertEqual(parser.ids['profile-check'][0][1]['type'], 'button')
+
 
 class ManualRoutingHttpTests(unittest.TestCase):
     def setUp(self):
