@@ -94,7 +94,7 @@ class WorkspaceTests(unittest.TestCase):
     def test_previous_policy_version_approval_is_invalidated_without_rewriting(self):
         draft = self.approve(self.draft())
         state = self.workspace._state()
-        state[draft['id']]['safety_version'] = 'owner-policy-v6-material-complaints'
+        state[draft['id']]['safety_version'] = 'owner-policy-v7-planned-actions'
         path = self.workspace.drafts / rr.TRIAGE_NAME
         rr.atomic_json(str(path), state); before = path.read_bytes()
         reopened = self.workspace.dispatch('get', {'id': draft['id']})
@@ -424,6 +424,28 @@ class HttpBoundaryTests(unittest.TestCase):
         self.assertEqual(status, 200); edited = json.loads(body)
         self.assertEqual(edited['status'], 'blocked')
         self.assertTrue(any('business action or promise' in f for f in edited['findings']))
+        ref = {'id': edited['id'], 'revision': edited['revision']}
+        self.assertEqual(self.request('POST', '/api/decision', dict(ref, status='approved', reviewed=True))[0], 422)
+        self.assertEqual(self.request('POST', '/api/approved-text', ref)[0], 409)
+
+    def test_http_fractional_wait_survives_save_and_changed_duration_blocks_copy(self):
+        status, _, body = self.request('POST', '/api/generate',
+            {'business': 'Demo Cafe', 'review': 'Cold coffee and a 1.5 hour wait.',
+             'stars': 1, 'mode': 'offline'})
+        self.assertEqual(status, 200); draft = json.loads(body)
+        self.assertEqual(draft['review_evidence']['brief']['durations'], [['1.5', 'hour']])
+        check = next(c for c in draft['review_evidence']['checks'] if c['label'] == 'reported 1.5 hour wait')
+        self.assertTrue(check['covered']); self.assertIn('1.5 hour', check['source']['quote'])
+        ref = {'id': draft['id'], 'revision': draft['revision']}
+        self.assertEqual(self.request('POST', '/api/decision', dict(ref, status='approved', reviewed=True))[0], 200)
+        status, _, body = self.request('POST', '/api/approved-text', ref)
+        self.assertEqual(status, 200); self.assertIn('1.5 hours', json.loads(body)['text'])
+        status, _, body = self.request('POST', '/api/edit', dict(ref,
+            reply=draft['reply'].replace('1.5 hours', '5 hours')))
+        self.assertEqual(status, 200); edited = json.loads(body)
+        self.assertEqual(edited['status'], 'blocked')
+        check = next(c for c in edited['review_evidence']['checks'] if c['label'] == 'reported 1.5 hour wait')
+        self.assertFalse(check['covered'])
         ref = {'id': edited['id'], 'revision': edited['revision']}
         self.assertEqual(self.request('POST', '/api/decision', dict(ref, status='approved', reviewed=True))[0], 422)
         self.assertEqual(self.request('POST', '/api/approved-text', ref)[0], 409)

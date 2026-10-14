@@ -9,7 +9,7 @@ import re
 import unicodedata
 import hashlib
 
-QUALITY_VERSION = 'review-detail-v3-material-complaints'
+QUALITY_VERSION = 'review-detail-v4-fractional-durations'
 NEGATIVE = set('terrible awful horrible worst rude slow cold dirty broken disappointed disappointing waste overpriced stale bland soggy burnt bitter wait waited waiting forever ignored wrong missing never avoid meh underwhelming mediocre pricey expensive tasteless watery loud cramped uncomfortable late weak delayed delay damaged poor bad unhelpful failed overcharged duplicate twice'.split())
 POSITIVE = set('amazing great excellent wonderful fantastic delicious friendly fresh cozy perfect loved love best beautiful helpful quick fast attentive generous spotless clean charming delightful tasty smooth rich lovely favorite favourite gem welcoming relaxing stunning comfortable incredible good'.split())
 # Most-specific alternatives precede their general topics. Overlapping matches
@@ -37,8 +37,12 @@ TOPICS = (
     ('response', r'responses?|questions?|messages?|emails?|unanswered|respond\w*|answered'),
 )
 PATTERNS = {name: re.compile(r'\b(?:' + pattern + r')\b', re.I) for name, pattern in TOPICS}
-CLAUSES = re.compile(r'(?<!\d)[.!?;]+(?!\d)|[,\n]+|\b(?:but|however|though|although|except|and)\b', re.I)
-TIME = re.compile(r'\b(\d{1,4})\s*[-\s]?\s*(minutes?|mins?|hours?|hrs?)\b', re.I)
+CLAUSES = re.compile(r'(?<!\d)[.!?;]+(?!\d)|(?<!\d),|,(?!\d)|\n+|'
+                     r'\b(?:but|however|though|although|except|and)\b', re.I)
+# Do not restart at the fractional tail of an unsupported numeric expression.
+# Keep bounded decimal spelling intact rather than converting through floats.
+TIME = re.compile(r'(?<![\w.,+\-])((?:\d{1,4}(?:\.\d{1,6})?|\.\d{1,6}))'
+                  r'\s*[-\s]?\s*(minutes?|mins?|hours?|hrs?)\b', re.I)
 DUPLICATE_CHARGE = re.compile(
     r'\b(?:double[ -]charg(?:e|ed|ing)|duplicate\s+(?:bill(?:ing)?|charg(?:e|es)|payment)|'
     r'(?:charg(?:e|ed|ing)|bill(?:ed|ing))\b[^.!?;,]{0,45}?\btwice(?!\s+(?:as\b|the\s+(?:price|amount|cost)\b)))\b', re.I)
@@ -118,7 +122,14 @@ def _topics(clause):
 
 
 def duration_keys(text):
-    return [(int(m.group(1)), 'hour' if m.group(2).lower().startswith(('h',)) else 'minute') for m in TIME.finditer(norm(text))]
+    """Integer keys stay integers; decimals retain their exact text as strings.
+
+    JSON-safe strings preserve trailing zeros and leading-dot notation without
+    floating-point rounding or authorizing a new number in the reply.
+    """
+    return [(m.group(1) if '.' in m.group(1) else int(m.group(1)),
+             'hour' if m.group(2).lower().startswith(('h',)) else 'minute')
+            for m in TIME.finditer(norm(text))]
 
 
 def analyze(review, stars=None):

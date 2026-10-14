@@ -120,6 +120,8 @@ to read the full review. Existing approvals require fresh review under the new
 check version. [Material complaint coverage](docs/MATERIAL_COMPLAINTS.md).
 Unapproved business plans and team promises also block approval and approved
 copy; exact owner statements remain required. [Planned-action checks](docs/PLANNED_ACTIONS.md).
+Fractional waits such as 1.5 hours now retain the customer's exact decimal
+spelling in templates and checks. [Fractional durations](docs/FRACTIONAL_DURATIONS.md).
 
 ## High-risk review routing and checked local Gemma calls
 

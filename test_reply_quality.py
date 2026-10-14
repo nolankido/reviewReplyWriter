@@ -145,6 +145,72 @@ class DetailCoverageTests(unittest.TestCase):
         self.assertEqual(rr.reply_gaps(body, MIXED, 'Kai Loft', 3), [])
 
 
+class FractionalDurationTests(unittest.TestCase):
+    def test_decimal_durations_keep_the_whole_reported_number(self):
+        for spelling, unit in [('1.5', 'hour'), ('2.25', 'hour'), ('10.5', 'minute'),
+                               ('1.50', 'hour'), ('.5', 'hour'), ('0.125', 'minute')]:
+            with self.subTest(spelling=spelling, unit=unit):
+                review = f'Cold coffee and a {spelling} {unit} wait.'
+                self.assertEqual(q.analyze(review, 1)['durations'], [(spelling, unit)])
+                for platform in rr.PLATFORMS:
+                    reply = rr.template_reply(review, 'Demo Cafe', 'professional', 1,
+                        'cafe', random.Random(0), platform=platform)
+                    self.assertIn(f'{spelling} {unit}s', reply)
+                    self.assertEqual(rr.reply_gaps(reply, review, 'Demo Cafe', 1, platform=platform), [])
+
+    def test_decimal_spelling_variants_preserve_customer_precision(self):
+        for unit in ['hours', 'hrs', 'hr', '-hour']:
+            self.assertEqual(q.duration_keys('1.50' + unit), [('1.50', 'hour')])
+        self.assertEqual(q.duration_keys('25 minutes'), [(25, 'minute')])
+        self.assertEqual(q.duration_keys('0.123456 hours'), [('0.123456', 'hour')])
+
+    def test_unsupported_numeric_expressions_do_not_yield_suffix_durations(self):
+        for text in ['1.2345678 hours', '10000 minutes', '1,500 minutes', '-1.5 hours',
+                     '+1.5 hours', '1.2.5 hours', 'order25 minutes', '1e5 minutes']:
+            with self.subTest(text=text):
+                self.assertEqual(q.duration_keys(text), [])
+                self.assertEqual(q.analyze('Cold coffee and a wait of ' + text, 1)['durations'], [])
+
+    def test_changed_decimal_tail_unit_or_rounding_does_not_satisfy_coverage(self):
+        review = 'Cold coffee and a 1.50 hour wait.'
+        for value in ['5 hours', '1.50 minutes', '1.5 hours', '2 hours', '90 minutes']:
+            with self.subTest(value=value):
+                body = 'Sorry about the cold coffee and wait of ' + value
+                self.assertTrue(any('reported 1.50 hour' in f for f in q.detail_gaps(body, review, 1)))
+                self.assertFalse(next(c for c in q.coverage(body, review, 1)['checks']
+                                      if c['label'] == 'reported 1.50 hour wait')['covered'])
+
+    def test_decimal_source_quote_offsets_and_json_keep_exact_spelling(self):
+        review = '  Café ☕. Cold coffee and a 2.25-hour wait.  '
+        brief = q.analyze(review, 1)
+        evidence = next(e for e in brief['evidence'] if e.get('duration') == ['2.25', 'hour'])
+        self.assertEqual(review[evidence['start']:evidence['end']], evidence['quote'])
+        self.assertIn('2.25-hour', evidence['quote'])
+        self.assertEqual(json.loads(json.dumps(brief))['durations'], [['2.25', 'hour']])
+        self.assertIn('2.25 hour', q.prompt_brief(review, 1))
+
+    def test_two_durations_and_followup_keep_only_current_update(self):
+        update = 'Update: Cold coffee and a 1.5 hour wait. Delivery was delayed 10.25 minutes.'
+        self.assertEqual(q.analyze(update, 1)['durations'], [('1.5', 'hour'), ('10.25', 'minute')])
+        reply = rr.template_followup(ANGRY, GOOD_NEGATIVE_REPLY, update, 'Demo Cafe',
+                                    'professional', 'cafe', random.Random(0))
+        self.assertIn('1.5 hours and 10.25 minutes', reply)
+        self.assertNotIn((25, 'minute'), q.duration_keys(reply))
+        self.assertEqual(rr.followup_gaps(reply, ANGRY, GOOD_NEGATIVE_REPLY, update, 'Demo Cafe'), [])
+
+    def test_model_stand_in_with_decimal_tail_gets_coached_retry(self):
+        review = 'Cold coffee and a 1.5 hour wait.'
+        good = rr.template_reply(review, 'Demo Cafe', 'professional', 1, 'cafe', random.Random(0))
+        calls = []
+        def stand_in(prompt, *args):
+            calls.append(prompt)
+            return good.replace('1.5 hours', '5 hours') if len(calls) == 1 else good
+        reply, engine = rr.generate_with_model(review, 'Demo Cafe', 'professional', 1,
+            'cafe', 'controlled-test-model', caller=stand_in)
+        self.assertEqual(reply, good); self.assertIn('retry', engine)
+        self.assertIn('reported 1.5 hour', calls[1])
+
+
 class FallbackQualityTests(unittest.TestCase):
     def test_fallback_covers_both_complaints_without_repeated_thanks(self):
         reply = rr.template_reply(MIXED, 'Kai Loft', 'professional', 3, 'stay', random.Random(0), platform='google')
