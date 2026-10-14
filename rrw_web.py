@@ -33,6 +33,7 @@ ASSETS = {'/': ('index.html', 'text/html; charset=utf-8'),
           '/inbox-sample.csv': ('inbox-sample.csv', 'text/csv; charset=utf-8'),
           '/submission.js': ('submission.js', 'text/javascript; charset=utf-8')}
 ASSETS['/feedback.js'] = ('feedback.js', 'text/javascript; charset=utf-8')
+ASSETS['/recovery.js'] = ('recovery.js', 'text/javascript; charset=utf-8')
 ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
            '/api/get': 'get', '/api/profile': 'profile', '/api/edit': 'edit',
            '/api/validate': 'validate', '/api/decision': 'decision',
@@ -42,6 +43,7 @@ ACTIONS.update({f'/api/quality-{action}': f'quality-{action}' for action in
 ACTIONS.update({f'/api/inbox-{action}': f'inbox-{action}' for action in
     ('preview', 'create', 'list', 'get', 'step', 'skip', 'retry', 'note')})
 ACTIONS.update({f'/api/feedback-{action}': f'feedback-{action}' for action in ('save', 'summary')})
+ACTIONS.update({f'/api/recovery-{action}': f'recovery-{action}' for action in ('get', 'save', 'clear')})
 
 
 ACTIONS.update({f'/api/submission-{action}': f'submission-{action}'

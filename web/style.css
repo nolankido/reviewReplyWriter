@@ -60,6 +60,7 @@ main{padding:38px 42px 20px;max-width:1620px;width:100%;margin:auto}
 .review-note-reasons{border:0;padding:0;margin:0 0 16px;display:flex;gap:8px 16px;flex-wrap:wrap}
 .review-note-reasons legend{font-size:12px;font-weight:600;margin-bottom:8px}
 .review-note-reasons label{font-size:11px;font-weight:400}
+.recovery-panel{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:22px;background:var(--tint)}
 @media(max-width:600px){.comparison-panes{grid-template-columns:1fr}}
 @media(max-width:900px){.setup-steps{grid-template-columns:1fr;gap:18px}}
 .badge{display:inline-block;border-radius:6px;padding:4px 8px;line-height:1.4;font-size:10px;font-weight:650;white-space:normal}

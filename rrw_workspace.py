@@ -87,6 +87,7 @@ class Workspace:
         self.evaluations = None
         self.inboxes = None
         self.review_notes = None
+        self.recovery = None
 
     def _notes(self):
         if self.review_notes is None:
@@ -311,6 +312,12 @@ class Workspace:
         data = {} if data is None else data
         if not isinstance(data, dict):
             raise WorkspaceError('Request must be a JSON object.')
+        if action.startswith('recovery-'):
+            from rrw_recovery import Recovery
+            with self.lock:
+                if self.recovery is None:
+                    self.recovery = Recovery(self)
+                return self.recovery.dispatch(action, data)
         if action.startswith('feedback-'):
             with self.lock:
                 return self._notes().dispatch(action, data)

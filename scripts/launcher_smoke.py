@@ -87,10 +87,28 @@ def main():
             exported = request(origin, token, 'approved-text', {'id': draft['id'], 'revision': draft['revision']})
             if exported['text'] != draft['reply']:
                 raise RuntimeError('Approved export differs from the reviewed draft')
+            pending_edit = draft['reply'] + '\nPending private edit.'
+            copy_state = request(origin, token, 'recovery-get', {})
+            saved_copy = request(origin, token, 'recovery-save', {'revision': copy_state['revision'], 'payload': {
+                'inputs': {'business': 'Demo Cafe', 'kind': 'cafe', 'tone': 'professional', 'platform': 'google',
+                           'offer': '', 'signoff': '', 'approved_actions': [], 'review': 'Cold coffee.',
+                           'stars': 2, 'followup': False, 'original': '', 'previous': '', 'mode': 'gemma'},
+                'editor': {'id': draft['id'], 'revision': draft['revision'], 'reply': pending_edit}}})
+            recovered = request(origin, token, 'recovery-get', {})
+            if (recovered['payload']['editor']['reply'] != pending_edit or recovered['editor_state'] != 'current'
+                    or recovered['payload']['inputs']['mode'] != 'offline'
+                    or 'policy_confirmed' in recovered['payload']['inputs']):
+                raise RuntimeError('Working copy recovery changed text or retained authorization')
+            still_approved = request(origin, token, 'approved-text', {'id': draft['id'], 'revision': draft['revision']})
+            if still_approved['text'] != draft['reply']:
+                raise RuntimeError('Saving a recovery copy modified the approved draft')
+            cleared = request(origin, token, 'recovery-clear', {'revision': saved_copy['revision']})
+            if cleared['available'] or cleared['revision'] == 'new':
+                raise RuntimeError('Clearing a working copy did not retain its revision tombstone')
             print(json.dumps({'launcher': 'windows-batch' if os.name == 'nt' else 'python-setup',
                               'storage_path_with_spaces': True, 'free_port': True,
                               'template_draft_approval_export': True, 'comparison_and_private_notes': True,
-                              'model_calls': 0}))
+                              'private_working_copy': True, 'model_calls': 0}))
         finally:
             if process.poll() is None:
                 if os.name == 'nt':
