@@ -390,9 +390,20 @@ def call_ollama(prompt, model, temperature=0.8):
 
 
 def specificity_score(reply, review):
-    """How many of the review's specifics the reply actually uses."""
+    """Rank candidates by supported review topics, not substring matches.
+
+    Scoring all recognized topics avoids rewarding a generic response just
+    because its few mentions coincide with the first three display topics.
+    This is a tie-breaker between already validated drafts, not a claim of
+    semantic understanding or quality.
+    """
     body = _norm(_body(reply))
-    return sum(1 for s in specifics(review) if _mentions(body, s))
+    brief = quality.analyze(review)
+    topics = list(dict.fromkeys(brief['issues'] + brief['praise'] + brief['neutral']))
+    value = sum(2 if topic in brief['issues'] else 1
+                for topic in topics if quality.mentions(body, topic))
+    reported = quality.duration_keys(body)
+    return value + 2 * sum(duration in reported for duration in brief['durations'])
 
 
 def generate_with_model(review, business, tone, stars, kind, model,
