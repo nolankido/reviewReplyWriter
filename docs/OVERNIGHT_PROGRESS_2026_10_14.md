@@ -458,3 +458,58 @@ Next useful inspection: the explicitly named optional MP4 CLI input has size/
 header/symlink checks but lacks descriptor-bound regular-file checking. Reuse
 bounded read guarantees if repairing that observable gap; do not create footage
 or infer its validity. Keep the final occurrence read-only and honor the hard stop.
+
+## Tenth pass: bounded optional demo-file reads
+
+Startup at 2026-10-14 18:02 UTC verified main
+`82c6d3494e59a5e9031fef14e2b84a76377e700b`, tree
+`fd0eb49d96d0628b396cd4c21ab741012ed87cf3`, merged PR #23, matching the
+clean local source. No AGENTS.md or new active PR needed repair. Previously
+integrated candidates were not reapplied. The hard stop was checked before writes.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/24
+
+Tested feature commit: `9a877b1016ad3bbdd0688236bdea42c68fce4cc3`.
+Feature tree: `04f8049f4e0f451340b53f68d262bfd155f926bc`, compared equal
+to the complete locally tested tree before committing. The final candidate adds
+this receipt; its exact final head/tree and merge outcome are recorded in the PR.
+
+The explicitly named optional video used a preliminary size check followed by
+an unbounded file read. A named pipe could stall the CLI and changing input could
+escape the initial bound. The shared checked reader now requires a single-link
+regular file, uses no-follow/nonblocking/binary flags where available, checks
+descriptor and path identity/size/modification metadata, and reads at most the
+100 MiB limit plus one byte. Observed changes and invalid inputs fail before
+packet creation. Supporting-document parent containment and export leases are
+preserved and their metadata comparison is strengthened. The input is never
+written. Existing packets are still never overwritten.
+
+The MP4 header check does not establish playback, content accuracy or privacy.
+This is bounded ordinary-file handling, not protection against deliberate local
+forgery. Only the owner-selected video is added, with exact manifest checksums.
+Private evaluations remain excluded by the CLI. Nothing is uploaded, published
+or automatically approved; no dependency, model/configuration or hosting change
+was made.
+
+Executed locally: all 511 Python tests; 54 focused packet tests including ten
+new controlled video-input tests; development checker; all seven Node state
+scripts; both real Python launcher HTTP workflows; offline CLI; compilation and
+whitespace checks. The real CLI refused a FIFO within a five-second test timeout,
+with no writer and no output. Controlled tests cover actual replacement after
+reading, a FIFO replacement between stat/open, bounded growth, descriptor/path
+changes, leaf symlinks, hard links, directories, missing/oversized/wrong-header
+inputs, exact copied bytes and manifest hashes. Container-header fixtures are
+not real playable footage, operator feedback or fresh Gemma evidence.
+
+Feature Actions run 38612600343 failed before all five jobs' steps (empty arrays).
+Final candidate steps are inspected in the PR, without retries or weaker tests.
+Actual Windows batch execution, current Chromium/mobile/screen-reader behavior,
+fresh Gemma and real operator feedback remain unverified. Local checks are
+development evidence, not proof of contest eligibility or readiness.
+
+Next pass: read-only final verification and a consolidated report at the end of
+the authorized window. Recheck current main, active PRs and progress receipts;
+do not start another engineering branch near or after the stop. Remaining owner
+activation tasks are current-source local Gemma evidence and human assessments,
+real-platform/operator checks, privacy/eligibility/development-window review,
+signed-out demo-link inspection and deliberate manual publication/submission.
