@@ -120,6 +120,66 @@ class ReviewNotesTests(unittest.TestCase):
         with self.assertRaises(WorkspaceError):
             self.w.dispatch('approved-text', {'id': self.draft['id'], 'revision': self.draft['revision']})
 
+    def test_post_write_damage_cannot_return_an_empty_success_receipt(self):
+        original = rr.atomic_json
+        path = self.w.private / 'review-notes' / (self.draft['id'] + '.json')
+        before = (self.w.drafts / self.draft['id']).read_bytes()
+        def damaged(target, record):
+            original(target, record)
+            Path(target).write_text('{CONTROLLED_POST_WRITE_DAMAGE', encoding='utf-8')
+        with patch.object(rr, 'atomic_json', side_effect=damaged), self.assertRaises(WorkspaceError) as error:
+            self.save()
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(path.read_text(encoding='utf-8'), '{CONTROLLED_POST_WRITE_DAMAGE')
+        self.assertEqual((self.w.drafts / self.draft['id']).read_bytes(), before)
+        self.assertEqual(self.summary()['unreadable'], 1)
+
+    def test_different_valid_post_write_note_cannot_acknowledge_submitted_values(self):
+        original = rr.atomic_json
+        def replaced(target, record):
+            other = dict(record, assessment=dict(record['assessment'], note='CONTROLLED_OTHER_NOTE'))
+            other['sha256'] = feedback.digest({k: v for k, v in other.items() if k != 'sha256'})
+            original(target, other)
+        with patch.object(rr, 'atomic_json', side_effect=replaced), self.assertRaises(WorkspaceError) as error:
+            self.save()
+        self.assertEqual(error.exception.status, 409)
+        view = self.w.dispatch('get', {'id': self.draft['id']})
+        self.assertEqual(view['review_note']['assessment']['note'], 'CONTROLLED_OTHER_NOTE')
+        self.assertEqual(view['status'], 'pending')
+
+    def test_failed_post_write_read_preserves_the_saved_record_for_inspection(self):
+        original = self.w.review_notes._read
+        count = 0
+        def unreadable(name):
+            nonlocal count
+            count += 1
+            if count == 2:
+                raise OSError('CONTROLLED_READ_FAILURE')
+            return original(name)
+        with patch.object(self.w.review_notes, '_read', side_effect=unreadable), self.assertRaises(WorkspaceError) as error:
+            self.save()
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(self.w.dispatch('get', {'id': self.draft['id']})['review_note']['assessment'], ASSESSMENT)
+
+    def test_draft_changed_after_note_write_prevents_current_acknowledgement(self):
+        original = rr.atomic_json
+        def changed(target, record):
+            original(target, record)
+            path = self.w.drafts / self.draft['id']
+            path.write_text(path.read_text(encoding='utf-8') + '\nThank you.', encoding='utf-8')
+        with patch.object(rr, 'atomic_json', side_effect=changed), self.assertRaises(WorkspaceError) as error:
+            self.save()
+        self.assertEqual(error.exception.status, 409)
+        self.assertFalse(self.w.dispatch('get', {'id': self.draft['id']})['review_note']['current'])
+        self.assertEqual(self.summary()['stale'], 1)
+
+    def test_acknowledgement_matches_canonical_saved_note_and_hash(self):
+        note = self.save(assessment=dict(ASSESSMENT, note='  Synthetic note with spacing.\n'))
+        record = self.w.review_notes._read(self.draft['id'])
+        self.assertEqual(note['revision'], record['sha256'])
+        self.assertEqual(note['assessment']['note'], 'Synthetic note with spacing.')
+        self.assertTrue(note['current'])
+
     def test_saved_assessment_does_not_clear_an_existing_posting_approval(self):
         self.w.dispatch('decision', dict(self.request(), status='approved', reviewed=True))
         self.save()
@@ -244,6 +304,28 @@ class ReviewNotesTests(unittest.TestCase):
             self.assertEqual(json.loads(body['text'])['current'], 1)
         finally:
             server.shutdown(); server.server_close(); thread.join(2)
+
+    def test_real_http_post_write_damage_returns_uncertain_save_not_success(self):
+        server = LocalServer(self.w, 0)
+        thread = threading.Thread(target=server.serve_forever, kwargs={'poll_interval': .01}, daemon=True)
+        thread.start(); original = rr.atomic_json
+        def damaged(path, record):
+            original(path, record)
+            Path(path).write_text('{CONTROLLED_HTTP_POST_WRITE_DAMAGE', encoding='utf-8')
+        connection = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=3)
+        try:
+            with patch.object(rr, 'atomic_json', side_effect=damaged):
+                connection.request('POST', '/api/feedback-save', json.dumps(self.request()),
+                    {'Content-Type': 'application/json', 'Origin': server.origin, 'X-RRW-Token': server.token})
+                response = connection.getresponse(); body = json.loads(response.read())
+            self.assertEqual(response.status, 409)
+            self.assertIn('could not be confirmed', body['error'])
+            self.assertNotIn('assessment', body)
+            self.assertEqual(self.w.dispatch('get', {'id': self.draft['id']})['status'], 'pending')
+            path = self.w.private / 'review-notes' / (self.draft['id'] + '.json')
+            self.assertEqual(path.read_text(encoding='utf-8'), '{CONTROLLED_HTTP_POST_WRITE_DAMAGE')
+        finally:
+            connection.close(); server.shutdown(); server.server_close(); thread.join(2)
 
 
 if __name__ == '__main__':

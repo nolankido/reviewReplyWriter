@@ -51,6 +51,20 @@ another draft replaces the current editor and when leaving the page. Reload
 saved notes deliberately to discard note edits. Corrupt notes remain preserved
 for recovery and do not prevent separate review of a valid reply.
 
+Saving now requires the written assessment to read back exactly and still bind
+to the checked draft version. An unreadable or different readback reports an
+uncertain save and preserves the files. The browser also checks the receipt
+before accepting or clearing its form. Failed/malformed replies and unreadable
+reloads keep typed notes pending. An acknowledged save keeps any newer form
+edits against the saved-note revision. Nothing is retried automatically.
+
+After an uncertain save, keep the current form open. Reload saved notes only
+when ready to replace those inputs; the existing confirmation asks first.
+If the stored note is damaged, it stays preserved and the form is kept. Unsaved
+assessment forms are still excluded from working copies and backup archives;
+the app does not silently persist private notes elsewhere. Checked readback is
+an observed match, not protection against subsequent external file changes.
+
 ## Export counts without exposing the notes
 
 **Export assessment counts without notes or customer text** downloads JSON
@@ -83,3 +97,36 @@ posting approval. Those are controlled tests, not operator feedback.
 Chromium interactions are added to `scripts/browser_smoke.py`. Windows launcher
 execution and actual Chromium navigation still need their target runtimes;
 fresh Gemma inference and an observed operator session remain outstanding.
+
+### October 14 save-readback repair
+
+Direct owner continuation started from verified main
+`a1ee19f4aefd09539be4c9b8040e4c21b7819c57`, tree
+`7d99e1cd20dbad2d28ffccef1cf271d7d64b8ffb`, matching clean local source.
+No AGENTS.md, new competing work or Actions workflows were present. The
+overnight automation stays paused; this is direct follow-up authorization.
+
+A controlled post-write corruption returned an empty assessment as a successful
+API result, allowing the browser to clear typed notes and claim a save. The API
+now rejects damaged/different readback or a changed draft with an uncertain 409.
+No rollback overwrites the observed files. Valid readback produces the existing
+receipt from that checked record, without another unchecked read. The browser
+preserves all assessment inputs after uncertainty, mismatched receipts and
+unreadable reloads, and keeps newer edits after an acknowledged save.
+
+All 561 Python tests passed, including six new regressions and 26 focused
+feedback tests. Actual loopback HTTP post-write damage returns 409 and preserves
+the damaged record without changing or approving the draft. Tests cover a
+different valid replacement, read failure, a changed draft and canonical note
+receipt. The actual local verifier passed the development checker, both real
+Python launcher HTTP workflows and all nine Node scripts with unchanged
+inventoried source. Expanded actual feedback-handler Node checks cover valid,
+malformed, mismatched and uncertain receipts, newer edits and unreadable reload.
+Compilation, JavaScript syntax and whitespace checks passed.
+
+The failures and assessment text are controlled fixtures, not real operator
+feedback or model inference. Real Windows, browser/mobile/screen-reader behavior,
+fresh Gemma and consenting operator use remain unexecuted. Historical model
+receipts remain unchanged and stale for current source. No dependency, model
+configuration, workflow dispatch, private data, upload, posting or contest
+submission was added. Exact candidate/tree and merge outcome are in the PR.

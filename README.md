@@ -84,6 +84,8 @@ context, usefulness, reasons, notes and an optional observed review time.
 Assessments become stale after draft edits or regeneration and stay separate
 from posting approval. Exported counts exclude private notes and customer text,
 separate operator/self/demo judgments, and count drafts rather than people.
+Assessment saves require matching readback. Failed or uncertain saves and
+unreadable reloads keep typed notes pending; newer edits survive a known save.
 See [Review feedback](docs/REVIEW_FEEDBACK.md) and [Operator trial](docs/OPERATOR_TRIAL.md).
 
 ## A review inbox for recurring work

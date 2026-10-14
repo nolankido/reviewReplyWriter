@@ -95,12 +95,30 @@
     event.preventDefault();
     if (!selected || dirty || noteRevision === null) return;
     run(async () => {
-      const value = await api('feedback-save', {id: selected.id, revision: selected.revision,
-        note_revision: noteRevision, assessment: assessment()});
-      selected.review_note = value;
-      fillNote(value);
+      const submitted = assessment(), target = {id: selected.id, revision: selected.revision};
+      try {
+        const value = await api('feedback-save', {...target, note_revision: noteRevision, assessment: submitted});
+        if (!value || value.error || value.current !== true || !/^[0-9a-f]{64}$/.test(value.revision || '') ||
+            !value.assessment || !selected || selected.id !== target.id || selected.revision !== target.revision ||
+            !Object.keys(submitted).every(key => JSON.stringify(value.assessment[key]) ===
+              JSON.stringify(key === 'note' ? submitted.note.trim() : submitted[key]))) {
+          throw new Error('The assessment save returned no matching receipt. Your current notes are kept. Check saved notes before another save.');
+        }
+        selected.review_note = value;
+        if (JSON.stringify(assessment()) === JSON.stringify(submitted)) fillNote(value);
+        else {
+          // Keep later form edits against the acknowledged saved-note revision.
+          noteRevision = value.revision;
+          formBaseline = JSON.stringify({...submitted, note: submitted.note.trim()});
+          noteDirty = JSON.stringify(assessment()) !== formBaseline;
+          replyChanged = false;
+        }
+      } catch (error) {
+        noteDirty = true; noteState();
+        throw error;
+      }
       noteState();
-      notify('Private assessment saved. Posting approval is separate.');
+      notify('Private assessment saved. Posting approval is separate.' + (noteDirty ? ' Further unsaved assessment changes were kept in the form.' : ''));
     });
   });
   $('review-note-reload').addEventListener('click', () => {
@@ -110,6 +128,8 @@
       if (!current || view.revision !== current.revision) {
         notify('The draft changed elsewhere. Refresh and read the saved draft before reloading its notes.', true); return;
       }
+      if (!view.review_note || view.review_note.error || view.review_note.revision === null)
+        throw new Error('Saved assessment notes could not be loaded. Your current notes and saved files were kept.');
       selected.review_note = view.review_note;
       fillNote(view.review_note); noteState();
       notify('Saved assessment reloaded. Your reply editor was kept.');
