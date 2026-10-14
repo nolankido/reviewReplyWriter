@@ -1,0 +1,10 @@
+.review-evidence { margin: 18px 0; padding: 16px; border: 1px solid #bcc9c3; border-radius: 12px; background: #f5f8f5; color: #243a30; }
+.review-evidence h4 { margin: 0 0 8px; font-size: 1rem; }
+.evidence-list { list-style: none; padding: 0; margin: 12px 0; }
+.evidence-list > li { padding: 10px 0; border-top: 1px solid #d5dfd8; overflow-wrap: anywhere; }
+.evidence-list strong { display: block; }
+.evidence-status { display: block; margin-top: 3px; font-size: .8rem; color: #3e5d4b; }
+.evidence-status.needs-detail { color: #833919; font-weight: 600; }
+.evidence-list summary { cursor: pointer; font-size: .85rem; margin-top: 8px; text-decoration: underline; text-underline-offset: 3px; }
+.evidence-list blockquote { margin: 8px 0 0; padding: 8px 12px; border-left: 3px solid #a0b5a8; font-size: .9rem; }
+.evidence-warning { color: #833919; font-size: .9rem; }

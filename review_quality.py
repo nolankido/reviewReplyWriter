@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import re
 import unicodedata
+import hashlib
 
-QUALITY_VERSION = 'review-detail-v1'
+QUALITY_VERSION = 'review-detail-v2-source-evidence'
 NEGATIVE = set('terrible awful horrible worst rude slow cold dirty broken disappointed disappointing waste overpriced stale bland soggy burnt bitter wait waited waiting forever ignored wrong missing never avoid meh underwhelming mediocre pricey expensive tasteless watery loud cramped uncomfortable late weak delayed delay damaged poor bad unhelpful failed overcharged duplicate twice'.split())
-POSITIVE = set('amazing great excellent wonderful fantastic delicious friendly fresh cozy perfect loved love best beautiful helpful quick fast attentive generous spotless charming delightful tasty smooth rich lovely favorite favourite gem welcoming relaxing stunning comfortable incredible good'.split())
+POSITIVE = set('amazing great excellent wonderful fantastic delicious friendly fresh cozy perfect loved love best beautiful helpful quick fast attentive generous spotless clean charming delightful tasty smooth rich lovely favorite favourite gem welcoming relaxing stunning comfortable incredible good'.split())
 # Most-specific alternatives precede their general topics. Overlapping matches
 # collapse, so 'oat milk latte' is not counted twice as 'latte'.
 TOPICS = (
@@ -33,14 +34,53 @@ TOPICS = (
     ('design', r'design'), ('color', r'colou?rs?'), ('size', r'size'), ('fit', r'fit'),
     ('location', r'location'), ('music', r'music'), ('seating', r'seating|seats?'),
     ('refill', r'refills?'), ('order', r'order'),
+    ('response', r'responses?|questions?|messages?|emails?|unanswered|respond\w*|answered'),
 )
 PATTERNS = {name: re.compile(r'\b(?:' + pattern + r')\b', re.I) for name, pattern in TOPICS}
 CLAUSES = re.compile(r'(?<!\d)[.!?;]+(?!\d)|[,\n]+|\b(?:but|however|though|although|except|and)\b', re.I)
 TIME = re.compile(r'\b(\d{1,4})\s*[-\s]?\s*(minutes?|mins?|hours?|hrs?)\b', re.I)
+DUPLICATE_CHARGE = re.compile(
+    r'\b(?:double[ -]charg(?:e|ed|ing)|duplicate\s+(?:bill(?:ing)?|charg(?:e|es)|payment)|'
+    r'(?:charg(?:e|ed|ing)|bill(?:ed|ing))\b[^.!?;,]{0,45}?\btwice(?!\s+(?:as\b|the\s+(?:price|amount|cost)\b)))\b', re.I)
+UNANSWERED = re.compile(r'\b(?:ignored\s+(?:my|our|the)\s+(?:question|message|email)|'
+                        r'unanswered|no\s+(?:one|staff\s+member)\s+(?:ever\s+)?answered\s+(?:my|our|the)\s+question)\b', re.I)
 
 
 def norm(text):
-    return unicodedata.normalize('NFKC', text).lower().replace('\u2019', "'").replace('\u2011', '-').replace('\u2013', '-')
+    return unicodedata.normalize('NFKC', text).lower().replace('\u2019', "'").replace('\u2010', '-').replace('\u2011', '-').replace('\u2013', '-')
+
+
+def _duplicate_charge(text):
+    low = norm(text)
+    for match in DUPLICATE_CHARGE.finditer(low):
+        if not _denied(low, match.start()):
+            return True
+    return False
+
+
+def _denied(text, start):
+    # Scope negation to the assertion, not 'not happy about being charged twice'.
+    return bool(re.search(r"\b(?:not|never|no|[a-z]+n't|nobody|no one)\s+(?:(?:been|being|actually|ever|a|any)\s+){0,2}$",
+                          text[max(0, start - 45):start]))
+
+
+def _unanswered(text):
+    low = norm(text)
+    return any(not _denied(low, m.start()) for m in UNANSWERED.finditer(low))
+
+
+def _clauses(review):
+    """Offsets always refer to the untouched input, even after normalization."""
+    start = 0
+    for separator in list(CLAUSES.finditer(review)) + [None]:
+        end = len(review) if separator is None else separator.start()
+        raw = review[start:end]
+        left = len(raw) - len(raw.lstrip())
+        right = len(raw.rstrip())
+        if right > left:
+            yield start + left, start + right, raw[left:right]
+        if separator is not None:
+            start = separator.end()
 
 
 def _sentiment(clause):
@@ -61,6 +101,8 @@ def _sentiment(clause):
             value = -value
         pos += value > 0
         neg += value < 0
+    if _duplicate_charge(clause) or _unanswered(clause):
+        neg = max(1, neg)
     return pos, neg
 
 
@@ -83,20 +125,39 @@ def analyze(review, stars=None):
     low = norm(review)
     praise, issues, neutral, durations = [], [], [], []
     pos = neg = 0
-    for clause in CLAUSES.split(low):
+    evidence, facts = [], []
+    for start, end, quote in _clauses(review):
+        clause = norm(quote)
         p, n = _sentiment(clause)
         # 'check-in took forever' and 'a 25 minute wait' are local issues,
         # while unknown clauses stay neutral rather than being invented praise.
         pos += p
         neg += n
         target = issues if n else (praise if p else neutral)
-        for topic in _topics(clause):
+        polarity = 'complaint' if n else ('praise' if p else 'neutral')
+        topics = _topics(clause)
+        if 'response' in topics and _unanswered(clause):
+            # The unanswered question is more useful than a generic staff label
+            # when the three-topic reply budget fills up.
+            topics.remove('response')
+            topics.insert(0, 'response')
+        for topic in topics:
             if topic not in target:
                 target.append(topic)
+            if len(evidence) < 48:
+                evidence.append(dict(topic=topic, polarity=polarity,
+                                     start=start, end=end, quote=quote))
+        if _duplicate_charge(clause) and len(facts) < 8:
+            facts.append(dict(kind='duplicate_charge', topic='billing',
+                              label='reported duplicate billing',
+                              start=start, end=end, quote=quote))
         if n and re.search(r'\b(?:wait\w*|queue|delay\w*|check[ -]?in|late)\b', clause):
             for key in duration_keys(clause):
                 if key not in durations:
                     durations.append(key)
+                    if len(evidence) < 48:
+                        evidence.append(dict(duration=list(key), polarity='complaint',
+                                             start=start, end=end, quote=quote))
     # Narrow explicit sarcasm cue. General sarcasm still needs human judgment.
     sarcastic = bool(re.match(r'^\s*(?:great|wonderful|fantastic)[,!]\s*(?:another|yet another)\b', low) and neg)
     if sarcastic:
@@ -125,8 +186,11 @@ def analyze(review, stars=None):
     # Complaint polarity wins for repeated topics; it must not be celebrated.
     praise = [t for t in praise if t not in issues]
     neutral = [t for t in neutral if t not in issues and t not in praise]
+    if len(evidence) == 48:
+        warnings.append('Only the first 48 detected details are shown. Read the full review.')
     return dict(tier=tier, praise=praise, issues=issues, neutral=neutral,
-                durations=durations[:2], warnings=warnings)
+                durations=durations[:2], warnings=warnings, evidence=evidence, facts=facts,
+                version=QUALITY_VERSION, source_sha256=hashlib.sha256(review.encode('utf-8')).hexdigest())
 
 
 def mentions(text, topic):
@@ -149,7 +213,36 @@ def detail_gaps(body, review, stars=None):
     for number, unit in brief['durations']:
         if (number, unit) not in present:
             gaps.append(f'review detail: preserve the reported {number} {unit} wait or delay')
+    if any(f['kind'] == 'duplicate_charge' for f in brief['facts']) and not _duplicate_charge(body):
+        gaps.append('review detail: preserve the reported duplicate billing, not just a generic billing topic')
     return gaps
+
+
+def coverage(body, review, stars=None):
+    """Show bounded mention coverage with source quotes; never certify claims."""
+    brief = analyze(review, stars)
+    checks = []
+    fact = next((f for f in brief['facts'] if f['kind'] == 'duplicate_charge'), None)
+    for topic in brief['issues'][:3]:
+        source = next((e for e in brief['evidence'] if e.get('topic') == topic and e['polarity'] == 'complaint'), None)
+        checks.append(dict(label=describe_issue(topic, review), required=True,
+                           covered=_duplicate_charge(body) if topic == 'billing' and fact else mentions(body, topic), source=source))
+    if brief['tier'] == 'mixed' and brief['praise']:
+        topic = next((t for t in brief['praise'] if mentions(body, t)), brief['praise'][0])
+        source = next((e for e in brief['evidence'] if e.get('topic') == topic and e['polarity'] == 'praise'), None)
+        checks.append(dict(label='praise about ' + topic, required=True,
+                           covered=any(mentions(body, t) for t in brief['praise']), source=source))
+    for number, unit in brief['durations']:
+        source = next((e for e in brief['evidence'] if e.get('duration') == [number, unit]), None)
+        checks.append(dict(label=f'reported {number} {unit} wait', required=True,
+                           covered=(number, unit) in duration_keys(body), source=source))
+    if fact and 'billing' not in brief['issues'][:3]:
+        checks.append(dict(label=fact['label'], required=True, covered=_duplicate_charge(body), source=fact))
+    if not checks:
+        for topic in (brief['praise'] + brief['neutral'])[:2]:
+            source = next((e for e in brief['evidence'] if e.get('topic') == topic), None)
+            checks.append(dict(label=topic, required=False, covered=mentions(body, topic), source=source))
+    return dict(brief=brief, checks=checks)
 
 
 def prompt_brief(review, stars=None):
@@ -161,6 +254,8 @@ def prompt_brief(review, stars=None):
         lines.append('Also recognize the praise about: ' + brief['praise'][0] + '.')
     if brief['durations']:
         lines.append('Keep the exact reported duration: ' + ', '.join(f'{n} {u}' for n, u in brief['durations']) + '. Attribute it to the review; do not invent timings.')
+    if any(f['kind'] == 'duplicate_charge' for f in brief['facts']):
+        lines.append('Acknowledge the reported duplicate billing (charged twice); do not reduce it to generic billing or claim a refund happened.')
     lines += brief['warnings']
     lines.append('Use short, direct sentences. One thank-you is enough. Do not claim the concerns are fixed.')
     return '\n'.join(lines) + '\n'
@@ -171,6 +266,10 @@ def describe_issue(topic, review):
     for clause in CLAUSES.split(norm(review)):
         if not mentions(clause, topic) or not _sentiment(clause)[1]:
             continue
+        if topic == 'billing' and _duplicate_charge(clause):
+            return 'duplicate billing'
+        if topic == 'response' and _unanswered(clause):
+            return 'unanswered question' if 'question' in clause else 'unanswered message'
         for adjective in ('cold', 'soggy', 'weak', 'broken', 'dirty', 'rude', 'slow', 'late', 'damaged'):
             literal = PATTERNS[topic].pattern[2:-2]
             if re.search(r'\b' + adjective + r'\s+(?:' + literal + r')\b', clause) or re.search(
@@ -201,7 +300,7 @@ def fallback_body(review, business, tone, stars=None, followup=False):
         if brief['tier'] == 'mixed' and brief['praise']:
             sentences.append(f'We appreciate your kind words about the {brief["praise"][0]}.')
         if brief['issues']:
-            sentences.append(f'We are sorry about the concerns you described with the {_join([describe_issue(t, review) for t in brief["issues"][:3]])}.')
+            sentences.append(f'We are sorry about the {_join([describe_issue(t, review) for t in brief["issues"][:3]])} you described.')
         else:
             topics = (brief['praise'] + brief['neutral'])[:2]
             if topics:

@@ -268,6 +268,9 @@ class EvaluationLab:
                 if result['tier'] != case['expected_tier']:
                     row['rubric_findings'].append('Tier mismatch: expected ' + case['expected_tier'] + ', got ' + result['tier'])
                 body = rr._body(result['reply'], result.get('signoff')).lower()
+                import review_quality as quality
+                row['review_evidence'] = quality.coverage(body, draft['review'],
+                    None if 'original' in draft else draft.get('stars'))
                 if case['topics_any'] and not any(t.lower() in body for t in case['topics_any']):
                     row['rubric_findings'].append('No target issue/topic mentioned: ' + ', '.join(case['topics_any']))
                 if report['mode'] == 'gemma':
