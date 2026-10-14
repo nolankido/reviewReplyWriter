@@ -101,14 +101,13 @@ actual operator feedback remain unverified. Historical Gemma receipts are kept.
 
 ## Next useful pass
 
-Inspect private backup and staged recovery. Current approval-state errors say
-"restore it from backup," but there is no implemented backup path. A bounded
-explicit local backup with a checked inventory and non-overwriting inspection/
-recovery would address that concrete gap. Keep private data out of Git and judge
-exports; do not restore authorization or approval automatically. Reject archive
-paths/links, oversized inputs and incomplete manifests. Preserve current files
-and pending tabs rather than silently replacing them. Keyboard/mobile recovery
-and clearer fallback states remain useful subsequent priorities.
+Inspect keyboard focus after async library/draft/recovery actions. Selecting a
+library draft calls renderDraft(), which reconstructs the library buttons without
+an explicit focus handoff. A focused selection can be removed from the DOM.
+Provide a deliberate source/editor handoff and preserve focus/current text when
+guards are cancelled. Test status announcements and mobile/keyboard recovery
+using actual Chromium when available; controlled DOM checks are not rendering or
+accessibility certification. Clearer model/fallback states remain useful later.
 
 Actions has been failing before any steps run. Inspect new job steps once; do not
 retry or weaken tests to evade the unresolved account/runtime problem. Record
@@ -157,3 +156,46 @@ remain unverified. Actions steps for the final candidate are inspected in the
 PR without workflow retries or weakened tests. Feature run 38561913138 failed
 before all five jobs' steps (each step array was empty). It ran no test code and
 does not provide cross-platform/browser evidence.
+
+## Fourth pass: private review-work backup and non-overwriting recovery
+
+Startup verified main `ba51ae69d0b4dae53ed7bf68f9bbdcb8c85eeaf9`, tree
+`f8cfd74db6f041fa0dd4db371036e21af0f9ba7e`, from PR #17. The clean local
+tree matched. There was no repository AGENTS.md or new active PR to repair; the
+two older candidate PRs were unchanged.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/18
+
+Tested feature commit: `c1f82ba981836b40ccc1649f6d83de2e5deb7033`.
+Feature tree: `df013ee9d14abc97cb222ae7a2ee8f5ae8707726`, checked equal to
+the entire locally tested tree before committing. The final candidate also
+checks original selected work bytes in the recovered-launcher smoke and adds
+this receipt. Its final head/tree/merge are recorded in the PR; read current main
+rather than assuming the feature branch is still the published head.
+
+Added rrw_backup.py create/inspect/recover using the standard library. Explicit
+private confirmation, a strict review-work path inventory, hashes/byte caps,
+source-change rechecks and the browser instance lock protect snapshot creation.
+Archives stay private, are not encrypted, and use a Git-ignored suffix. Credentials,
+launcher/environment state and submission confirmations are excluded. Recovery
+validates everything before creating a new destination, refuses existing content
+including empty directories, preserves copied bytes and resets operational
+triage instead of reviving approvals. Incomplete recovery is preserved and refused
+by setup/workspace startup. No in-place merge, automatic posting, credential
+restoration or cloud upload was added. See docs/PRIVATE_BACKUP.md for exact scope,
+privacy warnings and limits; malformed source records can be preserved for
+inspection without becoming semantically valid.
+
+Executed locally: all 465 Python tests, including 29 focused controlled backup
+regressions; actual subprocess CLI create/inspect/recover; new real recovered
+Python launcher HTTP smoke for reset approval, unreviewed rejection, explicit
+controlled approval/export and original saved-work preservation; existing real
+launcher workflow; all three Node state scripts; development checker; offline
+CLI; Python compilation and whitespace checks. The fixtures are fictional, not
+operator feedback, fresh Gemma or cross-platform evidence.
+
+Feature Actions run 38571896758 failed before every job's steps (all five arrays
+were empty). The PR records final candidate jobs without a retry. No test code
+ran in those pre-step failures. Windows batch execution, current
+Chromium rendering/keyboard/mobile navigation, fresh current-source Gemma and a
+real operator trial remain unverified. Historical Gemma receipts are preserved.

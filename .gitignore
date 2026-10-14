@@ -12,3 +12,6 @@ venv/
 # Private owner profiles and local run artifacts
 .rrw/
 evidence/
+
+# Explicit local backups can contain customer text, owner policy and private notes.
+*.rrw-backup.zip
