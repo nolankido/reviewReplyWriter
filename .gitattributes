@@ -1,2 +1,4 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Keep byte-based model evidence consistent across platform checkouts.
+* text=auto eol=lf
+# The Windows launcher remains native CRLF; it is not model input.
+*.bat text eol=crlf

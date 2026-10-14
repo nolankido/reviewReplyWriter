@@ -102,6 +102,9 @@ def release_blockers(evidence, post_text):
                 "fresh_gemma_run_recorded", "firsthand_claims_reviewed"):
         if evidence.get(key) is not True:
             blockers.append(f"owner evidence not confirmed: {key}")
+    for key in ("demo_accessible_to_judges", "rules_reviewed"):
+        if key in evidence and evidence[key] is not True:
+            blockers.append(f"owner evidence not confirmed: {key}")
     for heading in ("## Demo", "## Code", "## How I Built It",
                     "## Prize Categories"):
         if heading not in post_text:
@@ -130,22 +133,25 @@ def evaluation_blockers(path):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--release", action="store_true")
+    ap.add_argument("--evidence", default=EVIDENCE_PATH, help="Submission evidence JSON; defaults to the repository checklist")
+    ap.add_argument("--post", default=POST_PATH, help="DEV draft to verify; no publication occurs")
     ap.add_argument("--evaluation", help="JSON report exported by Quality Lab, for release checks")
     args = ap.parse_args(argv)
     count, green = suite_state()
     try:
-        with open(POST_PATH, encoding="utf-8") as fh:
+        with open(args.post, encoding="utf-8") as fh:
             post = fh.read()
         blockers = gallery_blockers()
         findings, todos = post_findings(post, count, green)
         blockers.extend(findings)
         if args.release:
-            with open(EVIDENCE_PATH, encoding="utf-8") as fh:
+            with open(args.evidence, encoding="utf-8") as fh:
                 evidence = json.load(fh)
             blockers.extend(release_blockers(evidence, post))
             report_path = args.evaluation or evidence.get("evaluation_report")
-            if report_path and not os.path.isabs(report_path):
-                report_path = os.path.join(HERE, report_path)
+            if report_path and not os.path.isabs(report_path) and not args.evaluation:
+                evidence_base = HERE if os.path.abspath(args.evidence) == os.path.abspath(EVIDENCE_PATH) else os.path.dirname(os.path.abspath(args.evidence))
+                report_path = os.path.join(evidence_base, report_path)
             blockers.extend(evaluation_blockers(report_path))
     except (OSError, ValueError) as exc:
         blockers, todos = [str(exc)], []

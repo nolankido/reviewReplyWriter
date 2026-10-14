@@ -6,6 +6,7 @@
   <title>Review Reply Writer | Local workspace</title>
   <link rel="stylesheet" href="/style.css">
   <script src="/app.js" defer></script>
+  <script src="/submission.js" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to workspace</a>
@@ -23,7 +24,7 @@
   <main id="main">
     <header class="page-header"><div><p class="eyebrow">THE OWNER'S WORKSPACE</p><h1>A thoughtful reply.<br>A human decision.</h1><p class="intro">Draft with local AI. Check every commitment. Keep your voice.</p></div><div class="model-box"><span id="model-status" class="badge neutral">Checking Ollama</span><button id="refresh-model" class="text-button" type="button">Check connection</button></div></header>
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
-    <nav class="view-switch" aria-label="Workspace view"><button id="view-drafts" class="button active" aria-pressed="true" type="button">Draft workspace</button><button id="view-quality" class="button" aria-pressed="false" type="button">Quality Lab</button></nav>
+    <nav class="view-switch" aria-label="Workspace view"><button id="view-drafts" class="button active" aria-pressed="true" type="button">Draft workspace</button><button id="view-quality" class="button" aria-pressed="false" type="button">Quality Lab</button><button id="view-submission" class="button" aria-pressed="false" type="button">Submission Desk</button></nav>
     <div class="workspace-grid" id="draft-panel">
       <section class="card compose-card" aria-labelledby="compose-title">
         <header class="card-heading"><span class="step">01</span><div><p class="eyebrow">COMPOSE</p><h2 id="compose-title">Start with the review</h2></div></header>
@@ -78,6 +79,30 @@
         </div>
         <section class="card quality-export"><div><h3>4. Keep the evidence</h3><p class="helper">Exports contain fictional reviews, raw attempts and your notes. Review before sharing. No upload occurs.</p><ul id="quality-evidence-gaps" class="helper"></ul></div><div class="editor-tools"><button id="quality-json" class="button secondary" type="button">Export JSON evidence</button><button id="quality-markdown" class="button secondary" type="button">Export readable report</button></div></section>
       </div>
+    </section>
+    <section id="submission-panel" hidden aria-labelledby="submission-title">
+      <div class="submission-heading"><div><p class="eyebrow">HACKATHON HANDOFF</p><h2 id="submission-title">A clear path to the finish.</h2><p class="helper">Prepare the article and a no-install judge guide. Nothing is uploaded or submitted here.</p></div><span class="badge neutral">Not submitted</span></div>
+      <div class="submission-summary" id="submission-summary" aria-label="Submission readiness"></div>
+      <p class="submission-deadline" id="submission-deadline"></p>
+      <div class="submission-grid">
+        <section class="card"><p class="eyebrow">01 · ACCESS</p><h3>Give judges a way in.</h3><p class="helper">A private Actions artifact or a local video is not a hosted demo. Save a stable link, test it signed out, then record your confirmation.</p><form id="submission-form">
+          <div class="field"><label for="submission-repo">Code repository</label><input id="submission-repo" readonly type="url"><small>This desk cannot change repository visibility. Inspect tracked files and history before providing access.</small></div>
+          <div class="field"><label for="submission-demo">Hosted video or deployed-app URL</label><input id="submission-demo" type="url" maxlength="2048" placeholder="https://" autocomplete="off"><small>HTTPS only. We validate the address format, not its content or accessibility.</small></div>
+          <h4>Confirm only what you checked.</h4><div id="submission-confirmations" class="submission-confirmations"></div>
+          <div class="submission-form-actions"><button id="submission-save" class="button primary" type="submit">Save checklist</button><button id="submission-refresh" class="text-button" type="button">Reload saved checklist</button></div><p id="submission-dirty" class="dirty-note" hidden>Unsaved checklist changes. Save before exporting.</p>
+        </form></section>
+        <section class="card"><p class="eyebrow">02 · EVIDENCE</p><h3>Keep the claims checkable.</h3><div id="submission-recorded" class="submission-recorded"></div><p class="helper">The judge guide contains recorded fictional examples, not a live model session or a customer endorsement. The drafting engine has not been changed in this handoff.</p>
+          <div class="field"><label for="submission-evaluation">Your assessed Quality Lab run</label><select id="submission-evaluation"><option value="">Select a saved evaluation</option></select><small>Only runs in this workspace can be selected. No arbitrary file paths.</small></div>
+          <p id="submission-evaluation-summary" class="helper"></p><button id="submission-open-quality" class="button secondary" type="button">Open Quality Lab</button>
+          <div class="submission-gaps"><h4>Entry and document checks</h4><ul id="submission-entry-gaps"></ul><h4>Stronger internal evidence gate</h4><ul id="submission-internal-gaps"></ul><p class="helper">Our evidence gate is not an extra contest rule. A real first user is valuable, but optional. Never invent one.</p></div>
+        </section>
+      </div>
+      <section class="card submission-export"><div><p class="eyebrow">03 · PREPARE</p><h3>One packet. No hidden private files.</h3><p class="helper">Includes a read-only HTML judge guide, the DEV draft, recorded evidence, a checklist and file checksums. Your profiles, customer drafts, environment files and session token are excluded.</p></div>
+        <label class="check-row"><input id="submission-include" type="checkbox"><span>Also include the selected evaluation, with its raw replies and my notes.</span></label><label id="submission-sharing-row" class="check-row" hidden><input id="submission-sharing" type="checkbox"><span>I reviewed that evaluation and authorize including its contents in this local export.</span></label>
+        <div class="editor-tools"><button id="submission-post" class="button secondary" type="button">Download DEV draft</button><button id="submission-packet" class="button primary" type="button">Export working judge packet</button><button id="submission-final" class="text-button" type="button" disabled>Export checked packet</button></div><p class="helper">Working exports retain unresolved items. Checked exports require all local confirmations and assessed evidence. Neither publishes an entry.</p>
+        <details class="submission-preview"><summary>Read the generated DEV draft</summary><label class="sr-only" for="submission-preview">Generated DEV draft, read only</label><textarea id="submission-preview" rows="16" readonly spellcheck="false"></textarea></details>
+      </section>
+      <section class="submission-last"><h3>04 · Publish deliberately on DEV.</h3><p>Review the video and writing, check the links signed out, then use the official template. Writing quality has the greatest judging weight. This desk has no publish button.</p><div class="editor-tools"><a id="submission-challenge-link" class="button secondary" target="_blank" rel="noopener noreferrer">Open official challenge</a><a id="submission-rules-link" target="_blank" rel="noopener noreferrer">Read official rules</a></div><p id="submission-rules-date" class="helper"></p></section>
     </section>
     <footer class="page-footer"><span>Local workspace. Human judgment.</span><span>English-language checks · No auto-posting · No external UI assets</span></footer>
   </main>
