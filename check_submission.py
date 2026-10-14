@@ -113,9 +113,22 @@ def release_blockers(evidence, post_text):
     return blockers
 
 
+
+def evaluation_blockers(path):
+    """Require a checked run artifact; a checkbox alone is not model evidence."""
+    if not path:
+        return ["missing evaluation report: pass --evaluation FILE from Quality Lab"]
+    from rrw_evaluate import load_report, live_evidence_blockers
+    try:
+        return live_evidence_blockers(load_report(path))
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        return ["invalid evaluation evidence: " + str(exc)]
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--release", action="store_true")
+    ap.add_argument("--evaluation", help="JSON report exported by Quality Lab, for release checks")
     args = ap.parse_args(argv)
     count, green = suite_state()
     try:
@@ -128,6 +141,10 @@ def main(argv=None):
             with open(EVIDENCE_PATH, encoding="utf-8") as fh:
                 evidence = json.load(fh)
             blockers.extend(release_blockers(evidence, post))
+            report_path = args.evaluation or evidence.get("evaluation_report")
+            if report_path and not os.path.isabs(report_path):
+                report_path = os.path.join(HERE, report_path)
+            blockers.extend(evaluation_blockers(report_path))
     except (OSError, ValueError) as exc:
         blockers, todos = [str(exc)], []
     print(f"Review Reply Writer - {'release' if args.release else 'development'} checks")

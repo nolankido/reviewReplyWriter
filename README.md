@@ -4,6 +4,18 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+## Quality Lab
+
+The browser now includes **Quality Lab**, a separate evaluation workspace. Run
+three fictional smoke scenarios or a 30-case stress set, one case per click.
+It keeps model replies, retries, template fallbacks, blocked outputs and human
+assessments separate. Results do not become customer drafts or posting approvals.
+
+Start with templates to inspect the protocol. For real-model evidence, check
+Gemma setup and explicitly select the installed model. Export the JSON evidence
+and readable report after reviewing each result. Unreviewed quality remains
+unknown, even when automatic checks pass. See [the Quality Lab guide](docs/QUALITY_LAB.md).
+
 ## Open the app
 
 Requires Python 3.10 or newer. No extra runtime packages, framework installation,

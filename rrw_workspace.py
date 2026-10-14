@@ -63,9 +63,8 @@ def gemma_caller(prompt, model, temperature):
     result = local_request('/api/generate', {
         'model': model, 'prompt': prompt, 'stream': False,
         'options': {'temperature': temperature, 'num_predict': 500}}, timeout=180)
-    if not isinstance(result, dict) or not isinstance(result.get('response'), str):
-        raise ValueError('Ollama returned no text response')
-    return result['response'].strip()
+    from rrw_model import checked_response
+    return checked_response(result)
 
 
 def model_status():
@@ -94,6 +93,7 @@ class Workspace:
         self.lock = threading.RLock()
         self.generation = threading.Lock()
         self.caller = caller or gemma_caller
+        self.evaluations = None
 
     def _path(self, name):
         if not isinstance(name, str) or not re.fullmatch(r'reply-[a-z0-9-]+\.md', name):
@@ -208,7 +208,7 @@ class Workspace:
             draft['stars'] = None  # The existing follow-up engine grades the update text.
         return draft
 
-    def _generate(self, draft, mode):
+    def _generate(self, draft, mode, *, observe=None, record_ledger=True):
         if mode not in ('offline', 'gemma'):
             raise WorkspaceError('Choose Gemma or template preview.')
         trace = []
@@ -218,9 +218,16 @@ class Workspace:
         def observed(prompt, model, temperature):
             started = time.monotonic()
             item = {'attempt': len(trace) + 1, 'temperature': temperature}
+            if observe is not None:
+                import hashlib
+                item['prompt_sha256'] = hashlib.sha256(prompt.encode('utf-8')).hexdigest()
             try:
                 answer = self.caller(prompt, model, temperature)
                 item['findings'] = rr.draft_findings(dict(draft, reply=answer))
+                if hasattr(answer, 'receipt'):
+                    item['receipt'] = answer.receipt
+                if observe is not None:
+                    item['candidate'] = str(answer) if isinstance(answer, str) else None
                 return answer
             except (OSError, ValueError, urllib.error.URLError) as exc:
                 item['findings'] = [f'Model call failed: {exc}']
@@ -228,10 +235,12 @@ class Workspace:
             finally:
                 item['elapsed_ms'] = round((time.monotonic() - started) * 1000)
                 trace.append(item)
+                if observe is not None:
+                    observe(dict(item))
 
         reply, engine = None, 'template engine (offline)'
         if mode == 'gemma':
-            settings = dict(caller=observed, ledger_path=str(self.ledger), voice=draft.get('voice'), **common)
+            settings = dict(caller=observed, ledger_path=str(self.ledger) if record_ledger else None, voice=draft.get('voice'), **common)
             if followup:
                 reply, engine = rr.generate_followup(
                     draft['original'], draft['previous'], draft['review'], draft['business'],
@@ -292,6 +301,12 @@ class Workspace:
         data = {} if data is None else data
         if not isinstance(data, dict):
             raise WorkspaceError('Request must be a JSON object.')
+        if action.startswith('quality-'):
+            from rrw_evaluate import EvaluationLab
+            with self.lock:
+                if self.evaluations is None:
+                    self.evaluations = EvaluationLab(self)
+            return self.evaluations.dispatch(action, data)
         if action in ('generate', 'reroll'):
             return self.generate(data, action == 'reroll')
         with self.lock:

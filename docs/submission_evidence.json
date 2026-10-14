@@ -4,5 +4,6 @@
   "repository_accessible_to_judges": false,
   "development_window_confirmed": false,
   "fresh_gemma_run_recorded": false,
-  "firsthand_claims_reviewed": false
+  "firsthand_claims_reviewed": false,
+  "evaluation_report": ""
 }
