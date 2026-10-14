@@ -106,6 +106,13 @@ These are English pattern checks, not proof that the reply understands the revie
 
 See [the evidence and hackathon assessment](docs/REVIEW_EVIDENCE_PASS.md).
 
+Reported duplicate billing and response complaints now stay in the limited
+checklist even after three earlier topics. Templates, model prompts, saved-reply
+checks and source quotations use the same selection. The original requirements
+remain, and any other detected complaints outside the checklist get a reminder
+to read the full review. Existing approvals require fresh review under the new
+check version. [Material complaint coverage](docs/MATERIAL_COMPLAINTS.md).
+
 ## High-risk review routing and checked local Gemma calls
 
 Potential poisoning, allergy, harassment, threats, sensitive-data exposure and

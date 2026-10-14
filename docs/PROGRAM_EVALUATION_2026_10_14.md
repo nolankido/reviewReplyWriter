@@ -108,3 +108,15 @@ not raise unexecuted-platform or operator evidence to a pass. The next useful
 action is to run this command on the owner's Windows computer, then execute
 current-source local Gemma smoke and assess the results. Collect a real operator
 trial and inspect the actual hosted demo before making public product claims.
+
+## Continued repair: material complaint coverage
+
+The next direct owner continuation reproduced a specificity defect beyond the
+three-topic budget: late duplicate billing blocked the fallback while a late
+unanswered question could be omitted. The shared bounded checklist now retains
+the original three topics plus those material details. Prompts, templates,
+validation and visible source checks agree. Old approvals require new review;
+private state and historical model receipts are preserved. See
+[material complaint coverage](MATERIAL_COMPLAINTS.md) for reproduction, actual
+533-test/local-verifier evidence and the remaining limits. No scoring uplift,
+real operator result or new model evidence is inferred from this repair.
