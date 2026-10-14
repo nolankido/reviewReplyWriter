@@ -2,10 +2,16 @@
 const $ = id => document.getElementById(id);
 const fragment = new URLSearchParams(location.hash.slice(1));
 const supplied = fragment.get('token');
-let token = supplied || sessionStorage.getItem('rrw-session') || '';
+let session;
+try { session = window.rrwConnection.session(sessionStorage, supplied); }
+catch (error) { session = {token: supplied || '', available: false}; }
+let token = session.token;
 if (supplied) {
-  sessionStorage.setItem('rrw-session', supplied);
   history.replaceState(null, '', location.pathname);
+}
+if (!session.available) {
+  $('session-storage-note').hidden = false;
+  $('session-storage-note').textContent = 'Browser session storage is blocked. This tab can use the launcher link, but reopening requires a current launcher link. A pending result check is kept only in this tab; saved drafts remain in the library.';
 }
 let workspace = {drafts: [], profiles: {}, profiles_revision: 'new'};
 let current = null;
@@ -35,22 +41,7 @@ function node(tag, content, className) {
   return el;
 }
 async function api(path, data) {
-  if (!token) throw new Error('Open the session link printed by rrw_web.py to connect this tab.');
-  const options = {method: data === undefined ? 'GET' : 'POST', credentials: 'omit',
-    headers: {'X-RRW-Token': token, 'Accept': 'application/json'}, cache: 'no-store'};
-  if (data !== undefined) {
-    options.headers['Content-Type'] = 'application/json';
-    options.body = JSON.stringify(data);
-  }
-  const response = await fetch('/api/' + path, options);
-  const result = await response.json();
-  if (!response.ok) {
-    const error = new Error(result.error + (result.findings ? '\n' + result.findings.join('\n') : ''));
-    error.status = response.status;
-    error.findings = Array.isArray(result.findings) ? result.findings : [];
-    throw error;
-  }
-  return result;
+  return window.rrwConnection.request(path, data, token);
 }
 function setBusy(value) {
   busy = value;
@@ -61,7 +52,7 @@ function setBusy(value) {
     else if ('wasDisabled' in control.dataset) { control.disabled = control.dataset.wasDisabled === 'true'; delete control.dataset.wasDisabled; }
   }
   $('generate').textContent = value ? 'Working...' : 'Generate draft ↗';
-  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); if (window.rrwFeedback) window.rrwFeedback.buttons(); if (window.rrwRecovery) window.rrwRecovery.buttons(); }
+  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); if (window.rrwFeedback) window.rrwFeedback.buttons(); if (window.rrwRecovery) window.rrwRecovery.buttons(); if (window.rrwGeneration) window.rrwGeneration.buttons(); }
 }
 async function run(task) {
   if (busy) return;
@@ -90,7 +81,7 @@ function updateButtons() {
   $('approve').disabled = !saved || current.findings.length > 0 || !$('human-reviewed').checked || approved;
   $('copy').disabled = !approved;
   $('download').disabled = !approved;
-  $('reroll').disabled = !current;
+  $('reroll').disabled = !current || Boolean(window.rrwGeneration && window.rrwGeneration.hasPending());
   $('set-aside').disabled = !current;
   $('human-reviewed').disabled = !saved || current.findings.length > 0 || approved;
   $('approve').textContent = approved ? 'Approved for manual posting' : 'Approve this reply';
@@ -272,7 +263,7 @@ $('compose-form').addEventListener('submit', event => {
       previous: $('previous').value, mode: $('engine-mode').value};
     notify(data.mode === 'gemma' ? 'Gemma is drafting and checking. A rejected draft gets one retry; a checked template is the fallback.' : 'Creating a checked template preview. No AI model is being called.');
     let view;
-    try { view = await api('generate', data); }
+    try { view = await window.rrwGeneration.submit('generate', data); }
     catch (error) {
       const reasons = (error.findings || []).filter(f => f.includes('manual review required'));
       if (error.status === 422 && reasons.length) {
@@ -283,8 +274,9 @@ $('compose-form').addEventListener('submit', event => {
       }
       throw error;
     }
-    await refreshWorkspace(); renderDraft(view);
+    renderDraft(view);
     if (window.rrwRecovery) window.rrwRecovery.accept();
+    await refreshWorkspace();
     notify(view.engine.includes('fallback') ? 'Gemma did not return a passing draft. A checked template was saved instead. See generation details.' : 'Draft saved. Read it, make any edits, then approve the exact reply.');
   });
 });
@@ -328,7 +320,7 @@ $('reroll').addEventListener('click', () => {
   if (!confirmDiscard(false)) return;
   run(async () => { notify('Regenerating with the policy saved in this draft.');
     let view;
-    try { view = await api('reroll', {...idRevision(), mode: $('engine-mode').value}); }
+    try { view = await window.rrwGeneration.submit('reroll', {...idRevision(), mode: $('engine-mode').value}); }
     catch (error) {
       const reasons = (error.findings || []).filter(f => f.includes('manual review required'));
       if (error.status === 422 && reasons.length) {
@@ -338,7 +330,7 @@ $('reroll').addEventListener('click', () => {
       }
       throw error;
     }
-    await refreshWorkspace(); renderDraft(view); notify('New draft saved. Review it before approving.'); });
+    renderDraft(view); await refreshWorkspace(); notify('New draft saved. Review it before approving.'); });
 });
 $('copy').addEventListener('click', () => run(async () => {
   const result = await api('approved-text', idRevision());
@@ -416,7 +408,7 @@ $('engine-mode').addEventListener('change', () => {
     ? 'Uses gemma3:4b through local Ollama. Enable Ollama local-only mode. Rejected or unavailable output falls back to a labelled template.'
     : 'Template preview lets you try the workflow without a model. Nothing is posted.';
 });
-window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || (window.rrwGeneration && window.rrwGeneration.hasPending()) || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
 
 
 // Quality experiments are separate from real drafts and publication approvals.

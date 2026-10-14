@@ -8,7 +8,9 @@
   <link rel="stylesheet" href="/review-evidence.css">
   <link rel="stylesheet" href="/inbox.css">
   <script src="/review-evidence.js" defer></script>
+  <script src="/connection.js" defer></script>
   <script src="/app.js" defer></script>
+  <script src="/generation.js" defer></script>
   <script src="/feedback.js" defer></script>
   <script src="/recovery.js" defer></script>
   <script src="/inbox.js" defer></script>
@@ -30,6 +32,13 @@
   <main id="main">
     <header class="page-header"><div><p class="eyebrow">THE OWNER'S WORKSPACE</p><h1>A thoughtful reply.<br>A human decision.</h1><p class="intro">Draft with local AI. Check every commitment. Keep your voice.</p></div><div class="model-box"><span id="model-status" class="badge neutral">Checking Ollama</span><button id="refresh-model" class="text-button" type="button">Check connection</button></div></header>
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <p id="session-storage-note" class="notice" role="status" hidden></p>
+    <section id="generation-recovery" class="card" aria-labelledby="generation-title" hidden>
+      <h2 id="generation-title">Check a generation result</h2>
+      <p id="generation-message" class="helper" role="status" aria-live="polite"></p>
+      <div class="editor-tools"><button id="generation-check" class="button secondary" type="button">Check result</button><button id="generation-open" class="button secondary" type="button" disabled>Open saved draft</button><button id="generation-dismiss" class="text-button" type="button">Dismiss result check</button></div>
+      <p class="helper">A timeout does not cancel the server. No automatic retry is sent. Opening a result asks before replacing pending work.</p>
+    </section>
     <nav class="view-switch" aria-label="Workspace view"><button id="view-drafts" class="button active" aria-pressed="true" type="button">Draft workspace</button><button id="view-quality" class="button" aria-pressed="false" type="button">Quality Lab</button><button id="view-submission" class="button" aria-pressed="false" type="button">Submission Desk</button></nav>
     <details id="setup-guide" class="setup-guide"><summary>Getting started · Try a reply, connect Gemma, check its output</summary><div class="setup-steps">
       <div><h3>1. Try the workflow</h3><p class="helper">Templates work without installing a model. Load a fictional review, draft a reply, then read, edit and approve it.</p><button id="setup-example" class="button secondary" type="button">Load a complaint example</button></div>

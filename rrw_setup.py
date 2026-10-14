@@ -16,10 +16,11 @@ import tempfile
 HERE = Path(__file__).resolve().parent
 REQUIRED_FILES = ('review_reply.py', 'review_quality.py', 'reply_safety.py', 'rrw_risk.py',
                   'rrw_model.py', 'rrw_workspace.py', 'rrw_web.py', 'rrw_inbox.py',
-                  'rrw_evaluate.py', 'rrw_submission.py', 'rrw_feedback.py', 'rrw_recovery.py', 'examples/evaluation_cases.json',
+                  'rrw_evaluate.py', 'rrw_submission.py', 'rrw_feedback.py', 'rrw_recovery.py', 'rrw_requests.py', 'examples/evaluation_cases.json',
                   'web/index.html', 'web/app.js', 'web/style.css', 'web/inbox.js',
                   'web/inbox.css', 'web/inbox-sample.csv', 'web/submission.js',
-                  'web/review-evidence.js', 'web/review-evidence.css', 'web/feedback.js', 'web/recovery.js')
+                  'web/review-evidence.js', 'web/review-evidence.css', 'web/feedback.js', 'web/recovery.js',
+                  'web/connection.js', 'web/generation.js')
 MODEL_MESSAGES = {
     'installed': 'Gemma 3 is installed. Generation has not been tested by this check.',
     'missing': 'Ollama is running. Download gemma3:4b, then check again.',

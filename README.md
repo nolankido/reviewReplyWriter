@@ -27,6 +27,13 @@ changed or missing draft are shown for inspection instead of overwriting it.
 Only one copy is kept, and it is excluded from judge packets.
 See [Working copy recovery](docs/WORKING_COPY_RECOVERY.md).
 
+Generation now keeps a private request receipt. If a connection is lost, use
+**Check result**, then explicitly open the saved draft. Checking keeps the current
+form intact. Repeating the same received request cannot start another generation.
+Requests have browser deadlines; a timeout does not cancel the server. Blocked
+browser session storage no longer prevents drafting from a current launcher link.
+See [Connection and generation recovery](docs/CONNECTION_RECOVERY.md).
+
 ## Inspect edits and record review feedback
 
 New browser drafts retain the starting reply for their current generation.

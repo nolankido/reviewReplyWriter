@@ -88,6 +88,7 @@ class Workspace:
         self.inboxes = None
         self.review_notes = None
         self.recovery = None
+        self.requests = None
 
     def _notes(self):
         if self.review_notes is None:
@@ -278,7 +279,7 @@ class Workspace:
     def _write(self, draft, name=None):
         context = {k: draft[k] for k in ('stars', 'offer', 'signoff', 'approved_actions',
             'original', 'previous', 'choices', 'voice', 'generation_trace', 'generated_at',
-            'human_edited', 'generation_baseline', 'inbox_id', 'inbox_row_id') if k in draft}
+            'human_edited', 'generation_baseline', 'inbox_id', 'inbox_row_id', 'generation_request') if k in draft}
         args = (draft['business'], draft['review'], draft['reply'],
                 draft.get('engine', 'imported draft'), draft['tone'], draft['kind'],
                 draft.get('tier') or rr.review_tier(draft['review'], draft.get('stars')),
@@ -292,7 +293,7 @@ class Workspace:
         rr.save_triage(str(self.drafts), state)
         return self._view(name)
 
-    def generate(self, data, reroll=False):
+    def generate(self, data, reroll=False, *, request=None):
         if not self.generation.acquire(blocking=False):
             raise WorkspaceError('A draft is already being generated. Finish that run first.', 409)
         try:
@@ -301,6 +302,9 @@ class Workspace:
                 draft = (self._revision(data.get('id'), data.get('revision')) if reroll
                          else self._new_draft(data))
             result = self._generate(draft, data.get('mode', 'offline'))
+            result.pop('generation_request', None)
+            if request is not None:
+                result['generation_request'] = request
             with self.lock:
                 if reroll:
                     self._revision(data['id'], data.get('revision'))
@@ -312,6 +316,14 @@ class Workspace:
         data = {} if data is None else data
         if not isinstance(data, dict):
             raise WorkspaceError('Request must be a JSON object.')
+        if action == 'generation-check' or (action in ('generate', 'reroll') and 'request_id' in data):
+            from rrw_requests import GenerationRequests
+            with self.lock:
+                if self.requests is None:
+                    self.requests = GenerationRequests(self)
+            if action == 'generation-check':
+                return self.requests.check(data.get('request_id'))
+            return self.requests.generate(data, action == 'reroll')
         if action.startswith('recovery-'):
             from rrw_recovery import Recovery
             with self.lock:
