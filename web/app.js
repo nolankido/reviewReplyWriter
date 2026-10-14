@@ -243,10 +243,10 @@ async function refreshWorkspace() {
   renderProfiles(); renderQueue();
   if (window.rrwProfiles) window.rrwProfiles.loaded(workspace);
 }
-async function refreshAfterSaved(success) {
+async function refreshAfterSaved(success, refresh = refreshWorkspace) {
   // The saved result is already shown. A later list read is not a write failure.
   notify(success);
-  try { await refreshWorkspace(); }
+  try { await refresh(); }
   catch (error) {
     notify(success + ' The library could not refresh. The saved result is shown; refresh the library later.', true);
   }

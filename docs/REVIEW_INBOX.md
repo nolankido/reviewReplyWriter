@@ -22,6 +22,11 @@ still requires individual review and approval of every reply.
    the remaining rows. Use **Reload inboxes** to refresh approval status after
    editing or approving replies.
 
+A saved inbox or completed row remains acknowledged if a later library read
+fails. A newly saved reply opens before that optional refresh. If the reply
+itself cannot be read, the saved row stays visible: use **Review draft** to check
+its current version later. This does not repeat generation or grant approval.
+
 Owner offers, confirmed actions and learned voice metadata are excluded from
 inbox imports. The inbox uses the chosen tone and sign-off. It does not accept
 policy from CSV cells, a previously posted response, another business or the
@@ -135,7 +140,35 @@ feedback or Gemma evidence. Target browser/device behavior remains unverified.
 
 ## Verification
 
-The final local suite has **341 passing Python tests**, including 29 new methods
+October 14 follow-up: direct owner continuation from verified main
+`cfbbc6d067c490c06dbc1e2ee0a38a3e19334a1f`, tree
+`12f90378bc97c609effd0ecc37cb8afef3cf4fd4`, matching clean local source.
+No AGENTS.md, new competing work or Actions workflows were present. The
+overnight automation remains paused; this is direct follow-up authorization.
+
+Controlled execution of the actual inbox handler reproduced a successful save
+being replaced by only an inbox-list error. The next-review handler also waited
+for the library before opening its saved reply. Those reads now follow the
+acknowledgement; reply lookup has its own explicit saved-row fallback. Failed
+generation cannot manufacture an acknowledged result. Blocked rows still show
+their findings and never open or approve a usable reply.
+
+All 555 Python tests passed. The actual local verifier passed the development
+checker, both real Python launcher HTTP workflows and all nine actual Node
+scripts with unchanged inventoried source. Expanded inbox Node checks cover
+acknowledged import/list failure, saved-draft/library failure, unavailable reply,
+failed generation and blocked-row progress, including exact mutation counts and
+no approval/copy calls. JavaScript syntax and whitespace checks passed. These
+failure fixtures use controlled DOM/API responses, not actual browser navigation
+or model inference. Real Windows, current browser/mobile/screen-reader behavior,
+fresh Gemma and actual operator feedback remain unexecuted. No backend writes,
+dependencies, private data, workflow dispatch, upload, posting or contest
+submission were added. Exact candidate/tree and merge outcome are in the PR.
+The next evidence priority remains target-computer verification, actual local
+Gemma and consenting operator use. Historical model evidence is unchanged and
+stale for current application source.
+
+The original October 13 suite had **341 passing Python tests**, including 29 new methods
 for UTF-8/BOM and multiline parsing, schema and size limits, policy separation,
 preview leases, duplicate and source-ID conflicts, one-row generation, individual
 approval, queue reload, model locking, manual referrals, failures and recovery.

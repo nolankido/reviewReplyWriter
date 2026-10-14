@@ -101,6 +101,9 @@ imports. The CLI's multi-business CSV format is separate.
 
 See [Review inbox](docs/REVIEW_INBOX.md) and the downloadable fictional sample
 in `web/inbox-sample.csv`.
+Saved inbox progress stays visible after a failed library refresh. If a saved
+reply cannot open, use its **Review draft** control later; generation is not
+repeated automatically.
 
 ## Keep the customer's actual details
 

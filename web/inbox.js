@@ -194,8 +194,8 @@
     const record = await api('inbox-create', {...previewRequest, preview_revision: preview.revision,
       confirmed: $('inbox-confirm').checked, label: source.label || 'Review inbox'});
     sourceTracker.accept(source);
-    render(record); invalidatePreview(); await reload();
-    notify('Inbox saved locally. Draft one review at a time, then approve each reply separately.');
+    render(record); invalidatePreview();
+    await refreshAfterSaved('Inbox saved locally. Draft one review at a time, then approve each reply separately.', reload);
     });
   });
   $('inbox-select').addEventListener('change', () => {
@@ -210,13 +210,18 @@
       notify('Drafting one inbox review. Closing the tab does not cancel an in-flight model request.');
       const before = new Set(selected.rows.filter(x => x.draft_id).map(x => x.draft_id));
       const result = await api('inbox-step', {id: selected.id, revision: selected.revision, mode: $('inbox-mode').value});
-      render(result); await refreshWorkspace();
+      render(result);
       const newDraft = result.rows.find(x => x.draft_id && !before.has(x.draft_id));
       if (newDraft) {
-        const view = await api('get', {id: newDraft.draft_id});
+        let view;
+        try { view = await api('get', {id: newDraft.draft_id}); }
+        catch (error) {
+          notify('One draft was saved in the inbox, but its current reply could not be opened. The saved row is shown. Use Review draft to check it later; no generation was repeated and no approval was granted.', true);
+          return;
+        }
         fillForm(view); renderDraft(view, true);
-        notify('One draft saved. Review and approve it individually. The remaining queue is saved.');
-      } else notify('This row needs personal attention. Read its findings in the inbox.', true);
+        await refreshAfterSaved('One draft saved. Review and approve it individually. The remaining queue is saved.');
+      } else await refreshAfterSaved('Inbox progress saved. This row needs personal attention. Read its findings in the inbox.');
     });
   });
   window.rrwInbox = {buttons, invalidatePreview, hasUnsaved};

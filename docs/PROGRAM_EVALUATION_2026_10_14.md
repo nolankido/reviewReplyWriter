@@ -183,3 +183,13 @@ and unchecked owner authorization remain protected. The expanded actual Node
 handler checks and 555-test/local-verifier receipt are documented in
 [working-copy recovery](WORKING_COPY_RECOVERY.md). No platform/operator evidence
 score is raised by controlled fixtures.
+
+## Continued repair: inbox outcomes after failed reads
+
+The inbox could hide an acknowledged save behind a failed list read, and wait
+for a library refresh before opening a saved draft. Acknowledged inbox/row
+results now remain visible, saved replies open before optional refresh, and a
+failed reply lookup leaves a labelled Review draft path. Genuine generation
+failures stay failures, with no retry or approval. See [review inbox](REVIEW_INBOX.md)
+for controlled handler scenarios and 555-test/local-verifier evidence. Real
+platform, Gemma and operator evidence remain outstanding.
