@@ -390,7 +390,10 @@ class Workspace:
                     raise WorkspaceError('Use a new profile key for a different business.')
                 values[name] = dict(old, **settings)
                 rr.atomic_json(str(self.profiles), values)
-                saved, saved_revision = self._profiles()
+                try:
+                    saved, saved_revision = self._profiles()
+                except (OSError, ValueError) as exc:
+                    raise WorkspaceError('Saved profile could not be checked after writing. Check saved profiles before another save.', 409) from exc
                 if saved != values:
                     raise WorkspaceError('Profiles changed after saving. Check saved profiles before another save.', 409)
                 return {'name': name, 'profile': saved[name], 'profiles_revision': saved_revision}

@@ -55,8 +55,10 @@ statement or hash is not independent proof of its truth or owner permission.
 
 ## Executed evidence
 
-All 539 Python tests passed, including five new profile-receipt, concurrent-read/
+All 540 Python tests passed, including six new profile-receipt, concurrent-read/
 post-write-change, real HTTP/asset-boundary and accessible-status regressions.
+Unreadable post-write state produces an uncertain conflict and preserves the
+file, rather than being reported as a deterministic pre-write rejection.
 The actual local verifier passed the development checker, both real Python
 launcher HTTP workflows and all nine Node state scripts. The main launcher now
 checks profile receipt/state agreement and verifies that saving a profile leaves

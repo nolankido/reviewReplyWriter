@@ -167,6 +167,17 @@ class WorkspaceTests(unittest.TestCase):
         self.assertEqual(error.exception.status, 409)
         self.assertEqual(rr.load_profiles(str(self.workspace.profiles))['demo']['tone'], 'playful')
 
+    def test_unreadable_post_write_profile_is_uncertain_and_preserved(self):
+        original = rr.atomic_json
+        def corrupted(path, values):
+            original(path, values)
+            Path(path).write_text('{CONTROLLED_POST_WRITE_CORRUPTION', encoding='utf-8')
+        with patch.object(rr, 'atomic_json', side_effect=corrupted):
+            with self.assertRaises(ws.WorkspaceError) as error:
+                self.workspace.dispatch('profile', dict(self.data, name='demo', profiles_revision='new'))
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(self.workspace.profiles.read_text(), '{CONTROLLED_POST_WRITE_CORRUPTION')
+
     def test_saved_voice_is_scoped_to_selected_business(self):
         self.workspace.dispatch('profile', dict(self.data, name='demo', profiles_revision='new'))
         profiles = rr.load_profiles(str(self.workspace.profiles))

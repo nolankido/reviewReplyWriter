@@ -140,5 +140,5 @@ revision before that refresh. Uncertain writes can be checked read-only while
 preserving current review/settings and leaving authorization unchecked; further
 profile saves wait for a successful read. Existing draft policy/approval is
 unaffected. See [profile-save recovery](PROFILE_SAVES.md) for exact behavior,
-539-test/local-verifier evidence and remaining platform/operator limits. This
+540-test/local-verifier evidence and remaining platform/operator limits. This
 adds recoverability, not a new adoption result or independent policy attestation.
