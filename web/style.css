@@ -51,6 +51,16 @@ main{padding:38px 42px 20px;max-width:1620px;width:100%;margin:auto}
 .setup-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:18px}
 .setup-steps h3{font-size:14px}
 .setup-steps code{overflow-wrap:anywhere}
+.reply-comparison,.review-notes{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
+.comparison-panes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.comparison-panes>div{min-width:0;border:1px solid var(--line);border-radius:8px;padding:12px}
+.comparison-panes p{overflow-wrap:anywhere;font-size:12px}
+.comparison-panes del{background:#faeded;color:#8b3434}
+.comparison-panes ins{background:#e6f3eb;color:#235d44;text-decoration:underline}
+.review-note-reasons{border:0;padding:0;margin:0 0 16px;display:flex;gap:8px 16px;flex-wrap:wrap}
+.review-note-reasons legend{font-size:12px;font-weight:600;margin-bottom:8px}
+.review-note-reasons label{font-size:11px;font-weight:400}
+@media(max-width:600px){.comparison-panes{grid-template-columns:1fr}}
 @media(max-width:900px){.setup-steps{grid-template-columns:1fr;gap:18px}}
 .badge{display:inline-block;border-radius:6px;padding:4px 8px;line-height:1.4;font-size:10px;font-weight:650;white-space:normal}
 .badge.neutral{background:#eef2f3;color:#52666d}

@@ -17,6 +17,21 @@ Maximum length, source-detail and authorization checks remain enforced. Warm
 templates use a neutral greeting; owners can choose their own wording.
 See [Owner workflow](docs/OWNER_FIRST_WORKFLOW.md).
 
+## Inspect edits and record review feedback
+
+New browser drafts retain the starting reply for their current generation.
+**Compare the starting draft with your saved reply** highlights removed and
+added wording. **Use starting draft in editor** restores it for editing; saving,
+rechecking and human approval still apply. Regeneration begins a new comparison.
+Older drafts without a recorded baseline say so instead of reconstructing one.
+
+The optional **Private review assessment** records the assessor's role, review
+context, usefulness, reasons, notes and an optional observed review time.
+Assessments become stale after draft edits or regeneration and stay separate
+from posting approval. Exported counts exclude private notes and customer text,
+separate operator/self/demo judgments, and count drafts rather than people.
+See [Review feedback](docs/REVIEW_FEEDBACK.md) and [Operator trial](docs/OPERATOR_TRIAL.md).
+
 ## A review inbox for recurring work
 
 Open **Review inbox** in the draft workspace. Load or paste a UTF-8 CSV for one

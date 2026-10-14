@@ -61,7 +61,7 @@ function setBusy(value) {
     else if ('wasDisabled' in control.dataset) { control.disabled = control.dataset.wasDisabled === 'true'; delete control.dataset.wasDisabled; }
   }
   $('generate').textContent = value ? 'Working...' : 'Generate draft ↗';
-  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); }
+  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); if (window.rrwFeedback) window.rrwFeedback.buttons(); }
 }
 async function run(task) {
   if (busy) return;
@@ -97,7 +97,8 @@ function updateButtons() {
   updateProgress();
 }
 function confirmDiscard() {
-  return !dirty || window.confirm('Discard the unsaved reply edits? The last saved draft will be kept.');
+  return (!dirty || window.confirm('Discard the unsaved reply edits? The last saved draft will be kept.')) &&
+    (!window.rrwFeedback || window.rrwFeedback.canDiscard());
 }
 function policyChanged(reset = true) {
   const present = Boolean($('offer').value.trim() || $('approved-actions').value.trim());
@@ -141,6 +142,7 @@ function fillForm(view) {
   typeChanged(); countReview();
 }
 function clearEditor() {
+  if (window.rrwFeedback) window.rrwFeedback.reset();
   resetReviewEvidence();
   current = null; dirty = false;
   $('editor-empty').hidden = false;
@@ -252,6 +254,7 @@ function renderDraft(view) {
       (attempt.findings.length ? attempt.findings.join('; ') : 'Passed draft checks.')));
   }
   if (view.approval_invalidated) notify('This draft changed after its earlier approval. Review and approve it again.');
+  if (window.rrwFeedback) window.rrwFeedback.render(view);
   renderQueue(); updateButtons();
   return true;
 }
@@ -301,6 +304,7 @@ $('reply-editor').addEventListener('input', () => {
     $('human-reviewed').checked = current.status === 'approved';
   }
   updateButtons();
+  if (window.rrwFeedback) window.rrwFeedback.buttons();
 });
 $('save-edit').addEventListener('click', () => run(async () => {
   const view = await api('edit', {...idRevision(), reply: $('reply-editor').value});
@@ -401,7 +405,7 @@ $('engine-mode').addEventListener('change', () => {
     ? 'Uses gemma3:4b through local Ollama. Enable Ollama local-only mode. Rejected or unavailable output falls back to a labelled template.'
     : 'Template preview lets you try the workflow without a model. Nothing is posted.';
 });
-window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || (window.rrwFeedback && window.rrwFeedback.hasUnsaved())) { event.preventDefault(); event.returnValue = ''; } });
 
 
 // Quality experiments are separate from real drafts and publication approvals.

@@ -44,6 +44,12 @@ results, required edits and permission to quote. Leave unknown fields blank.
 Distinguish the operator's words from your interpretation. A draft quote must be
 approved by the operator before publication. Declining to pay is still evidence.
 
+The editor's [private review assessment](REVIEW_FEEDBACK.md) can record observed
+usefulness and required changes alongside the exact saved draft. Use the actual
+assessor role and review context. An exported count describes assessed drafts,
+not distinct users. Keep participant identity, consent and any normal-method
+comparison in a separate study record. Review notes are never auto-published.
+
 Quality Lab assessments are diagnostic judgments on fictional fixtures. They
 are not customer adoption, publication approval or independent endorsements.
 Nothing in Submission Desk inserts a first-user story automatically.
