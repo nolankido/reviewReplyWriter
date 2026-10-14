@@ -17,6 +17,16 @@ Maximum length, source-detail and authorization checks remain enforced. Warm
 templates use a neutral greeting; owners can choose their own wording.
 See [Owner workflow](docs/OWNER_FIRST_WORKFLOW.md).
 
+## Protect pending work
+
+Changed review inputs and business settings now get a warning before an example,
+profile or saved draft replaces them. **Keep a private working copy for recovery**
+explicitly saves form inputs and unsaved reply edits on this computer. Recovery
+leaves policy confirmation unchecked and selects templates. Edits tied to a
+changed or missing draft are shown for inspection instead of overwriting it.
+Only one copy is kept, and it is excluded from judge packets.
+See [Working copy recovery](docs/WORKING_COPY_RECOVERY.md).
+
 ## Inspect edits and record review feedback
 
 New browser drafts retain the starting reply for their current generation.

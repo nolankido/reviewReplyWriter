@@ -10,6 +10,7 @@
   <script src="/review-evidence.js" defer></script>
   <script src="/app.js" defer></script>
   <script src="/feedback.js" defer></script>
+  <script src="/recovery.js" defer></script>
   <script src="/inbox.js" defer></script>
   <script src="/submission.js" defer></script>
 </head>
@@ -61,6 +62,7 @@
     <div class="workspace-grid" id="draft-panel">
       <section class="card compose-card" aria-labelledby="compose-title">
         <header class="card-heading"><span class="step">01</span><div><p class="eyebrow">COMPOSE</p><h2 id="compose-title">Start with the review</h2></div></header>
+        <details id="recovery-panel" class="recovery-panel"><summary>Keep a private working copy for recovery</summary><p class="helper">Save review inputs and unsaved reply edits on this computer before leaving. One copy per workspace. Saving a new copy replaces the earlier one. Nothing is saved here automatically.</p><p id="recovery-status" class="helper" role="status">Check for an earlier copy or save one when you need it.</p><div class="editor-tools"><button id="recovery-check" class="text-button" type="button">Check saved copy</button><button id="recovery-save" class="button secondary" type="button" disabled>Save working copy</button><button id="recovery-restore" class="text-button" type="button" disabled>Recover saved work</button><button id="recovery-clear" class="text-button" type="button" disabled>Discard recovery copy</button></div><p class="helper">Recovery starts in template mode. Owner authorization must be confirmed again. Reply edits from a changed draft are shown for inspection and cannot overwrite its saved text.</p><details id="recovery-orphan" hidden><summary>Reply edits from a changed or missing draft</summary><p class="helper">Compare manually with the current saved draft. This recovered text is not approved for posting.</p><label for="recovery-orphan-text">Recovered reply edits, read only</label><textarea id="recovery-orphan-text" rows="6" readonly spellcheck="false"></textarea></details></details>
         <form id="compose-form">
           <div class="profile-row"><div class="field grow"><label for="profile-select">Business profile</label><select id="profile-select"><option value="">New / unsaved business</option></select></div><span class="local-tag">LOCAL</span></div>
           <div class="field"><label for="business">Business name</label><input id="business" maxlength="150" value="Demo Cafe" required autocomplete="off"></div>
