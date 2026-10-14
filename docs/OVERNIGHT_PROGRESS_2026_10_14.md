@@ -101,14 +101,59 @@ actual operator feedback remain unverified. Historical Gemma receipts are kept.
 
 ## Next useful pass
 
-Inspect uncertain edit/approval saves and read-after-write refresh failures.
-The generation path is now protected, but a lost edit response can leave unsaved
-browser text beside a newer saved revision. Provide deliberate comparison/reload
-without discarding pending edits or accepting stale approvals. Prefer a
-reproducible owner-workflow defect over another feature quota. Privacy-safe backup
-and accessible keyboard/mobile recovery remain useful follow-on priorities.
+Inspect private backup and staged recovery. Current approval-state errors say
+"restore it from backup," but there is no implemented backup path. A bounded
+explicit local backup with a checked inventory and non-overwriting inspection/
+recovery would address that concrete gap. Keep private data out of Git and judge
+exports; do not restore authorization or approval automatically. Reject archive
+paths/links, oversized inputs and incomplete manifests. Preserve current files
+and pending tabs rather than silently replacing them. Keyboard/mobile recovery
+and clearer fallback states remain useful subsequent priorities.
 
 Actions has been failing before any steps run. Inspect new job steps once; do not
 retry or weaken tests to evade the unresolved account/runtime problem. Record
 real failing-code checks separately. No paid infrastructure, repository visibility
 change, public hosting, contest submission or outreach is authorized here.
+
+## Third pass: uncertain edit/approval saves
+
+Startup verified main `9a6e7b5178e7d5fe726624f17a45ff83a7266ceb`, tree
+`cc3ca0b1322b362858f504ebafaa8589c9e3e1f3`, from merged PR #16. The clean
+local tree matched. The current tree had no AGENTS.md and the two older open
+candidate PRs were unchanged; no prior feature was reapplied.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/17
+
+Tested feature commit: `fd981a0cb142117ad7d3c3cc521587616cf051c8`.
+Feature tree: `4a6f983e02488391bb12d62aa81d6b1fda2c9054`, compared equal to
+the complete locally checked tree before committing. The final candidate adds
+this receipt. Verify the final head, full tree and merged main in the PR instead
+of assuming the feature commit remains the published head.
+
+Fixed an acknowledged mutation being hidden by a failed library refresh. Edit,
+approval and set-aside now display the saved view first and report the independent
+read failure without repeating the write. Added a read-only latest saved reply/
+status comparison after uncertain responses or revision conflicts. Explicit
+keep-editor/use-saved choices re-read content and decision state before adoption,
+preserve further pending edits and compose values, and write nothing. They leave
+human-review/policy checkboxes unchecked and copy/export gated for explicit
+successful approval. Stale tabs and personal-handling reviews remain guarded.
+Unsaved same-draft private assessment notes retain their existing protection.
+No automatic browser persistence or new server mutation endpoint was introduced.
+See docs/SAVE_RECONCILIATION.md.
+
+Executed locally: all 436 Python tests; focused six-case real loopback HTTP suite
+with dropped edit/approval responses, stale mutation/copy rejection and unchanged
+saved policy; actual Node controller/core-handler checks in a controlled DOM;
+the existing connection/input Node checks; development checker; JavaScript syntax
+and Python compilation; real Python setup launcher result lookup, recovery,
+editing, private assessment, approval and export. Controlled fixtures are not
+operator feedback or Gemma evidence.
+
+Chromium scenarios for dropped edit/approval responses and failed library reads
+are prepared but unexecuted here. Actual rendering/keyboard/mobile verification,
+Windows batch execution, fresh current-source Gemma and a real operator trial
+remain unverified. Actions steps for the final candidate are inspected in the
+PR without workflow retries or weakened tests. Feature run 38561913138 failed
+before all five jobs' steps (each step array was empty). It ran no test code and
+does not provide cross-platform/browser evidence.
