@@ -29,7 +29,7 @@ class LocalVerificationTests(unittest.TestCase):
     def test_source_bound_results_do_not_claim_browser_model_operator_or_contest(self):
         report, code = self.run_fixture()
         self.assertEqual(code, 0); self.assertTrue(report['development_verified'])
-        self.assertTrue(report['sources_current']); self.assertEqual(len(report['checks']), 15)
+        self.assertTrue(report['sources_current']); self.assertEqual(len(report['checks']), 16)
         for name in ('browser_navigation', 'model_inference'):
             self.assertEqual(report[name], 'not_requested')
         self.assertEqual(report['operator_feedback'], 'not_collected')
@@ -39,7 +39,7 @@ class LocalVerificationTests(unittest.TestCase):
         report, code = verify.verify(self.root, runner=lambda *args: ('passed', 0),
                                     node=False, emit=lambda *args: None)
         self.assertEqual(code, 2); self.assertFalse(report['development_verified'])
-        self.assertEqual(sum(row['state'] == 'unavailable' for row in report['checks']), 8)
+        self.assertEqual(sum(row['state'] == 'unavailable' for row in report['checks']), 9)
 
     def test_failure_timeout_and_unavailable_are_distinct_and_never_pass(self):
         for state, expected in (('failed', 1), ('timed_out', 1), ('unavailable', 2)):
@@ -64,7 +64,7 @@ class LocalVerificationTests(unittest.TestCase):
         report, code = verify.verify(self.root, browser=True, runner=recorded,
                                     node='node', emit=lambda *args: None)
         self.assertEqual(code, 0); self.assertEqual(report['browser_navigation'], 'passed')
-        self.assertEqual(len(calls), 15)
+        self.assertEqual(len(calls), 16)
         self.assertTrue(all(command[-1].endswith('_smoke.py') for command in calls[-4:]))
         self.assertNotIn('install', json.dumps(calls)); self.assertNotIn('ollama', json.dumps(calls))
 

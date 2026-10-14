@@ -131,3 +131,14 @@ until controls are enabled for focus. Approval and exact-revision checks remain
 in place. See [approved-copy fallback](APPROVED_COPY.md) for controlled reproduction,
 534-test/local-verifier evidence and unexecuted real-platform limits. Real browser
 usability and operator success are not inferred from this engineering repair.
+
+## Continued repair: acknowledged and uncertain profile saves
+
+The following continuation reproduced a save acknowledgement hidden by a failed
+profile-list read. Saves now return canonical private settings and a checked
+revision before that refresh. Uncertain writes can be checked read-only while
+preserving current review/settings and leaving authorization unchecked; further
+profile saves wait for a successful read. Existing draft policy/approval is
+unaffected. See [profile-save recovery](PROFILE_SAVES.md) for exact behavior,
+539-test/local-verifier evidence and remaining platform/operator limits. This
+adds recoverability, not a new adoption result or independent policy attestation.

@@ -42,6 +42,12 @@ reply, and recovered review/authorization checkboxes stay unchecked. A failed
 library refresh no longer hides an acknowledged edit or approval.
 See [Saved-change reconciliation](docs/SAVE_RECONCILIATION.md).
 
+Business-profile saves now return the saved settings and their revision before
+refreshing the list. A failed list refresh cannot hide an acknowledged save.
+After an uncertain save, **Check saved profiles** reads the latest private list
+without replacing the current review/settings or restoring authorization. Further
+profile saves wait for that check. [Profile-save recovery](docs/PROFILE_SAVES.md).
+
 ## Back up private review work
 
 After saving pending work and closing the launcher, use `py rrw_backup.py create
@@ -287,7 +293,7 @@ py rrw_verify.py
 ```
 
 One command runs the existing development suite, real launcher/backup HTTP
-workflows and eight Node checks, then saves an explicit local receipt under
+workflows and nine Node checks, then saves an explicit local receipt under
 ignored `.rrw/verification/`. Missing tools and changed source cannot claim a
 complete pass. Browser checks require an already installed development runtime
 and an explicit `--browser`; no tools or models are installed. Receipts exclude

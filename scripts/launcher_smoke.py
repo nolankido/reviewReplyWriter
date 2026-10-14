@@ -24,7 +24,8 @@ HERE = Path(__file__).resolve().parents[1]
 def request(origin, token, action, data):
     conn = http.client.HTTPConnection(origin.hostname, origin.port, timeout=5)
     try:
-        conn.request('POST', '/api/' + action, json.dumps(data),
+        method = 'GET' if action == 'state' else 'POST'
+        conn.request(method, '/api/' + action, None if method == 'GET' else json.dumps(data),
                      {'Content-Type': 'application/json', 'Origin': origin.scheme + '://' + origin.netloc,
                       'X-RRW-Token': token})
         response = conn.getresponse()
@@ -101,6 +102,17 @@ def main():
             exported = request(origin, token, 'approved-text', {'id': draft['id'], 'revision': draft['revision']})
             if exported['text'] != draft['reply']:
                 raise RuntimeError('Approved export differs from the reviewed draft')
+            profiles_before = request(origin, token, 'state', {})
+            saved_profile = request(origin, token, 'profile', {'name': 'demo-proof',
+                'business': 'Demo Cafe', 'kind': 'cafe', 'tone': 'warm', 'platform': 'google',
+                'profiles_revision': profiles_before['profiles_revision']})
+            profiles_after = request(origin, token, 'state', {})
+            if (saved_profile['profiles_revision'] != profiles_after['profiles_revision']
+                    or saved_profile['profile'] != profiles_after['profiles']['demo-proof']
+                    or 'policy_confirmed' in saved_profile['profile']):
+                raise RuntimeError('Profile receipt does not match exact private saved settings and lease')
+            if request(origin, token, 'approved-text', {'id': draft['id'], 'revision': draft['revision']})['text'] != draft['reply']:
+                raise RuntimeError('Saving a business profile changed an approved draft')
             pending_edit = draft['reply'] + '\nPending private edit.'
             copy_state = request(origin, token, 'recovery-get', {})
             saved_copy = request(origin, token, 'recovery-save', {'revision': copy_state['revision'], 'payload': {
@@ -141,6 +153,7 @@ def main():
             print(json.dumps({'launcher': 'windows-batch' if os.name == 'nt' else 'python-setup',
                               'storage_path_with_spaces': True, 'free_port': True,
                               'template_draft_approval_export': True, 'comparison_and_private_notes': True,
+                              'profile_save_receipt': True,
                               'private_working_copy': True, 'generation_result_recovery': True,
                               'quality_checkpoint_lookup': True, 'working_packet_document_leases': True, 'model_calls': 0}))
         finally:
