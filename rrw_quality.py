@@ -227,7 +227,9 @@ def detail_instructions(review, stars=None):
                       'praise_topics': [t['topic'] for t in a['praise']],
                       'preserve_quantities': a['anchors'], 'warnings': a['warnings']}, ensure_ascii=False)
         + '\nAddress every listed complaint, not just the first topic. Preserve the stated wait or amount exactly; '
-          'do not soften 25 minutes to a long wait. Mention one praised detail in mixed feedback. '
+          'do not replace a stated quantity with vague wording. Do not add any number or duration '
+          'unless it occurs in the current review; an empty quantity list is not permission to guess. '
+          'Mention one praised detail in mixed feedback. '
           'Use one clear apology or acknowledgment. Do not claim work is underway or completed. '
           'Do not add offers, instructions or facts from this checklist. Do not repeat thanks.\n')
 
