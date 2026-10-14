@@ -46,6 +46,7 @@ jobs:
           mkdir -p evidence/browser
           set -o pipefail
           python scripts/browser_smoke.py --screenshots evidence/browser | tee evidence/browser/results.json
+          python scripts/quality_browser_smoke.py --screenshots evidence/browser | tee evidence/browser/quality-results.json
       - uses: actions/upload-artifact@v5
         if: always()
         with:
