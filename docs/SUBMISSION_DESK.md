@@ -80,7 +80,13 @@ includes only the video file you explicitly name and never overwrites a packet:
 py rrw_submission.py --output "judge-packet.zip" --video "Review_Reply_Writer_Gemma_Demo.mp4"
 ```
 
-Use the actual path to your video. The CLI requires an ordinary MP4 under 100 MiB.
+Use the actual path to your video. The CLI requires a single-link regular MP4 of
+at most 100 MiB. Leaf symlinks, hard links, directories and named pipes are refused
+before reading. The descriptor read is bounded and rejects observed size,
+identity or modification-time changes before creating a packet. On failure,
+your input file is not modified and no packet is written; choose a stable file
+and a new output filename to retry. This is not protection against deliberate
+local file forgery.
 Its container-header check does not establish that the content is accurate or
 playable. The CLI excludes private evaluations; use the browser's deliberate
 sharing controls to include one. No video is uploaded automatically. A local
