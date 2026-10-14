@@ -32,11 +32,11 @@ they do not establish eligibility or authorize publishing private material.
 | Current repository is private and MIT licensed | Judge access is unconfirmed. The application license does not replace Gemma's separate terms. |
 | Current tracked-path review | The inspected main at `568b8b8d60accff66cf318b8203311889422d7da` has 144 tracked files, no `.rrw/`, `replies/`, `evidence/`, local backup or environment paths, and no Actions workflow files. This is a path inventory, not a secret scan or a full history/artifact audit. |
 
-Nolan must confirm the original work began on or after **October 12, 2026 at
-9 AM Hawaii time**, including work before the archive was uploaded. Review the
-original coding session or other contemporaneous record. If it began earlier,
-do not mark eligibility confirmed or assume later improvements fix that issue.
-Resolve uncertainty with the organizers before representing the entry as eligible.
+On October 14, Nolan confirmed that original coding began **October 13, 2026 at
+approximately 8 AM Hawaii time**, within the stated entry window. The tracked
+development-window flag now records that owner statement. It is not independent
+certification of all contest eligibility, account, credit or licensing rules.
+The archive timestamps remain supporting provenance with the limits above.
 
 For judge access, the simplest route is the existing repository's public URL
 after a deliberate privacy review. Inspect current files, earlier commits,
@@ -55,10 +55,9 @@ route and test the intended judge account. A private URL or a working packet
 alone does not show that judges can inspect the code. No collaborators have
 been invited and no repository setting has been changed by this workflow.
 
-Leave `development_window_confirmed` and `repository_accessible_to_judges` false
-until those facts have actually been checked. The remaining preparation can
-continue while this decision is outstanding; final publication cannot claim
-these items complete.
+`development_window_confirmed` now reflects Nolan's statement above. Leave
+`repository_accessible_to_judges` false until actual access is established and
+checked. Final publication must not claim that outstanding access is complete.
 
 ## 2. Run current Gemma and assess the actual replies
 
