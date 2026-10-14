@@ -26,6 +26,8 @@ MAX_BODY = 128 * 1024
 ASSETS = {'/': ('index.html', 'text/html; charset=utf-8'),
           '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
           '/style.css': ('style.css', 'text/css; charset=utf-8'),
+          '/review-evidence.js': ('review-evidence.js', 'text/javascript; charset=utf-8'),
+          '/review-evidence.css': ('review-evidence.css', 'text/css; charset=utf-8'),
           '/submission.js': ('submission.js', 'text/javascript; charset=utf-8')}
 ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
            '/api/get': 'get', '/api/profile': 'profile', '/api/edit': 'edit',

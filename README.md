@@ -4,6 +4,18 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+## Keep the customer's actual details
+
+The draft editor now shows **Details to keep**, with exact excerpts from the
+saved review and mention checks for the saved reply. Unsaved edits make those
+checks visibly stale until you save and recheck. Try the fictional **Duplicate
+billing** example: the reply should retain both the reported double charge and
+the unanswered question, while acknowledging the praise about the coffee.
+Prompts, fallback drafts and detail checks share the same bounded interpretation.
+These are English pattern checks, not proof that the reply understands the review.
+
+See [the evidence and hackathon assessment](docs/REVIEW_EVIDENCE_PASS.md).
+
 ## High-risk review routing and checked local Gemma calls
 
 Potential poisoning, allergy, harassment, threats, sensitive-data exposure and

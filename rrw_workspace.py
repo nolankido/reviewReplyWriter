@@ -148,7 +148,13 @@ class Workspace:
             status = 'pending'
         if findings:
             status = 'blocked'
+        import review_quality as quality
+        review_evidence = quality.coverage(rr._body(draft['reply'], draft.get('signoff')),
+            draft['review'], None if 'original' in draft else draft.get('stars'))
+        review_evidence.update(source=draft['review'],
+            source_label='Customer update' if 'original' in draft else 'Customer review')
         return dict(draft, id=name, revision=revision, findings=findings,
+                    review_evidence=review_evidence,
                     status=status, approval_invalidated=invalidated,
                     word_count=len(draft['reply'].split()),
                     word_target=rr.PLATFORMS.get(draft.get('platform'), rr.PLATFORMS['generic']))

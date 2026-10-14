@@ -18,7 +18,9 @@ const samples = {
   negative: {business: 'Demo Cafe', kind: 'cafe', stars: 2,
     review: 'Cold coffee and a 25 minute wait. The barista ignored my question about the order. Disappointing.'},
   mixed: {business: 'Demo Stay', kind: 'stay', stars: 3,
-    review: 'Beautiful room and a stunning ocean view, but check-in took forever and the shower pressure was weak.'}
+    review: 'Beautiful room and a stunning ocean view, but check-in took forever and the shower pressure was weak.'},
+  billing: {business: 'Demo Cafe', kind: 'cafe', stars: 3,
+    review: 'The coffee was excellent, but I was charged twice. The waiter ignored my question about the bill.'}
 };
 
 function notify(message, error = false) {
@@ -124,6 +126,7 @@ function fillForm(view) {
   typeChanged(); countReview();
 }
 function clearEditor() {
+  resetReviewEvidence();
   current = null; dirty = false;
   $('editor-empty').hidden = false;
   $('editor-content').hidden = true;
@@ -196,6 +199,7 @@ function renderDraft(view) {
   $('saved-previous').textContent = view.previous || '';
   $('saved-policy').textContent = [view.offer, ...(view.approved_actions || [])].filter(Boolean).join('\n\n') || 'No compensation or action statements authorized.';
   $('reply-editor').value = view.reply;
+  renderReviewEvidence(view.review_evidence, view.reply);
   $('reply-count').textContent = view.word_count + ' words · style target ' + view.word_target.join('-');
   $('dirty-note').hidden = true;
   $('findings-box').className = 'findings' + (view.findings.length ? ' blocked' : '');
