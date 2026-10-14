@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 CORPUS = HERE / 'examples' / 'evaluation_cases.json'
 VERSION = 'rrw-evaluation-v1'
 SOURCES = ('review_reply.py', 'reply_safety.py', 'rrw_risk.py', 'review_quality.py', 'rrw_workspace.py',
-           'rrw_model.py', 'rrw_inbox.py', 'rrw_evaluate.py', 'examples/evaluation_cases.json')
+           'rrw_model.py', 'rrw_generation_status.py', 'rrw_inbox.py', 'rrw_evaluate.py', 'examples/evaluation_cases.json')
 ISSUES = ('unapproved_promise', 'invented_fact', 'missed_complaint',
           'wrong_tone', 'too_generic', 'other')
 STATUSES = ('model', 'template', 'fallback', 'blocked', 'error', 'interrupted')

@@ -143,6 +143,7 @@ class Workspace:
 
     def _view(self, name, state=None):
         from rrw_feedback import comparison
+        from rrw_generation_status import summary
         draft, revision = self._read(name)
         findings = rr.draft_findings(draft)
         state = self._state() if state is None else state
@@ -163,6 +164,7 @@ class Workspace:
         return dict(draft, id=name, revision=revision, findings=findings,
                     reply_comparison=comparison(draft), review_note=self._notes().view(name, revision),
                     review_evidence=review_evidence,
+                    generation_status=summary(draft),
                     status=status, approval_invalidated=invalidated,
                     word_count=len(draft['reply'].split()),
                     word_target=rr.PLATFORMS.get(draft.get('platform'), rr.PLATFORMS['generic']))
@@ -245,7 +247,8 @@ class Workspace:
                 if observe is not None:
                     item['candidate'] = str(answer) if isinstance(answer, str) else None
                 return answer
-            except (OSError, ValueError, urllib.error.URLError) as exc:
+            except (OSError, ValueError, KeyError, urllib.error.URLError) as exc:
+                item['failure'] = 'unavailable' if isinstance(exc, OSError) else 'invalid_response'
                 item['findings'] = [f'Model call failed: {exc}']
                 raise
             finally:
@@ -265,16 +268,19 @@ class Workspace:
                 reply, engine = rr.generate_with_model(
                     draft['review'], draft['business'], draft['tone'], draft['stars'],
                     draft['kind'], rr.DEFAULT_MODEL, **settings)
+        from rrw_generation_status import outcome
+        generation_outcome = outcome(mode, reply is None, reply, trace)
         if reply is None:
-            reason = engine
             if followup:
                 reply = rr.template_followup(draft['original'], draft['previous'], draft['review'],
                     draft['business'], draft['tone'], draft['kind'], random.Random(0), **common)
             else:
                 reply = rr.template_reply(draft['review'], draft['business'], draft['tone'],
                     draft['stars'], draft['kind'], random.Random(0), **common)
-            engine = 'template engine (offline)' if mode == 'offline' else f'template engine (fallback: {reason})'
+            engine = ('template engine (offline)' if mode == 'offline' else
+                      f"template engine (fallback: {generation_outcome['state']})")
         result = dict(draft, reply=reply, engine=engine, generation_trace=trace,
+                      generation_outcome=generation_outcome,
                       generated_at=datetime.now(timezone.utc).isoformat(), human_edited=False)
         result['generation_baseline'] = {key: str(result[key]) for key in ('reply', 'engine', 'generated_at')}
         result['tier'] = rr.review_tier(draft['review'], None if followup else draft.get('stars'))
@@ -283,7 +289,7 @@ class Workspace:
 
     def _write(self, draft, name=None):
         context = {k: draft[k] for k in ('stars', 'offer', 'signoff', 'approved_actions',
-            'original', 'previous', 'choices', 'voice', 'generation_trace', 'generated_at',
+            'original', 'previous', 'choices', 'voice', 'generation_trace', 'generation_outcome', 'generated_at',
             'human_edited', 'generation_baseline', 'inbox_id', 'inbox_row_id', 'generation_request') if k in draft}
         args = (draft['business'], draft['review'], draft['reply'],
                 draft.get('engine', 'imported draft'), draft['tone'], draft['kind'],

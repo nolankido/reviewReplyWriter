@@ -45,6 +45,12 @@ records attempt counts, temperatures, measured call durations, and validation
 findings. Unavailable or rejected model output falls back to a labelled template.
 The interface never calls a template a Gemma-generated reply.
 
+New saved drafts also explain whether Gemma failed to connect, returned an
+unaccepted response, or returned replies rejected by the checks. The saved result
+separates request attempts from checked completion receipts and offers explicit
+setup/Quality Lab navigation without automatically retrying. Older drafts are not
+retroactively certified. See [saved generation results](GENERATION_RESULTS.md).
+
 The browser fixes the model identifier to `gemma3:4b`, uses a direct loopback
 endpoint, disables environment proxy use, and rejects redirects. This does not
 prove that a model alias or the independently running Ollama server is configured

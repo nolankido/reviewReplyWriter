@@ -76,6 +76,7 @@ async function main() {
   vm.createContext(context);
   const section = (start, end) => app.slice(app.indexOf(start), app.indexOf(end));
   vm.runInContext(section('function setBusy(', 'function updateProgress('), context);
+  vm.runInContext(section('function renderGenerationStatus(', 'function renderQueue('), context);
   vm.runInContext(section('function renderQueue(', 'function renderProfiles('), context);
   vm.runInContext(section('function renderDraft(', 'function idRevision('), context);
   context.renderQueue();

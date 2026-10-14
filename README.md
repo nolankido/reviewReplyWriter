@@ -58,6 +58,11 @@ to its saved review/policy summary, while recovered reply edits move to the
 editor. Cancelled replacement guards do not move focus or discard work. See
 [Keyboard recovery handoffs](docs/KEYBOARD_HANDOFF.md) for scope and test limits.
 
+Saved generation results explain connection failures, unaccepted responses and
+rejected model replies separately. Templates stay labelled as not AI output.
+Explicit help buttons open setup or Quality Lab without retrying, installing or
+authorizing anything. See [Saved generation results](docs/GENERATION_RESULTS.md).
+
 ## Inspect edits and record review feedback
 
 New browser drafts retain the starting reply for their current generation.

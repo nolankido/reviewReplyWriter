@@ -15,7 +15,7 @@ import tempfile
 
 HERE = Path(__file__).resolve().parent
 REQUIRED_FILES = ('review_reply.py', 'review_quality.py', 'reply_safety.py', 'rrw_risk.py',
-                  'rrw_model.py', 'rrw_workspace.py', 'rrw_web.py', 'rrw_inbox.py',
+                  'rrw_model.py', 'rrw_generation_status.py', 'rrw_workspace.py', 'rrw_web.py', 'rrw_inbox.py',
                   'rrw_evaluate.py', 'rrw_submission.py', 'rrw_feedback.py', 'rrw_recovery.py', 'rrw_requests.py', 'examples/evaluation_cases.json',
                   'web/index.html', 'web/app.js', 'web/style.css', 'web/inbox.js',
                   'web/inbox.css', 'web/inbox-sample.csv', 'web/submission.js',
