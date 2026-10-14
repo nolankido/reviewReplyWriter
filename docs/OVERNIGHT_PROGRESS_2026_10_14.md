@@ -563,3 +563,32 @@ Tested preparation commit: `8a36b883fd423758f0a900810ae33d743331b556`.
 Tested preparation tree: `4891992a9d04699cffb7518f6b9d02e02ec08d3f`, verified
 equal to the complete local tree before committing. The final candidate adds
 this publication receipt only; its head/tree and merge outcome are in PR #36.
+
+## Owner-confirmed development start and submission continuation
+
+On October 14 at 12:36 PM Hawaii time, Nolan stated that original coding began
+October 13 at approximately 8 AM. The development-window flag now records that
+owner statement, with its basis and approximate time; this is not independent
+certification of all contest eligibility. Judge access, current Gemma evidence,
+claim review and final entry publication remain unconfirmed. No approval or
+other owner confirmation was inferred from this statement.
+
+An isolated official Ollama v0.40.4 download was attempted outside the repository
+for a current-source run. It returned 123,891,712 bytes instead of the official
+1,436,408,810 bytes, failed the published SHA-256 digest and failed zstd integrity
+with premature end. It was not extracted or executed; no Gemma run occurred.
+No alternate download route or GitHub Actions job was used.
+
+Recovered the original live-demo artifact from run 38498807122 and verified its
+GitHub SHA-256 before extracting selected fictional media. Reviewed key frames,
+captions and metadata; the clip shows earlier Gemma output, an unauthorized
+refund block, correction, approval and copy. A local MP4 adds a persistent
+historical-build label and separate captions without accelerating or replacing
+the app footage. It is not a current recording or the new billing demonstration.
+An external hosting attempt required destination approval and did not upload or
+publish anything. DEV account access is incomplete. No source engine changed.
+
+Focused checks confirm the explicit owner statement clears only the
+development-window blocker. All other evidence flags remain false. The previous
+569-test/local-verifier receipt remains the source-code baseline; no new model,
+browser or operator validation is inferred from these documentation changes.
