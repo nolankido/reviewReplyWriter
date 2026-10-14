@@ -42,6 +42,17 @@ reply, and recovered review/authorization checkboxes stay unchecked. A failed
 library refresh no longer hides an acknowledged edit or approval.
 See [Saved-change reconciliation](docs/SAVE_RECONCILIATION.md).
 
+## Back up private review work
+
+After saving pending work and closing the launcher, use `py rrw_backup.py create
+--confirm-private` from the app folder. This writes a checked private archive to
+`.rrw/backups/`. Backups contain customer text, owner policy and private notes;
+they are not encrypted and must not be shared with judges or committed to Git.
+Inspect an archive before relying on it. Recovery only writes to a new directory,
+keeps the original workspace intact and clears posting approvals.
+See [Private backup and recovery](docs/PRIVATE_BACKUP.md) for exact commands,
+included files, limits and opening the recovered workspace.
+
 ## Inspect edits and record review feedback
 
 New browser drafts retain the starting reply for their current generation.

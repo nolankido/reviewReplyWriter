@@ -75,6 +75,11 @@ def model_status():
 class Workspace:
     def __init__(self, root, caller=None):
         self.root = Path(root).resolve()
+        from rrw_backup import require_complete_recovery
+        try:
+            require_complete_recovery(self.root)
+        except (OSError, ValueError) as exc:
+            raise WorkspaceError('Recovered workspace cannot be opened safely. Preserve it and recover the backup into another new directory.') from exc
         self.drafts = self.root / 'replies'
         self.private = self.root / '.rrw'
         self.profiles = self.private / 'profiles.json'

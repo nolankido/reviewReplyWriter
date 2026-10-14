@@ -35,6 +35,8 @@ jobs:
         run: python review_reply.py --file examples/02-angry-cafe.txt --profile moes --offline --seed 0
       - name: Exercise setup launcher and approval through real loopback HTTP
         run: python scripts/launcher_smoke.py
+      - name: Exercise private backup CLI and recovered approval over real HTTP
+        run: python scripts/backup_smoke.py
       - name: Check review-input replacement state
         run: node scripts/input_state_checks.cjs
       - name: Check request deadlines and lost-result state
