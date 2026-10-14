@@ -1,0 +1,262 @@
+{
+  "schema": "rrw-evaluation-v1",
+  "id": "eval-dfb9bc333ea8491b8b5681a72feeefe3",
+  "created_at": "2026-10-14T00:30:10.387066+00:00",
+  "mode": "gemma",
+  "suite": "smoke",
+  "execution": "ollama",
+  "cases": [
+    {
+      "id": "cafe-praise",
+      "label": "Cafe praise",
+      "input": {
+        "business": "Demo Cafe",
+        "review": "The oat milk latte was perfect and the service was quick.",
+        "kind": "cafe",
+        "tone": "professional",
+        "platform": "google",
+        "stars": 5
+      },
+      "expected_tier": "positive",
+      "topics_any": [
+        "latte"
+      ]
+    },
+    {
+      "id": "cafe-complaint",
+      "label": "Cafe complaint",
+      "input": {
+        "business": "Demo Cafe",
+        "review": "Cold coffee and a 25 minute wait. The barista ignored my question. Disappointing.",
+        "kind": "cafe",
+        "tone": "professional",
+        "platform": "google",
+        "stars": 2
+      },
+      "expected_tier": "negative",
+      "topics_any": [
+        "coffee",
+        "wait"
+      ]
+    },
+    {
+      "id": "stay-mixed",
+      "label": "Stay mixed",
+      "input": {
+        "business": "Demo Stay",
+        "review": "Beautiful room and ocean view, but check-in took forever and the shower was weak.",
+        "kind": "stay",
+        "tone": "professional",
+        "platform": "google",
+        "stars": 3
+      },
+      "expected_tier": "mixed",
+      "topics_any": [
+        "check-in",
+        "shower"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "case_id": "cafe-praise",
+      "status": "model",
+      "started_at": "2026-10-14T00:30:10.389374+00:00",
+      "reply": "Thank you so much for your wonderful review! We’re thrilled to hear that our oat milk latte was perfect for you – we truly appreciate you noticing the care we put into crafting those drinks. It’s fantastic that you also found the service quick. \n\nAt Demo Cafe, we always strive to provide a pleasant experience for our customers. We hope you’ll stop by again soon and enjoy another delicious drink. \n\nThe team.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "temperature": 0.8,
+          "prompt_sha256": "f581107008de3c5ea82a810daa9b0ab3e50b346a3f7b218754b01a8d1fd7be43",
+          "findings": [],
+          "receipt": {
+            "transport": "ollama-loopback",
+            "model": "gemma3:4b",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 22014561503,
+            "load_duration": 2847239906,
+            "prompt_eval_count": 431,
+            "prompt_eval_duration": 10760544000,
+            "eval_count": 90,
+            "eval_duration": 8306698000
+          },
+          "candidate": "Thank you so much for your wonderful review! We’re thrilled to hear that our oat milk latte was perfect for you – we truly appreciate you noticing the care we put into crafting those drinks. It’s fantastic that you also found the service quick. \n\nAt Demo Cafe, we always strive to provide a pleasant experience for our customers. We hope you’ll stop by again soon and enjoy another delicious drink. \n\nThe team.",
+          "elapsed_ms": 22031
+        }
+      ],
+      "findings": [],
+      "rubric_findings": [],
+      "elapsed_ms": 22083,
+      "result_sha256": "15991f2ede8ce88abb211c391f9a863f2944b964c6b33663e85fa736b5d80172",
+      "engine": "gemma3:4b via Ollama (local)",
+      "tier": "positive",
+      "finished_at": "2026-10-14T00:30:32.473930+00:00"
+    },
+    {
+      "case_id": "cafe-complaint",
+      "status": "model",
+      "started_at": "2026-10-14T00:30:32.476550+00:00",
+      "reply": "Thank you for taking the time to share your feedback about Demo Cafe. We were very sorry to hear about the cold coffee and the extended wait you experienced. We understand your frustration with our barista not addressing your question – that’s certainly not the level of service we aim to provide. We appreciate you bringing this to our attention. We hope you’ll stop by again soon to give us another chance to show you the quality of coffee and service we typically offer.",
+      "attempts": [
+        {
+          "attempt": 1,
+          "temperature": 0.8,
+          "prompt_sha256": "b462cdcb939e0b6bf5b95e87a70065b0ad38bfde34a954bb837a747c75f2e709",
+          "findings": [
+            "policy: unauthorized business action or promise (have addressed)"
+          ],
+          "receipt": {
+            "transport": "ollama-loopback",
+            "model": "gemma3:4b",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 20665222662,
+            "load_duration": 1533182,
+            "prompt_eval_count": 435,
+            "prompt_eval_duration": 10709103000,
+            "eval_count": 105,
+            "eval_duration": 9904506000
+          },
+          "candidate": "Thank you for taking the time to share your feedback regarding your recent visit to Demo Cafe. We were very concerned to hear about the cold coffee and the 25-minute wait you experienced. Our barista should have addressed your question promptly, and we sincerely apologize that this happened. We strive to provide a positive experience for all our customers. We hope you’ll stop by again soon and give us the opportunity to show you the quality of coffee and service we typically offer. The team at Demo Cafe appreciates your honesty.",
+          "elapsed_ms": 20682
+        },
+        {
+          "attempt": 2,
+          "temperature": 0.3,
+          "prompt_sha256": "01fa2dad61a1c500b7e8aad80a15d033788aabc09a7b503167e3791d562ce9a5",
+          "findings": [],
+          "receipt": {
+            "transport": "ollama-loopback",
+            "model": "gemma3:4b",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 21023780319,
+            "load_duration": 1984107,
+            "prompt_eval_count": 471,
+            "prompt_eval_duration": 12083564000,
+            "eval_count": 95,
+            "eval_duration": 8931731000
+          },
+          "candidate": "Thank you for taking the time to share your feedback about Demo Cafe. We were very sorry to hear about the cold coffee and the extended wait you experienced. We understand your frustration with our barista not addressing your question – that’s certainly not the level of service we aim to provide. We appreciate you bringing this to our attention. We hope you’ll stop by again soon to give us another chance to show you the quality of coffee and service we typically offer.",
+          "elapsed_ms": 21041
+        }
+      ],
+      "findings": [],
+      "rubric_findings": [],
+      "elapsed_ms": 41779,
+      "result_sha256": "a4d5a034019dfaba00a99f3747ec926ca51c0ca2bb6d24ac7dac33261ced94a1",
+      "engine": "gemma3:4b via Ollama (local, after one format retry)",
+      "tier": "negative",
+      "finished_at": "2026-10-14T00:31:14.257411+00:00"
+    },
+    {
+      "case_id": "stay-mixed",
+      "status": "fallback",
+      "started_at": "2026-10-14T00:31:14.262881+00:00",
+      "reply": "Thank you for sharing your feedback about Demo Stay. Your comments about the check-in help us understand your experience. We are sorry that parts of your experience did not meet your expectations. Thank you for explaining what mattered to you in your own words.\n\nWe hope you'll visit again. Thank you for taking the time to share your perspective.\n\n- The Demo Stay team",
+      "attempts": [
+        {
+          "attempt": 1,
+          "temperature": 0.8,
+          "prompt_sha256": "b3b8b6266810e272d362da1445c09ad7894da5d27f395b08d835e27c64e9cc66",
+          "findings": [
+            "an honest acknowledgment of the problem"
+          ],
+          "receipt": {
+            "transport": "ollama-loopback",
+            "model": "gemma3:4b",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 19559010963,
+            "load_duration": 2556735,
+            "prompt_eval_count": 441,
+            "prompt_eval_duration": 11457123000,
+            "eval_count": 86,
+            "eval_duration": 8048654000
+          },
+          "candidate": "Thank you so much for taking the time to share your experience at Demo Stay. We were thrilled to hear you appreciated the beautiful room and the stunning ocean view – it’s truly our priority to provide that memorable setting. We understand your disappointment with the shower pressure; we’re actively working to ensure all our guests enjoy a consistently satisfying experience. We hope you’ll stop by again soon. \n\nThe Demo Stay team",
+          "elapsed_ms": 19577
+        },
+        {
+          "attempt": 2,
+          "temperature": 0.3,
+          "prompt_sha256": "e6673ef6956e6e974bd2c8490786a795672f40f082ae070cf75280620a233872",
+          "findings": [
+            "an honest acknowledgment of the problem"
+          ],
+          "receipt": {
+            "transport": "ollama-loopback",
+            "model": "gemma3:4b",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 21599106956,
+            "load_duration": 1853531,
+            "prompt_eval_count": 473,
+            "prompt_eval_duration": 12219818000,
+            "eval_count": 99,
+            "eval_duration": 9371562000
+          },
+          "candidate": "Thank you so much for taking the time to share your experience at Demo Stay. We were thrilled to hear you enjoyed the beautiful room and, of course, the stunning ocean view! We truly appreciate you highlighting that aspect of your visit.\n\nWe also understand your disappointment with the weak shower pressure – that’s certainly not the standard we aim for. We’re always working to improve our guest’s experience. We hope you’ll stop by again soon.\nThe Demo Stay team",
+          "elapsed_ms": 21616
+        }
+      ],
+      "findings": [],
+      "rubric_findings": [],
+      "elapsed_ms": 41258,
+      "result_sha256": "5be769be3e2f23005aa5d3adf58fb760e895b13a1b236c7a46ac911b223c1bfc",
+      "engine": "template engine (fallback: model missed the reply format twice)",
+      "tier": "mixed",
+      "finished_at": "2026-10-14T00:31:55.527679+00:00"
+    }
+  ],
+  "provenance": "All 30 scenarios are fictional developer-written regression fixtures. They are not customer data, first-user feedback, or an unbiased benchmark.",
+  "corpus_version": "rrw-synthetic-v1",
+  "sources": {
+    "review_reply.py": "b6221f1ae76b5b104653f430ccae772f5a29a21d5de7f78e62818aa1eeffd4c6",
+    "reply_safety.py": "9fd44ec1d51ddbd1ad077fe8e56c0847340c2e22f2b06a327d99442138a53602",
+    "rrw_workspace.py": "9515df4667c7634fe7ed84ae69a2ed00468ecc23c44731639abf102581d88997",
+    "rrw_model.py": "7f399884f8b4199d6d44f16e3ce049cadcd78f7345b1efdd60f6e1315e271d3a",
+    "rrw_evaluate.py": "471d842816de1a7a726151032cb8643363f0f2d4cb55c81315319a5df5533545",
+    "examples/evaluation_cases.json": "31bf76007f6b9b76e424e29b1ff52119746c2f03a1eed7176a2adf452de7211f"
+  },
+  "safety_version": "owner-policy-v1",
+  "preflight": {
+    "ready": true,
+    "model": "gemma3:4b",
+    "state": "installed",
+    "message": "Gemma 3 is installed. Generation quality is not yet verified.",
+    "identity": {
+      "name": "gemma3:4b",
+      "digest": "68ceab7e468a31c988b44d5a4984a0e21f58c4f7158c6ce29c1804babac38df7",
+      "size": 3350272403,
+      "family": "gemma3",
+      "parameter_size": "3.9B",
+      "quantization": "Q4_K_M"
+    },
+    "version": "0.40.3",
+    "local_execution_verified": false,
+    "privacy_note": "A loopback address and model metadata are not a network audit. Enable Ollama local-only mode and restart Ollama.",
+    "steps": [
+      "Start Ollama.",
+      "Run: ollama pull gemma3:4b",
+      "Disable Ollama cloud features and restart it.",
+      "Recheck, then run the Gemma smoke evaluation."
+    ]
+  },
+  "environment": {
+    "python": "3.13.16",
+    "os": "Linux",
+    "architecture": "x86_64"
+  },
+  "parameters": {
+    "model": "gemma3:4b",
+    "temperature_initial": 0.8,
+    "temperature_retry": 0.3,
+    "num_predict": 500,
+    "context": "Ollama server default; not independently inspected",
+    "seed": "Ollama default; repeatable protocol, not guaranteed identical text"
+  },
+  "updated_at": "2026-10-14T00:31:55.528144+00:00",
+  "sha256": "584b8944f6ec558c1d1fb64fbf3532ebcd062aed0c728976af2f4908682e8922"
+}

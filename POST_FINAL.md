@@ -4,9 +4,9 @@ published: false
 tags: devchallenge, hf26challenge
 ---
 
-> TODO: This is an unpublished working draft. Record fresh local Gemma runs,
-> add the demo, verify the contest's development window and public code access,
-> and review all firsthand claims before publishing.
+> TODO: This is an unpublished working draft. A hosted CPU Gemma smoke run is
+> recorded, but owner-device testing, human assessments, the public demo, contest
+> development-window confirmation and judge access still need review.
 
 ## What I Built
 
@@ -62,8 +62,8 @@ file's fingerprint and policy version, so an edit requires another review.
 Tests exercise unauthorized compensation, exact authorization, coached retry,
 fallback failures, per-business policy isolation, follow-up conversations,
 input errors and approval invalidation. Test callers simulate model responses;
-they must not be presented as live Gemma evaluations. Fresh model runs and a
-business-owner usability test are still outstanding.
+they must not be presented as live Gemma evaluations. A separate real Gemma
+smoke run is now retained in the repository; operator usability remains untested.
 
 ## Testing the Difference Between a Demo and Evidence
 
@@ -82,8 +82,15 @@ A human can assess each exact result and preserve corrections beside the origina
 The exported evidence keeps these judgments separate from generated output and
 from posting approval. A recorded evaluation file is now needed for the project's
 release check; toggling a checkbox alone is no longer enough to claim a fresh run.
-Fresh real-model evidence, operator feedback and a public demo still need to be
-supplied and reviewed before publishing this article.
+A real three-case Gemma smoke run on a GitHub-hosted CPU runner produced two
+model-written drafts and one template fallback, with five completed API responses.
+The complaint retry exposed a false positive: "should have addressed" was matched
+as a completed action. The mixed-review fallback was still repetitive. These
+results support another quality pass, not a claim of perfect safety or adoption.
+
+The [measurement report](docs/QUALITY_RESULTS.md) and complete JSON preserve those
+results. No human assessments were manufactured. Operator feedback, user-device
+testing and a public demo still need to be supplied and reviewed before publication.
 
 ## Why Open Innovation Matters
 
