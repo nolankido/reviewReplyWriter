@@ -4,6 +4,16 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+## High-risk review routing and checked local Gemma calls
+
+Potential poisoning, allergy, harassment, threats, sensitive-data exposure and
+legal allegations are now referred to a person before routine generation.
+This intentionally conservative English-language routing may over-refer or miss
+unrecognized wording. Saved drafts, approvals and copy requests are rechecked.
+The CLI uses the browser's checked Ollama adapter, including response completion
+and model identity. Billing and waiter complaints now have improved handling.
+See [the reliability pass](docs/RELIABILITY_PASS_2026_10_13.md).
+
 ## Submission Desk and judge handoff
 
 The browser now has a **Submission Desk** beside Draft workspace and Quality Lab.

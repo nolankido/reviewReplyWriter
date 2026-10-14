@@ -13,6 +13,7 @@ import re
 import sys
 import tempfile
 import review_quality as quality
+from rrw_risk import manual_review_findings
 import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
@@ -100,6 +101,7 @@ def validate_input(review, stars=None, platform="generic", offer=None, approved_
     if platform not in PLATFORMS:
         raise ValueError(f"unknown platform: {platform}")
     validate_owner_statements(offer, approved_actions)
+    require_valid(manual_review_findings(review))
 
 
 def draft_findings(draft):
@@ -136,7 +138,8 @@ def is_negative(review, stars=None):
 def specifics(review):
     """Salient details from the review a reply can echo (up to 3)."""
     low = review.lower()
-    found = [p for p in TOPIC_PHRASES if p in low]
+    brief = quality.analyze(review)
+    found = list(dict.fromkeys(brief['issues'] + brief['praise'] + brief['neutral']))
     if len(found) < 2:
         seen = set(found)
         for tok in _tokens(review):
@@ -165,7 +168,7 @@ def split_specifics(review):
     for clause in clauses:
         clause_neg = any(t in NEGATIVE_WORDS for t in _tokens(clause))
         for phrase in TOPIC_PHRASES:
-            if phrase in clause and phrase not in delights \
+            if re.search(r'(?<!\w)' + re.escape(phrase) + r'(?!\w)', clause) and phrase not in delights \
                     and phrase not in issues:
                 (issues if clause_neg else delights).append(phrase)
     return delights, issues
@@ -249,7 +252,7 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
         validate_owner_statements(offer, approved_actions)
     except ValueError as exc:
         return [f"policy: {exc}"]
-    gaps = []
+    gaps = manual_review_findings(review)
     low = _norm(reply)
     head = low[:160]
     if not any(m in head for m in THANKS_MARKERS):
@@ -378,26 +381,29 @@ def build_prompt(review, business, tone, stars, kind, offer=None,
 
 
 def call_ollama(prompt, model, temperature=0.8):
-    payload = json.dumps({
-        "model": model,
-        "prompt": prompt,
-        "stream": False,
-        "options": {"temperature": temperature, "num_predict": 500},
-    }).encode("utf-8")
-    req = urllib.request.Request(
-        OLLAMA_URL, data=payload,
-        headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=180) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
-    if not isinstance(data, dict) or not isinstance(data.get("response"), str):
-        raise ValueError("Ollama returned no text response")
-    return data["response"].strip()
+    """Share the browser's bounded, checked Ollama transport with the CLI.
+
+    The deferred import avoids an initialization cycle with rrw_workspace.
+    """
+    from rrw_workspace import gemma_caller
+    return gemma_caller(prompt, model, temperature)
 
 
 def specificity_score(reply, review):
-    """How many of the review's specifics the reply actually uses."""
+    """Rank candidates by supported review topics, not substring matches.
+
+    Scoring all recognized topics avoids rewarding a generic response just
+    because its few mentions coincide with the first three display topics.
+    This is a tie-breaker between already validated drafts, not a claim of
+    semantic understanding or quality.
+    """
     body = _norm(_body(reply))
-    return sum(1 for s in specifics(review) if _mentions(body, s))
+    brief = quality.analyze(review)
+    topics = list(dict.fromkeys(brief['issues'] + brief['praise'] + brief['neutral']))
+    value = sum(2 if topic in brief['issues'] else 1
+                for topic in topics if quality.mentions(body, topic))
+    reported = quality.duration_keys(body)
+    return value + 2 * sum(duration in reported for duration in brief['durations'])
 
 
 def generate_with_model(review, business, tone, stars, kind, model,
@@ -535,7 +541,7 @@ def followup_gaps(reply, original, previous, update, business,
         validate_owner_statements(offer, approved_actions)
     except ValueError as exc:
         return [f"policy: {exc}"]
-    gaps = []
+    gaps = manual_review_findings(original) + manual_review_findings(update)
     low = _norm(reply)
     # The opening only: an 'again' buried in the closing invitation
     # ('stop by again soon') is not an acknowledgment of anything.
@@ -670,6 +676,7 @@ def generate_followup(original, previous, update, business, tone, kind,
                       model, caller=None, offer=None, signoff=None,
                       platform="generic", ledger_path=None, voice=None, approved_actions=None):
     """(reply, engine) for a follow-up, or (None, reason)."""
+    validate_input(original, None, platform, offer, approved_actions)
     validate_input(update, None, platform, offer, approved_actions)
     if caller is None:
         caller = call_ollama
@@ -713,6 +720,7 @@ def template_followup(original, previous, update, business, tone, kind,
                       rng, offer=None, signoff=None, platform="generic",
                       approved_actions=None):
     """Never escalate or repeat an already used offer without authorization."""
+    validate_input(original, None, platform, offer, approved_actions)
     validate_input(update, None, platform, offer, approved_actions)
     tier = review_tier(update)
     spent = bool(offer) and _norm(offer) in _norm(previous)

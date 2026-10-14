@@ -58,10 +58,10 @@ main{padding:38px 42px 20px;max-width:1620px;width:100%;margin:auto}
 .card-heading .eyebrow{margin-bottom:3px;font-size:9px}
 .step{display:grid;place-items:center;width:34px;height:34px;flex-shrink:0;border-radius:50%;background:var(--tint);color:var(--green);font-size:11px;font-weight:650}
 .field{margin:0 0 15px;min-width:0}
-label{display:block;font-size:11px;font-weight:650;margin-bottom:6px}
-input:not([type=checkbox]),select,textarea{display:block;border:1px solid #dbe3e1;border-radius:8px;padding:10px 11px;width:100%;background:#fff;color:var(--ink);font-size:12px;min-height:39px}
+label{display:block;font-size:12px;font-weight:650;margin-bottom:6px}
+input:not([type=checkbox]),select,textarea{display:block;border:1px solid #dbe3e1;border-radius:8px;padding:10px 11px;width:100%;background:#fff;color:var(--ink);font-size:14px;min-height:39px}
 textarea{resize:vertical;line-height:1.7;min-height:70px}
-textarea::placeholder,input::placeholder{color:#82918f}
+textarea::placeholder,input::placeholder{color:#536a68}
 textarea:focus,input:focus,select:focus{outline:2px solid #7caf9c;outline-offset:1px;border-color:var(--green)}
 button:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #7caf9c;outline-offset:3px}
 .fields{display:grid;gap:12px}

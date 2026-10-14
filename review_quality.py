@@ -9,7 +9,7 @@ import re
 import unicodedata
 
 QUALITY_VERSION = 'review-detail-v1'
-NEGATIVE = set('terrible awful horrible worst rude slow cold dirty broken disappointed disappointing waste overpriced stale bland soggy burnt bitter wait waited waiting forever ignored wrong missing never avoid meh underwhelming mediocre pricey expensive tasteless watery loud cramped uncomfortable late weak delayed delay damaged poor bad unhelpful failed'.split())
+NEGATIVE = set('terrible awful horrible worst rude slow cold dirty broken disappointed disappointing waste overpriced stale bland soggy burnt bitter wait waited waiting forever ignored wrong missing never avoid meh underwhelming mediocre pricey expensive tasteless watery loud cramped uncomfortable late weak delayed delay damaged poor bad unhelpful failed overcharged duplicate twice'.split())
 POSITIVE = set('amazing great excellent wonderful fantastic delicious friendly fresh cozy perfect loved love best beautiful helpful quick fast attentive generous spotless charming delightful tasty smooth rich lovely favorite favourite gem welcoming relaxing stunning comfortable incredible good'.split())
 # Most-specific alternatives precede their general topics. Overlapping matches
 # collapse, so 'oat milk latte' is not counted twice as 'latte'.
@@ -25,7 +25,8 @@ TOPICS = (
     ('dinner', r'dinner'), ('parking', r'parking'), ('wifi', r'wi[ -]?fi'),
     ('shower', r'showers?'), ('bed', r'beds?'), ('room', r'rooms?'),
     ('view', r'views?'), ('pool', r'pools?'), ('beach', r'beach'),
-    ('staff', r'staff|servers?|baristas?'), ('service', r'service'),
+    ('staff', r'staff|servers?|baristas?|waiters?|waitresses?'), ('service', r'service'),
+    ('billing', r'bill(?:ing|ed|s)?|charg(?:e|ed|es|ing)|payments?|overcharg\w*|double[ -]charged'),
     ('wait', r'wait(?:ed|ing|s)?|queues?|line'), ('price', r'price|cost'),
     ('portion', r'portions?'), ('packaging', r'packaging'),
     ('shipping', r'shipping'), ('delivery', r'delivery'), ('quality', r'quality'),

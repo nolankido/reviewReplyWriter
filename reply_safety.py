@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v2-detail"
+SAFETY_VERSION = "owner-policy-v3-sensitive-triage"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 
@@ -81,6 +81,8 @@ _RULES = (
         r"\b(?:on\s+the\s+house|(?:is|be|are)\s+on\s+us|at\s+no\s+(?:cost|charge)|"
         r"no\s+(?:extra\s+)?(?:cost|charge|return\s+shipping)|won't\s+charge|will\s+not\s+charge|"
         r"waiv\w*\s+(?:the\s+|your\s+)?(?:fee|charge)|pick\s+up\s+the\s+tab)\b|"
+        r"\b(?:your|the|our)\s+(?:next\s+)?(?:\w+\s+){0,3}is\s+(?:our|my)\s+treat\b|"
+        r"\b(?:comes?|available)\s+with\s+(?:our|my)\s+compliments\b|"
         r"\b\d+(?:\.\d+)?\s*%\s*(?:off|discount)\b", re.I)),
     ("unauthorized business action or promise", re.compile(
         r"\b(?:we|i|our\s+(?:team|staff|manager|owner)|management)\s*"
@@ -92,6 +94,13 @@ _RULES = (
         r"\b(?:we|i)\s*(?:'ll|will|shall|promise\s+to|guarantee)\b|"
         r"\b(?:has|have|is|are|was|were)\s+(?:already\s+|now\s+|been\s+)*"
         r"(?:fixed|repaired|replaced|resolved|retrained|addressed|refunded|sorted)\b|"
+        r"\b(?:the|our|a|an)\s+(?:barista|employee|staff|manager|waiter|waitress|technician)"
+        r"\s+(?:has|have|was|were)\s+(?:been\s+)?"
+        r"(?:dismissed|fired|terminated|disciplined|retrained|suspended)\b|"
+        r"\b(?:the|our|a|an)\s+(?:coffee\s+)?(?:machine|system|equipment|shower|appliance)"
+        r"\s+(?:has\s+|have\s+)?(?:underwent|undergone|received|had)\s+(?:an?\s+)?"
+        r"(?:repair|repairs|servicing|replacement)\b|"
+        r"\b(?:an?\s+)?investigation\s+(?:has\s+been\s+)?(?:opened|launched|completed|concluded)\b|"
         r"\b(?:never\s+happen\s+again|won't\s+happen\s+again|will\s+not\s+happen\s+again)\b", re.I)),
     ("unauthorized customer instruction", re.compile(
         r"\b(?:contact|call|email|message|dm|text)\s+(?:us|me|the\s+(?:owner|manager))\b|"
@@ -113,6 +122,8 @@ def policy_gaps(reply, offer=None, approved_actions=None):
     except ValueError as exc:
         return [f"policy: {exc}"]
     remainder = _strip_authorized(_policy_text(reply), statements)
+    # 'Feel free' is benign; later 'free' goods remain checked.
+    remainder = re.sub(r'\bfeel\s+free\b', 'feel welcome', remainder)
     # 'That's on us' is an apology, not permission for free goods.
     remainder = re.sub(r"\b(?:that's|that is|the mistake is) on us\b", "our mistake", remainder)
     findings = []

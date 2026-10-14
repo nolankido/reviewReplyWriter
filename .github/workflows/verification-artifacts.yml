@@ -1,8 +1,7 @@
 name: Verification evidence
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read

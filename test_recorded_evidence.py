@@ -5,6 +5,11 @@ import rrw_evaluate as ev
 
 
 class RecordedEvidenceTests(unittest.TestCase):
+    def test_manual_triage_code_is_in_evidence_fingerprint(self):
+        self.assertIn('rrw_risk.py', ev.SOURCES)
+        report = ev.load_report(Path(__file__).parent / 'examples/evaluation/live-quality-smoke-2026-10-13.json')
+        self.assertNotEqual(report['sources'], ev.source_snapshot())
+
     def test_historical_live_record_is_intact_and_unreviewed(self):
         report = ev.load_report(Path(__file__).parent / 'examples/evaluation/live-smoke-2026-10-13.json')
         summary = ev.summarize(report)

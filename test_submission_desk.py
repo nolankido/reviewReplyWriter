@@ -76,6 +76,15 @@ class SubmissionTests(unittest.TestCase):
         path=folder/(report['id']+'.json');path.write_text(json.dumps(report),encoding='utf-8')
         return report,path
     def ready_view(self):
+        # Exercise a *hypothetical* source-matched evidence handoff while
+        # retaining the original historical report, raw replies and receipts.
+        # These temporary mocks only affect the unit test; they do not turn
+        # the historical run into evidence for the changed engine.
+        reference_sources = quality.load_report(HERE/REFERENCE)['sources']
+        for module in (quality, __import__('rrw_submission')):
+            patcher = patch.object(module, 'source_snapshot', return_value=reference_sources)
+            patcher.start()
+            self.addCleanup(patcher.stop)
         report,_=self.local_report(True)
         view=self.save(demo_url='https://youtu.be/unit-test-not-real',evaluation_id=report['id'])
         return self.save(view,**{key:True for key in CONFIRMATIONS})
@@ -86,8 +95,9 @@ class SubmissionTests(unittest.TestCase):
         self.assertTrue(all(view['values'][k] is False for k in CONFIRMATIONS))
         self.assertFalse(self.desk.path.exists());self.assertIn('TODO',view['post'])
 
-    def test_existing_live_evidence_matches_unchanged_engine(self):
-        view=self.desk.state();self.assertTrue(view['reference_sources_current'])
+    def test_existing_live_evidence_is_historical_after_engine_change(self):
+        view=self.desk.state();self.assertFalse(view['reference_sources_current'])
+        self.assertIn('historical', ' '.join(view['internal_blockers']))
         self.assertEqual(view['reference_summary']['genuine_model_drafts'],3)
         self.assertEqual(view['reference_summary']['human_reviewed'],0)
 
