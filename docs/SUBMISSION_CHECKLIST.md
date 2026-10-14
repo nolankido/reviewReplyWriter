@@ -4,6 +4,23 @@ Checked October 14, 2026. This document separates contest requirements from this
 project's stronger internal evidence checks. No entry has been published by this
 workflow and no repository visibility setting has been changed.
 
+October 14 follow-up: the entry is saved as DEV draft **6206742** under Nolan
+Kido's **@kidon** account, using the official template, both required tags and
+the Fully Autonomous writing disclosure. It is not a published entry.
+The [historical demo](https://share.descript.com/view/n1ZTnZpfNyB) is hosted
+unlisted in Descript and played through its 67.8-second duration in a browser
+showing **Sign in**, without a player error. The video labels the earlier source
+throughout; it does not clear current-source Gemma or human-assessment gates.
+Repository visibility is still private. Public code access and the four
+remaining internal release blockers below must not be reported as complete.
+
+Saved editor: https://dev.to/kidon/the-model-writes-the-review-reply-the-owner-keeps-the-promises-47bm-temp-slug-6206742/edit
+This account-specific editing link is not a public entry or judge-access link.
+
+Latest executed `python check_submission.py --release`: 569 Python tests green;
+blocked on repository access, current Gemma evidence, firsthand claim review and
+the selected assessed evaluation report. No checker was weakened to publish.
+
 ## Official entry requirements
 
 Source: https://dev.to/page/hacktoberfest-week2-2026-10-12-contest-rules
