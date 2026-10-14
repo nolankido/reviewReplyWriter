@@ -55,10 +55,35 @@ def main():
                 assert page.locator('#quality-case-reply').inner_text()==original
                 assert page.evaluate('window.bad || 0')==0
                 checks.append('Assessment preserves original output and handles markup as inert text')
-                for i in (2,3):
-                    page.locator('#quality-next').click()
-                    expect(page.locator('#quality-metrics')).to_contain_text(str(i)+'/3')
-                    expect(page.locator('#notice')).to_contain_text('Case recorded')
+                def drop_case_response(route):
+                    response = route.fetch()
+                    assert response.status == 200
+                    route.abort('failed')
+                page.route('**/api/quality-step', drop_case_response)
+                page.locator('#quality-next').click()
+                expect(page.locator('#quality-recovery-message')).to_contain_text('uncertain')
+                expect(page.locator('#quality-next')).to_be_disabled()
+                expect(page.locator('#quality-json')).to_be_disabled()
+                page.unroute('**/api/quality-step', drop_case_response)
+                pending = 'Controlled pending assessment after a lost case response'
+                page.locator('#quality-notes').fill(pending)
+                page.locator('#quality-recovery-check').click()
+                expect(page.locator('#quality-recovery-message')).to_contain_text('2/3 saved cases')
+                expect(page.locator('#quality-notes')).to_have_value(pending)
+                expect(page.locator('#quality-recovery-message')).to_be_focused()
+                page.once('dialog', lambda dialog: dialog.dismiss())
+                page.locator('#quality-recovery-load').click()
+                expect(page.locator('#quality-notes')).to_have_value(pending)
+                page.once('dialog', lambda dialog: dialog.accept())
+                page.locator('#quality-recovery-load').click()
+                expect(page.locator('#quality-metrics')).to_contain_text('2/3')
+                expect(page.locator('#quality-progress')).to_be_focused()
+                expect(page.locator('#quality-reviewed')).not_to_be_checked()
+                assert len(workspace.evaluations.dispatch('quality-get', {'id': workspace.evaluations.dispatch('quality-list', {})['runs'][0]['id']})['results']) == 2
+                checks.append('Lost case response is checked without replacing pending assessment text, then loaded explicitly without a duplicate case')
+                page.locator('#quality-next').click()
+                expect(page.locator('#quality-metrics')).to_contain_text('3/3')
+                expect(page.locator('#notice')).to_contain_text('Case recorded')
                 expect(page.locator('#quality-next')).to_be_disabled()
                 expect(page.locator('#quality-evidence-gaps')).to_contain_text('not a real Ollama evaluation')
                 assert list(workspace.drafts.iterdir())==[]

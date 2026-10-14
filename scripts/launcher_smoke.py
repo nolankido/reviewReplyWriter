@@ -116,10 +116,20 @@ def main():
             cleared = request(origin, token, 'recovery-clear', {'revision': saved_copy['revision']})
             if cleared['available'] or cleared['revision'] == 'new':
                 raise RuntimeError('Clearing a working copy did not retain its revision tombstone')
+            evaluation = request(origin, token, 'quality-start', {'mode': 'offline', 'suite': 'smoke'})
+            evaluation = request(origin, token, 'quality-step', {'id': evaluation['id'], 'revision': evaluation['revision']})
+            checked = request(origin, token, 'quality-get', {'id': evaluation['id']})
+            if (evaluation['active'] or checked['active'] or checked['revision'] != evaluation['revision']
+                    or checked['summary']['template'] != 1 or checked['summary']['genuine_model_drafts'] != 0):
+                raise RuntimeError('Saved template evaluation checkpoint was misrepresented')
+            after_quality = request(origin, token, 'approved-text', {'id': draft['id'], 'revision': draft['revision']})
+            if after_quality['text'] != draft['reply']:
+                raise RuntimeError('Quality checkpoint reads changed the approved owner draft')
             print(json.dumps({'launcher': 'windows-batch' if os.name == 'nt' else 'python-setup',
                               'storage_path_with_spaces': True, 'free_port': True,
                               'template_draft_approval_export': True, 'comparison_and_private_notes': True,
-                              'private_working_copy': True, 'generation_result_recovery': True, 'model_calls': 0}))
+                              'private_working_copy': True, 'generation_result_recovery': True,
+                              'quality_checkpoint_lookup': True, 'model_calls': 0}))
         finally:
             if process.poll() is None:
                 if os.name == 'nt':

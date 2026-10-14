@@ -287,3 +287,61 @@ Next highest-value inspection: interrupted Quality Lab/demo requests and saved
 checkpoint recovery. Improve any observable uncertain-result gap without
 duplicate model calls or misleading incomplete evidence. Recheck current main,
 active work and these receipts before choosing the next bounded pass.
+
+## Seventh pass: check interrupted Quality Lab checkpoints
+
+Startup at 2026-10-14 14:59 UTC verified main
+`07c22d9e8353b4bf109d93dafd5f51f93f811cad`, tree
+`99055ae1743fa5cc4070780c9b6608d6faea5e7f`, merged PR #20. It matched the
+clean local source. No AGENTS.md or new active PR required repair. The two older
+candidate PRs were unchanged and were not reapplied.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/21
+
+Tested feature commit: `ac5ee02b253c9b09e05ef866e24ae16620d86dfc`.
+Feature tree: `e5c3690b4d583c7404f45011bb8e7a565f65b767`, compared equal
+to the complete locally tested tree before committing. The final candidate adds
+this receipt; its exact head/tree/merge are recorded in the PR and must be
+verified fresh.
+
+Observed gaps: lost case/assessment responses only gave a generic error, successful
+case responses retained a stale active flag, and failed list refreshes hid
+acknowledged writes. The new saved-checkpoint check is read-only and retains
+pending notes/corrections. Explicit loading re-reads the checked revision,
+refuses stale/active checkpoints and respects discard cancellation. It clears
+review/new-run confirmation, not customer compose/editor values or policy.
+Uncertain/active state gates cases, assessments and exports, including form/
+programmatic activation. Running reservations are not called completed results.
+Acknowledged writes display before the independent list read. Successful case
+responses now mark the finished checkpoint inactive. Interrupted rows remain
+honest after restart and continuation skips, rather than repeats, their slots.
+See docs/QUALITY_REQUEST_RECOVERY.md.
+
+No automatic inference, retry, polling, download, configuration change, posting
+or new browser persistence was added. Check state is tab-local; reopened runs
+are selected from saved evaluations. Unsaved assessment text is not recovered
+automatically after reload. Lost creation has explicit refresh/select guidance,
+not idempotent creation receipts. A failed final checkpoint retains the reserved
+interruption and is not promoted to saved completed evidence.
+
+Executed locally: all 488 Python tests, including eight new real loopback lost
+case/assessment response, active/stale gate, restart, interruption, final-write
+failure, byte-preservation and markup regressions; development checker; all six
+actual Node state scripts, including real Quality Lab functions/handlers in a
+controlled DOM; both Python launcher HTTP workflows; offline CLI; JavaScript
+syntax, Python compilation and whitespace checks. The launcher now reads a
+saved template evaluation while preserving the exact approved owner-draft
+fixture. New caller/state fixtures are fictional templates, not operator
+feedback or Gemma evidence.
+
+Feature Actions run 38587285051 failed before all five jobs' steps (each array
+empty). Final candidate jobs are inspected in the PR without workflow retries
+or weakened checks. Dropped-response Chromium scenarios were extended but not
+executed. Real Windows batch, Chromium/mobile/screen-reader behavior, fresh
+Gemma inference and operator feedback remain unverified. Historical receipts
+are preserved and not promoted to current-source evidence.
+
+Next useful inspection: inbox import/note/step failure paths for retained owner
+text and safe saved-result binding. Recheck current main, active work and these
+receipts first; repair an observable gap rather than duplicating completed
+recovery features or inventing evidence to meet an improvement quota.
