@@ -49,6 +49,8 @@ jobs:
         run: node scripts/generation_status_checks.cjs
       - name: Check interrupted quality results without replaying cases or losing assessments
         run: node scripts/quality_recovery_checks.cjs
+      - name: Check pending inbox source and private handling input protection
+        run: node scripts/inbox_input_checks.cjs
 
   browser:
     runs-on: ubuntu-latest

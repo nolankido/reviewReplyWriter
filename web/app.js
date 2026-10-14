@@ -439,7 +439,7 @@ $('engine-mode').addEventListener('change', () => {
     ? 'Uses gemma3:4b through local Ollama. Enable Ollama local-only mode. Rejected or unavailable output falls back to a labelled template.'
     : 'Template preview lets you try the workflow without a model. Nothing is posted.';
 });
-window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || qualityNeedsCheck || (window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention()) || (window.rrwGeneration && window.rrwGeneration.hasPending()) || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || qualityNeedsCheck || (window.rrwInbox && window.rrwInbox.hasUnsaved()) || (window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention()) || (window.rrwGeneration && window.rrwGeneration.hasPending()) || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
 
 
 // Quality experiments are separate from real drafts and publication approvals.
