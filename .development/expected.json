@@ -1,0 +1,19 @@
+{
+ ".github/workflows/tests.yml": "f4a5ac51363a90543c528d3608ec9afee2e359034e5bf196e60543a33069bd78",
+ "POST_FINAL.md": "eb239faf7b3d9ee79b91bca8f8c9ca3fb88613c5b12e540225edadf7349b48b7",
+ "README.md": "63849c0eb707eb2072cf99f3d31efe55cd3a6a299450c01a53469b9700b2e155",
+ "check_submission.py": "7b02d142b57aaae52e9702de00f2581e8647f65db05f40b553b4a333ca070638",
+ "docs/QUALITY_LAB.md": "7382696a99af66e1cd71c5ded469f927268c82898240eff3213587920b58d299",
+ "docs/submission_evidence.json": "0394eb665d7f67caaf0a38d43b2de36b8d769e20fff96f5d0baaf016a81ea7a7",
+ "examples/evaluation_cases.json": "31bf76007f6b9b76e424e29b1ff52119746c2f03a1eed7176a2adf452de7211f",
+ "rrw_evaluate.py": "471d842816de1a7a726151032cb8643363f0f2d4cb55c81315319a5df5533545",
+ "rrw_model.py": "7f399884f8b4199d6d44f16e3ce049cadcd78f7345b1efdd60f6e1315e271d3a",
+ "rrw_web.py": "7114104b666db88b03c9e71b4ea23ff983bb4547c1bd19dfaceb1d06f380012c",
+ "rrw_workspace.py": "9515df4667c7634fe7ed84ae69a2ed00468ecc23c44731639abf102581d88997",
+ "scripts/quality_browser_smoke.py": "6a0e139d54a09e3436f12b668ad526dfe6b59b4f4ddbabec87410a9c2cd2de4c",
+ "test_evaluation_http.py": "c58287a34d478b56eb059db37d6693fab4420c751311266f3b4205fa829502a8",
+ "test_evaluation_lab.py": "4752c565eaecd295c50e1980bb213028c3b4ad18730925f87ce74caff0a74595",
+ "web/app.js": "cee42d4c00cfac04fdd3d4906d4bd40ed56eab53f7be16ab04accebe22c09b6d",
+ "web/index.html": "5bc1d2f8de174060117696aa3589e462eb0fbbfd09de524f18f59d54308cb336",
+ "web/style.css": "da63ec65906be84b958745cb7a2b2014179bfdf87aa41efad5f3d216e146b7bb"
+}
