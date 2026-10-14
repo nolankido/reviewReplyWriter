@@ -27,14 +27,17 @@ jobs:
           python check_submission.py | tee evidence/development-check.txt
           node --check web/app.js
           git diff --check
-      - name: Commit exact verified files to development branch only
+      - name: Commit exact verified application files to development branch only
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Workflow edits are delivered separately through the authorized GitHub connector.
+          # The runner token has no workflow-write permission.
+          git restore -- .github/workflows/tests.yml
           python - <<'PY'
           import json, subprocess
           from pathlib import Path
-          names = list(json.loads(Path('.development/expected.json').read_text()))
+          names = [name for name in json.loads(Path('.development/expected.json').read_text()) if not name.startswith('.github/')]
           subprocess.run(['git', 'add', '--', *names], check=True)
           PY
           git commit -m 'Integrate fingerprint-verified Quality Lab and model evidence pipeline'
