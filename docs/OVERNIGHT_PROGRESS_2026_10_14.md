@@ -630,3 +630,11 @@ the target-machine Gemma/assessment evidence, and publish the existing DEV draft
 under the existing authorization after its remaining claims and access are ready.
 The GitHub connector cannot change repository visibility; its browser settings
 page currently requires GitHub sign-in. Do not create a duplicate DEV entry.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/38
+
+Tested hosting/article commit: `cc5e8b640a988f773b839c0768fa0891886fc50c`.
+Verified full candidate tree: `22c5add33f2ac15d03cc95101b7d421f791ac067`.
+All 40 focused submission/checker tests also passed after fixing the actual DEV
+paragraph rendering. The final candidate adds only this review receipt; its
+final head/tree and merge outcome are recorded in PR #38.
