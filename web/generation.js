@@ -63,9 +63,8 @@
       // Opening is explicit. Never overwrite a newer draft or form in response
       // to a late completion, and never restore policy authorization.
       fillForm(view); renderDraft(view, true); clear();
-      notify(changed ? 'The saved draft changed. Its current version is open. Read the reply and policy again.'
+      await refreshAfterSaved(changed ? 'The saved draft changed. Its current version is open. Read the reply and policy again.'
         : 'Saved generation opened. Read the current reply and policy before approving.');
-      await refreshWorkspace();
     });
   });
   $('generation-dismiss').addEventListener('click', () => {
