@@ -153,3 +153,13 @@ rewriting private files on read. See [planned-action checks](PLANNED_ACTIONS.md)
 for the reproduction, 547-test/local-verifier evidence and conservative English
 pattern limits. The unexecuted target-machine/operator evidence remains the
 lowest-scoring item; this controlled repair does not raise that evidence score.
+
+## Continued repair: fractional wait durations
+
+The next continuation reproduced a 1.5-hour wait being read as five hours,
+causing a template to reject its own invented duration. Shared parsing now
+preserves bounded decimal spelling through prompts, templates, validation and
+source-linked checks without rounding or unit conversion. Unsupported numeric
+tails are not guessed. See [fractional durations](FRACTIONAL_DURATIONS.md) for
+555-test/local-verifier and real loopback evidence. Previous approvals require
+fresh review; current platform, Gemma and operator evidence remain outstanding.

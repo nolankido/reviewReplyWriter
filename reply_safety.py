@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v7-planned-actions"
+SAFETY_VERSION = "owner-policy-v8-fractional-durations"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 
