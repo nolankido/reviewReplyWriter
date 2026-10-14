@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v4-source-evidence"
+SAFETY_VERSION = "owner-policy-v5-owner-workflow"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 

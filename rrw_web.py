@@ -39,7 +39,7 @@ ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
 ACTIONS.update({f'/api/quality-{action}': f'quality-{action}' for action in
     ('diagnostics', 'list', 'get', 'start', 'step', 'assess', 'export')})
 ACTIONS.update({f'/api/inbox-{action}': f'inbox-{action}' for action in
-    ('preview', 'create', 'list', 'get', 'step', 'skip', 'retry')})
+    ('preview', 'create', 'list', 'get', 'step', 'skip', 'retry', 'note')})
 
 
 ACTIONS.update({f'/api/submission-{action}': f'submission-{action}'

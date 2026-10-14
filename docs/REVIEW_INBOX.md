@@ -89,6 +89,20 @@ approval. Imported rows and saved inbox status cannot grant posting approval.
 Personal data remains plaintext on the computer. Judge-packet exports use their
 existing allowlist and do not scan or include inbox files.
 
+## Personal-handling notes
+
+Manual items now have **Read for personal handling** and **Record private
+handling** controls. The dedicated screen clears any older draft from the
+active editor. A private note and explicit handled checkbox track your own
+work without generating a reply or granting posting approval. A brief note is
+required to mark an item handled, and handling can be reopened.
+
+Saved notes survive reopening. Unsaved notes require confirmation before inbox
+actions that replace the displayed queue. Notes are local plaintext, stay out
+of model prompts and owner policy, and are excluded from judge-packet exports.
+Handled items retain their manual-only classification. Handling status is your
+attestation, not independent verification of an external action.
+
 ## Verification
 
 The final local suite has **341 passing Python tests**, including 29 new methods

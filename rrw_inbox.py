@@ -147,6 +147,9 @@ class ReviewInbox:
                 stars = row.get('stars')
                 if stars is not None and (type(stars) is not int or not 1 <= stars <= 5):
                     raise WorkspaceError('Saved inbox rating is malformed.')
+            text(row.get('handling_note', ''), 'Private handling note', 1200)
+            if type(row.get('handled', False)) is not bool:
+                raise WorkspaceError('Manual handling status is malformed.')
         return record
 
     def _save(self, record):
@@ -260,7 +263,9 @@ class ReviewInbox:
             rows.append(row)
         return dict(record, revision=record['sha256'], rows=rows,
                     active=self.active == record['id'],
-                    counts={status: sum(r['status'] == status for r in rows) for status in STATUSES})
+                    counts=dict({status: sum(r['status'] == status for r in rows) for status in STATUSES},
+                        manual_open=sum(r['status'] == 'manual' and not r.get('handled', False) for r in rows),
+                        manual_handled=sum(r['status'] == 'manual' and r.get('handled', False) for r in rows)))
 
     def step(self, data):
         if data.get('mode') not in ('offline', 'gemma'):
@@ -321,7 +326,16 @@ class ReviewInbox:
             row = next((r for r in record['rows'] if r['id'] == data.get('row_id')), None)
             if row is None:
                 raise WorkspaceError('Review row not found.', 404)
-            if action == 'inbox-skip' and row['status'] in ('pending', 'interrupted', 'error'):
+            if action == 'inbox-note' and row['status'] == 'manual':
+                note = text(data.get('note'), 'Private handling note', 1200)
+                handled = data.get('handled')
+                if type(handled) is not bool:
+                    raise WorkspaceError('Choose whether personal handling is complete.')
+                if handled and not note:
+                    raise WorkspaceError('Record a brief private note before marking this review handled.')
+                row.update(handling_note=note, handled=handled,
+                           handling_updated_at=datetime.now(timezone.utc).isoformat())
+            elif action == 'inbox-skip' and row['status'] in ('pending', 'interrupted', 'error'):
                 row.update(status='skipped')
             elif action == 'inbox-retry' and row['status'] in ('interrupted', 'error') and not row.get('recovery_conflict'):
                 # Recover a saved candidate before retrying, even if the earlier

@@ -115,6 +115,7 @@ def main():
                 page.get_by_role('button', name='Demo Cafe: Needs review', exact=True).click()
                 expect(page.locator('#reply-editor')).to_have_value(original + '\nThank you.')
                 assertions.append('Session reload and saved draft reopening preserve content')
+                expect(page.locator('.review-progress li[aria-current=step]')).to_contain_text('Read')
                 # Save an owner profile, then verify an exact authorized statement.
                 page.locator('#owner-policy').evaluate('(el) => el.open = true')
                 page.locator('#approved-actions').fill('We have repaired the coffee machine.')

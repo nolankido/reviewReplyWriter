@@ -4,6 +4,19 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+## Review with the owner's judgment
+
+The editor shows the original review and its saved owner policy alongside the
+reply on wide screens, with a Draft, Read & Edit, Approve, Copy guide. Serious
+reviews open a dedicated personal-handling screen and clear any older reply
+from the active editor. Private inbox notes can track personal handling without
+generating or approving a public reply.
+
+Complete concise replies no longer need filler or an invitation to return.
+Maximum length, source-detail and authorization checks remain enforced. Warm
+templates use a neutral greeting; owners can choose their own wording.
+See [Owner workflow](docs/OWNER_FIRST_WORKFLOW.md).
+
 ## A review inbox for recurring work
 
 Open **Review inbox** in the draft workspace. Load or paste a UTF-8 CSV for one
@@ -170,7 +183,8 @@ automatic import of offers, actions or learned voice metadata.
 CSV row-level offers are owner-controlled policy input. Do not import an
 unreviewed third-party CSV as authorization. Different businesses do not inherit
 one another's default commitments. Platform word ranges are application style
-targets, not official service limits.
+targets, not official service limits. Only their upper bounds are enforced;
+minimum length and return invitations are editorial choices.
 
 ## Verification and submission
 

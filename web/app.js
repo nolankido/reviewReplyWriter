@@ -47,6 +47,7 @@ async function api(path, data) {
   if (!response.ok) {
     const error = new Error(result.error + (result.findings ? '\n' + result.findings.join('\n') : ''));
     error.status = response.status;
+    error.findings = Array.isArray(result.findings) ? result.findings : [];
     throw error;
   }
   return result;
@@ -69,6 +70,18 @@ async function run(task) {
   catch (error) { notify(error.message || 'Could not complete that action. Your editor text has been kept.', true); }
   finally { setBusy(false); }
 }
+function updateProgress() {
+  if (!current) return;
+  const stage = current.status === 'approved' && !dirty ? 3
+    : (!$('human-reviewed').checked || dirty || current.findings.length ? 1 : 2);
+  for (const element of document.querySelectorAll('.review-progress li')) {
+    const n = Number(element.dataset.step);
+    element.classList.toggle('complete', n < stage);
+    element.classList.toggle('active', n === stage);
+    if (n === stage) element.setAttribute('aria-current', 'step');
+    else element.removeAttribute('aria-current');
+  }
+}
 function updateButtons() {
   if (busy) return;
   const saved = current && !dirty;
@@ -81,6 +94,7 @@ function updateButtons() {
   $('set-aside').disabled = !current;
   $('human-reviewed').disabled = !saved || current.findings.length > 0 || approved;
   $('approve').textContent = approved ? 'Approved for manual posting' : 'Approve this reply';
+  updateProgress();
 }
 function confirmDiscard() {
   return !dirty || window.confirm('Discard the unsaved reply edits? The last saved draft will be kept.');
@@ -131,11 +145,28 @@ function clearEditor() {
   current = null; dirty = false;
   $('editor-empty').hidden = false;
   $('editor-content').hidden = true;
+  $('manual-review-panel').hidden = true;
+  $('draft-panel').classList.remove('has-draft');
   $('reply-editor').value = '';
   $('draft-status').textContent = 'No draft yet';
   $('draft-status').className = 'badge neutral';
   $('human-reviewed').checked = false;
   renderQueue(); updateButtons();
+}
+function showManualReview(review, findings) {
+  // A rejected review never leaves an older, possibly approved draft visible.
+  clearEditor();
+  $('editor-empty').hidden = true;
+  $('manual-review-panel').hidden = false;
+  $('draft-panel').classList.add('has-draft');
+  $('manual-review-text').textContent = review;
+  $('manual-review-reasons').replaceChildren(...findings.map(reason => node('li', reason)));
+  $('draft-status').textContent = 'Manual only';
+  $('draft-status').className = 'badge blocked';
+  updateButtons();
+}
+function reviewContext(view) {
+  return view.original !== undefined ? 'Original review: ' + view.original + '\n\nCustomer update: ' + view.review : view.review;
 }
 function engineLabel(engine) {
   if (!engine) return 'Imported draft';
@@ -167,7 +198,9 @@ function renderQueue() {
       if (!confirmDiscard()) return;
       run(async () => {
         const view = await api('get', {id: draft.id});
-        fillForm(view); renderDraft(view); notify('Saved draft opened. Its original owner policy is preserved.');
+        fillForm(view);
+        if (renderDraft(view)) notify('Saved draft opened. Its original owner policy is preserved.');
+        else notify('This saved review needs personal handling. Routine approval is stopped.', true);
       });
     });
     $('queue-list').append(button);
@@ -187,8 +220,12 @@ async function refreshWorkspace() {
 }
 function renderDraft(view) {
   showView(false);
+  const manual = view.findings.filter(f => f.includes('manual review required'));
+  if (manual.length) { showManualReview(reviewContext(view), manual); return false; }
   current = view; dirty = false;
   $('editor-empty').hidden = true; $('editor-content').hidden = false;
+  $('manual-review-panel').hidden = true;
+  $('draft-panel').classList.add('has-draft');
   $('draft-status').textContent = labels[view.status];
   $('draft-status').className = 'badge ' + view.status;
   $('draft-business').textContent = view.business || 'Business';
@@ -201,7 +238,7 @@ function renderDraft(view) {
   $('saved-policy').textContent = [view.offer, ...(view.approved_actions || [])].filter(Boolean).join('\n\n') || 'No compensation or action statements authorized.';
   $('reply-editor').value = view.reply;
   renderReviewEvidence(view.review_evidence, view.reply);
-  $('reply-count').textContent = view.word_count + ' words · style target ' + view.word_target.join('-');
+  $('reply-count').textContent = view.word_count + ' words · maximum ' + view.word_target[1];
   $('dirty-note').hidden = true;
   $('findings-box').className = 'findings' + (view.findings.length ? ' blocked' : '');
   $('findings-title').textContent = view.findings.length ? 'Changes needed before approval' : 'Passed the current checks. Your review comes next.';
@@ -216,6 +253,7 @@ function renderDraft(view) {
   }
   if (view.approval_invalidated) notify('This draft changed after its earlier approval. Review and approve it again.');
   renderQueue(); updateButtons();
+  return true;
 }
 function idRevision() { return {id: current.id, revision: current.revision}; }
 
@@ -228,10 +266,25 @@ $('compose-form').addEventListener('submit', event => {
       followup: $('reply-type').value === 'followup', original: $('original').value,
       previous: $('previous').value, mode: $('engine-mode').value};
     notify(data.mode === 'gemma' ? 'Gemma is drafting and checking. A rejected draft gets one retry; a checked template is the fallback.' : 'Creating a checked template preview. No AI model is being called.');
-    const view = await api('generate', data);
+    let view;
+    try { view = await api('generate', data); }
+    catch (error) {
+      const reasons = (error.findings || []).filter(f => f.includes('manual review required'));
+      if (error.status === 422 && reasons.length) {
+        const submitted = data.followup ? 'Original review: ' + data.original + '\n\nCustomer update: ' + data.review : data.review;
+        showManualReview(submitted, reasons);
+        notify('Manual handling required. No automated draft was created.', true);
+        return;
+      }
+      throw error;
+    }
     await refreshWorkspace(); renderDraft(view);
     notify(view.engine.includes('fallback') ? 'Gemma did not return a passing draft. A checked template was saved instead. See generation details.' : 'Draft saved. Read it, make any edits, then approve the exact reply.');
   });
+});
+$('manual-back').addEventListener('click', () => {
+  $('review').focus();
+  $('review').scrollIntoView({behavior: 'smooth', block: 'center'});
 });
 $('reply-editor').addEventListener('input', () => {
   dirty = Boolean(current && $('reply-editor').value !== current.reply);
@@ -267,7 +320,17 @@ $('set-aside').addEventListener('click', () => {
 $('reroll').addEventListener('click', () => {
   if (!confirmDiscard()) return;
   run(async () => { notify('Regenerating with the policy saved in this draft.');
-    const view = await api('reroll', {...idRevision(), mode: $('engine-mode').value});
+    let view;
+    try { view = await api('reroll', {...idRevision(), mode: $('engine-mode').value}); }
+    catch (error) {
+      const reasons = (error.findings || []).filter(f => f.includes('manual review required'));
+      if (error.status === 422 && reasons.length) {
+        showManualReview(reviewContext(current), reasons);
+        notify('Manual handling required. No new automated draft was saved.', true);
+        return;
+      }
+      throw error;
+    }
     await refreshWorkspace(); renderDraft(view); notify('New draft saved. Review it before approving.'); });
 });
 $('copy').addEventListener('click', () => run(async () => {
