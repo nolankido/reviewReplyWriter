@@ -638,3 +638,33 @@ Verified full candidate tree: `22c5add33f2ac15d03cc95101b7d421f791ac067`.
 All 40 focused submission/checker tests also passed after fixing the actual DEV
 paragraph rendering. The final candidate adds only this review receipt; its
 final head/tree and merge outcome are recorded in PR #38.
+
+## GitHub access restored and Actions disabled for the repository
+
+On October 14 at 1:32 PM Hawaii time Nolan reported completing GitHub sign-in
+and requested continuation of submission. The repository settings page was
+successfully accessed. Verified main remained
+`b488580b92aa8fc56988c430d410a483930853a8`, tree
+`222b7e7770a6a6c1933d0a1ec715871e0284e700`, from merged PR #38. Older open
+PRs #4/#7 were unchanged and were not reapplied.
+
+The repository-wide Actions permission still allowed all workflows. At
+23:33:30 UTC the existing instruction to stop GitHub Actions was completed by
+selecting Disable actions and saving. GitHub returned Actions policy updated,
+showed Disable actions selected and removed the Actions navigation tab. Read-only
+API checks then found zero queued, in-progress or waiting workflow runs. No job
+was dispatched, retried or created. Main already contained no workflow files.
+
+A narrow pattern scan of all 144 tracked current files found no candidate
+private-key blocks, GitHub tokens, AWS access-key identifiers or Google API keys.
+This is not a complete secret scan or a history, branch, log or artifact audit.
+Making this repository public would expose source, history and historical
+Actions logs and permit copying/forking. Visibility remains private pending the
+owner's specific decision. No judge-access flag or model-assessment evidence
+was changed. The saved DEV draft and earlier hosted demo remain the handoff.
+
+This pass changes only this receipt. The previously executed 569-test suite and
+40 focused submission checks remain the code baseline; no new application,
+model or platform result is claimed. Next: confirm deliberate public code
+access, then continue the existing DEV entry with its historical-demo and
+unfinished current-source-assessment disclosures intact.
