@@ -122,6 +122,8 @@ Unapproved business plans and team promises also block approval and approved
 copy; exact owner statements remain required. [Planned-action checks](docs/PLANNED_ACTIONS.md).
 Fractional waits such as 1.5 hours now retain the customer's exact decimal
 spelling in templates and checks. [Fractional durations](docs/FRACTIONAL_DURATIONS.md).
+Saved generations also keep their success notice when a separate library refresh
+fails. [Generation acknowledgement](docs/GENERATION_ACKNOWLEDGEMENT.md).
 
 ## High-risk review routing and checked local Gemma calls
 

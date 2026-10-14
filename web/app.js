@@ -243,6 +243,14 @@ async function refreshWorkspace() {
   renderProfiles(); renderQueue();
   if (window.rrwProfiles) window.rrwProfiles.loaded(workspace);
 }
+async function refreshAfterSaved(success) {
+  // The saved result is already shown. A later list read is not a write failure.
+  notify(success);
+  try { await refreshWorkspace(); }
+  catch (error) {
+    notify(success + ' The library could not refresh. The saved result is shown; refresh the library later.', true);
+  }
+}
 function renderDraft(view, focusSource = false) {
   $('manual-copy-panel').hidden = true; $('manual-copy-text').value = '';
   if (window.rrwSaveRecovery) window.rrwSaveRecovery.selected();
@@ -310,8 +318,7 @@ $('compose-form').addEventListener('submit', event => {
     }
     renderDraft(view, true);
     if (window.rrwRecovery) window.rrwRecovery.accept();
-    await refreshWorkspace();
-    notify(view.engine.includes('fallback') ? 'A checked template was saved instead of AI output. Read the saved generation result for the reason and next steps.' : 'Draft saved. Read it, make any edits, then approve the exact reply.');
+    await refreshAfterSaved(view.engine.includes('fallback') ? 'A checked template was saved instead of AI output. Read the saved generation result for the reason and next steps.' : 'Draft saved. Read it, make any edits, then approve the exact reply.');
   });
 });
 $('manual-back').addEventListener('click', () => {
@@ -365,7 +372,8 @@ $('reroll').addEventListener('click', () => {
       }
       throw error;
     }
-    renderDraft(view, true); await refreshWorkspace(); notify('New draft saved. Review it before approving.'); });
+    renderDraft(view, true);
+    await refreshAfterSaved('New draft saved. Review it before approving.'); });
 });
 function approvedCopyMatches(reference, text) {
   return Boolean(current && !dirty && current.status === 'approved' && current.findings.length === 0 &&

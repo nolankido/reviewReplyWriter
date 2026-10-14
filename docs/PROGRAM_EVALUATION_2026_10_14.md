@@ -163,3 +163,13 @@ source-linked checks without rounding or unit conversion. Unsupported numeric
 tails are not guessed. See [fractional durations](FRACTIONAL_DURATIONS.md) for
 555-test/local-verifier and real loopback evidence. Previous approvals require
 fresh review; current platform, Gemma and operator evidence remain outstanding.
+
+## Continued repair: generation acknowledgement after library failure
+
+Actual generation handlers could hide a successful save behind a later library
+read failure. Generation, regeneration and recovered opens now retain their
+acknowledged result and label the separate refresh issue. No generation retry
+is sent; genuine write/lookup failures preserve their unresolved state. See
+[generation acknowledgement](GENERATION_ACKNOWLEDGEMENT.md) for the controlled
+reproduction, seven new Node scenarios and 555-test/local-verifier evidence.
+This repairs failure communication without adding platform or operator evidence.
