@@ -592,3 +592,10 @@ Focused checks confirm the explicit owner statement clears only the
 development-window blocker. All other evidence flags remain false. The previous
 569-test/local-verifier receipt remains the source-code baseline; no new model,
 browser or operator validation is inferred from these documentation changes.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/37
+
+Tested attestation commit: `518fb9c822a5432f67a8927d89357c39eef357f2`.
+Tested full tree: `f565ba8c4a149aec9a6cff3b3cf34c980403d10c`, matched to the
+complete local candidate before committing. The final candidate adds only this
+review receipt; its final head/tree and merge outcome are recorded in PR #37.
