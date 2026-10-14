@@ -290,7 +290,7 @@ def _join(topics):
 
 def fallback_body(review, business, tone, stars=None, followup=False):
     brief = analyze(review, stars)
-    opener = 'Mahalo' if tone == 'warm' else 'Thank you'
+    opener = 'Thanks' if tone in ('warm', 'playful') else 'Thank you'
     subject = 'the update' if followup else 'your review'
     sentences = [f'{opener} for {subject} of {business or "our business"}.']
     if brief['tier'] == 'positive':

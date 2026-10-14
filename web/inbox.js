@@ -4,6 +4,7 @@
   let previewRequest = null;
   let selected = null;
   let initialized = false;
+  const handlingDirty = new Set();
   const status = {pending: 'Ready to draft', manual: 'Personal handling', invalid: 'Fix the source row',
     duplicate: 'Duplicate, not drafted', drafted: 'Draft saved', generating: 'Drafting',
     error: 'Needs attention', blocked: 'Draft blocked', interrupted: 'Interrupted', skipped: 'Skipped'};
@@ -20,10 +21,14 @@
     $('inbox-confirm').checked = false;
     buttons();
   }
+  function discardHandling(exceptRow = null) {
+    return ![...handlingDirty].some(id => id !== exceptRow) ||
+      window.confirm('Discard other unsaved private handling notes? Saved notes will be kept.');
+  }
   function describeCounts(counts) {
     return (counts.pending || 0) + ' ready · ' + (counts.manual || 0) + ' personal handling · ' +
       (counts.duplicate || 0) + ' duplicates · ' + (counts.invalid || 0) + ' invalid · ' +
-      (counts.drafted || 0) + ' drafted';
+      (counts.drafted || 0) + ' drafted' + (counts.manual_handled ? ' · ' + counts.manual_handled + ' personally handled' : '');
   }
   function rowElement(row, record) {
     const card = node('article', undefined, 'inbox-row');
@@ -41,6 +46,42 @@
     if (row.engine) card.append(node('p', engineLabel(row.engine), 'helper'));
     if (!record) return card;
     const actions = node('div', undefined, 'editor-tools');
+    if (row.status === 'manual') {
+      const read = node('button', 'Read for personal handling', 'button secondary'); read.type = 'button';
+      read.addEventListener('click', () => {
+        if (!confirmDiscard()) return;
+        fillForm({...record.settings, review: row.review, stars: row.stars});
+        showView(false); showManualReview(row.review, row.findings);
+        notify('This review needs personal handling. Routine drafting and approval are stopped.', true);
+        $('manual-review-title').setAttribute('tabindex', '-1'); $('manual-review-title').focus();
+      });
+      actions.append(read);
+      const details = node('details');
+      details.append(node('summary', row.handled ? 'Personal handling recorded' : 'Record private handling'));
+      const form = node('form');
+      const label = node('label', 'Private handling note');
+      const field = node('textarea'); field.rows = 3; field.maxLength = 1200;
+      field.id = 'handling-note-' + row.id; field.value = row.handling_note || '';
+      label.htmlFor = field.id;
+      const check = node('input'); check.type = 'checkbox'; check.checked = Boolean(row.handled);
+      const checkLabel = node('label', undefined, 'check-row');
+      checkLabel.append(check, node('span', 'I have personally handled this review. This is not posting approval.'));
+      const save = node('button', 'Save private handling', 'button secondary'); save.type = 'submit';
+      form.append(label, field, checkLabel, save,
+        node('p', 'Notes stay in the local inbox. They are not model input, owner authorization or permission to publish.', 'helper'));
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        if (!discardHandling(row.id)) return;
+        run(async () => {
+          render(await api('inbox-note', {id: selected.id, revision: selected.revision, row_id: row.id,
+            note: field.value, handled: check.checked}));
+          notify('Private handling saved. The review remains outside automated drafting and posting approval.');
+        });
+      });
+      form.addEventListener('input', () => handlingDirty.add(row.id));
+      form.addEventListener('change', () => handlingDirty.add(row.id));
+      details.append(form); card.append(details);
+    }
     if (row.draft_id) {
       card.append(node('p', 'Approval: ' + (labels[row.draft_status] || row.draft_status), 'helper'));
       const open = node('button', 'Review draft', 'button secondary');
@@ -50,8 +91,11 @@
         if (!confirmDiscard()) return;
         run(async () => {
           const view = await api('get', {id: row.draft_id});
-          fillForm(view); renderDraft(view); $('reply-editor').focus();
-          notify('Inbox draft opened. Read, edit and approve this exact reply individually.');
+          fillForm(view);
+          if (renderDraft(view)) {
+            $('reply-editor').focus();
+            notify('Inbox draft opened. Read, edit and approve this exact reply individually.');
+          } else notify('This saved review needs personal handling. Routine approval is stopped.', true);
         });
       });
       actions.append(open);
@@ -61,16 +105,20 @@
         : ['error', 'interrupted'].includes(row.status) && !row.recovery_conflict;
       if (!allowed) continue;
       const button = node('button', label, 'text-button'); button.type = 'button';
-      button.addEventListener('click', () => run(async () => {
+      button.addEventListener('click', () => {
+        if (!discardHandling()) return;
+        run(async () => {
         render(await api('inbox-' + action, {id: selected.id, revision: selected.revision, row_id: row.id}));
         notify(action === 'skip' ? 'Review skipped. Its source remains in the inbox.' : 'Recovery checked. A saved draft is reused; unfinished work is ready for an explicit new attempt.');
-      }));
+        });
+      });
       actions.append(button);
     }
     card.append(actions);
     return card;
   }
   function render(record) {
+    handlingDirty.clear();
     selected = record;
     $('inbox-saved').hidden = false;
     $('inbox-saved-title').textContent = record.label;
@@ -95,7 +143,7 @@
   $('inbox-details').addEventListener('toggle', () => {
     if ($('inbox-details').open && !initialized) run(reload);
   });
-  $('inbox-refresh').addEventListener('click', () => run(reload));
+  $('inbox-refresh').addEventListener('click', () => { if (discardHandling()) run(reload); });
   $('inbox-csv').addEventListener('input', invalidatePreview);
   for (const id of ['business', 'kind', 'tone', 'platform', 'signoff', 'profile-select']) {
     $(id).addEventListener('change', invalidatePreview);
@@ -129,19 +177,23 @@
     buttons();
   }));
   $('inbox-confirm').addEventListener('change', buttons);
-  $('inbox-create').addEventListener('click', () => run(async () => {
+  $('inbox-create').addEventListener('click', () => {
+    if (!discardHandling()) return;
+    run(async () => {
     if (!previewRequest || !preview) throw new Error('Preview the CSV first.');
     const record = await api('inbox-create', {...previewRequest, preview_revision: preview.revision,
       confirmed: $('inbox-confirm').checked, label: $('inbox-label').value || 'Review inbox'});
     render(record); invalidatePreview(); await reload();
     notify('Inbox saved locally. Draft one review at a time, then approve each reply separately.');
-  }));
+    });
+  });
   $('inbox-select').addEventListener('change', () => {
-    if (!$('inbox-select').value) { selected = null; $('inbox-saved').hidden = true; buttons(); return; }
+    if (!discardHandling()) { $('inbox-select').value = selected ? selected.id : ''; return; }
+    if (!$('inbox-select').value) { handlingDirty.clear(); selected = null; $('inbox-saved').hidden = true; buttons(); return; }
     run(async () => render(await api('inbox-get', {id: $('inbox-select').value})));
   });
   $('inbox-next').addEventListener('click', () => {
-    if (!selected || !confirmDiscard()) return;
+    if (!selected || !confirmDiscard() || !discardHandling()) return;
     run(async () => {
       clearEditor();
       notify('Drafting one inbox review. Closing the tab does not cancel an in-flight model request.');

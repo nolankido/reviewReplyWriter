@@ -94,6 +94,10 @@ invalidates it; a stale tab cannot export a changed reply using an old approval.
 Potentially serious allegations are routed to personal handling before routine
 AI or template generation.
 
+Personal handling has its own screen and private inbox notes. Marking an item
+handled records the owner's work; it does not turn the allegation into an AI
+draft, an authorized business promise or a publication approval.
+
 ### An apology should preserve the actual complaint
 
 “I was charged twice” is more useful than a generic billing topic. The current
@@ -109,6 +113,12 @@ checkmark. Unsaved edits mark the displayed coverage stale until rechecking.
 A detail being mentioned does not prove that the reply handles it correctly.
 That is why the interface says **Mention detected**, and the owner still reads
 the complete review and response.
+
+The same owner control applies to style. A short complete reply does not need
+filler, and a return invitation is optional. Removing those stock requirements
+reduced median template length from 35 to 25 words on the unchanged 30-case
+fictional diagnostic set. That is a measured writing change, not a customer
+preference study or a time-saving claim.
 
 ### Keep the failed experiments
 

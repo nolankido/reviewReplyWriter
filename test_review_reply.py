@@ -339,11 +339,14 @@ class PlatformTests(unittest.TestCase):
         short = ("Thank you for the kind words about the oat milk "
                  "latte - we appreciate them all. We hope you'll stop "
                  "by again soon.\n\n- The Moe's Coffee team")
-        # ~25 words: fine for google, too thin for airbnb's range.
+        # A complete short response is acceptable on either platform.
         self.assertTrue(rr.validate_reply(
             short, GLOWING, "Moe's Coffee", 5, platform="google"))
-        self.assertFalse(rr.validate_reply(
+        self.assertTrue(rr.validate_reply(
             short, GLOWING, "Moe's Coffee", 5, platform="airbnb"))
+        long = short.replace('\n\n- The', ' We appreciate your feedback about the coffee.' * 17 + '\n\n- The')
+        self.assertFalse(rr.validate_reply(long, GLOWING, "Moe's Coffee", 5, platform="google"))
+        self.assertTrue(rr.validate_reply(long, GLOWING, "Moe's Coffee", 5, platform="airbnb"))
 
     def test_templates_validate_on_every_platform(self):
         cases = [(GLOWING, 5, "cafe"), (ANGRY, 2, "cafe"),
@@ -364,7 +367,7 @@ class PlatformTests(unittest.TestCase):
     def test_prompt_carries_the_platform_range(self):
         prompt = rr.build_prompt(GLOWING, "Moe's Coffee", "warm", 5,
                                  "cafe", platform="airbnb")
-        self.assertIn("50 to 220 words", prompt)
+        self.assertIn("at most 220 words", prompt)
         self.assertIn("airbnb", prompt)
 
 

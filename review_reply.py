@@ -71,9 +71,8 @@ FIX_MARKERS = ("addressing", "working on", "passed this on", "looking into",
                "we've noted", "we have noted", "we'll fix", "we will fix",
                "streamline", "sorting out")
 
-# Word-count bounds per platform: a Google reply is short and public,
-# an Airbnb host reply is longer and personal. 'generic' is the
-# original one-size range.
+# Suggested style ranges. Only the upper bound is enforced; a complete,
+# specific reply need not be padded to meet a universal minimum.
 PLATFORMS = {
     "generic": (35, 160),
     "google": (25, 120),
@@ -284,9 +283,6 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
                         f"('{offer}')")
     lo, hi = PLATFORMS.get(platform, PLATFORMS["generic"])
     words = len(reply.split())
-    if words < lo:
-        gaps.append(f"more substance (at least {lo} words for "
-                    f"{platform})")
     if words > hi:
         gaps.append(f"brevity (at most {hi} words for {platform})")
     if "[" in reply or "]" in reply:
@@ -298,8 +294,6 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
         gaps.append("an invented detail the customer never gave you "
                     "(%s) - only use names and facts from the review"
                     % ", ".join(invented[:2]))
-    if not any(m in low for m in INVITE_MARKERS):
-        gaps.append("a closing invitation to come back")
     return gaps
 
 
@@ -363,9 +357,8 @@ def build_prompt(review, business, tone, stars, kind, offer=None,
         "- Mention the business by name once.\n"
         "- Answer one specific detail from the review, not generic praise.\n"
         + guidance + offer_line + emphasis_line + voice_line +
-        "- Close with a clear invitation to return - say it outright, "
-        "like \"We hope you'll stop by again soon.\" Do not end on the "
-        "apology or the offer.\n"
+        "- A return invitation is optional. Include one only if it fits the review; "
+        "do not add a stock closing or filler just to lengthen the reply.\n"
         "- Never include an email address, phone number, or website - "
         "the owner adds their own; inventing one is a serious error.\n"
         "- Only use names, people, and facts the customer mentioned. "
@@ -373,7 +366,7 @@ def build_prompt(review, business, tone, stars, kind, offer=None,
         "If the customer mentions a person without naming them, call "
         "them by their role ('our barista') - never a name, never a "
         "placeholder.\n"
-        f"- {lo} to {hi} words (this reply is for {platform}). "
+        f"- Keep this reply concise, at most {hi} words (for {platform}). No minimum length. "
         "No brackets, no placeholders, no subject line.\n"
         + sign_line +
         "Write only the reply." + quality.prompt_brief(review, stars)
@@ -490,17 +483,7 @@ def _signoff_line(business, signoff):
 
 
 def _finish_template(parts, statements, business, signoff, platform):
-    closing = "We hope you'll visit again and have a better experience." if any('sorry' in p for p in parts) else "We hope you'll visit again soon."
-    def assemble():
-        return "\n\n".join([" ".join(parts)] + statements + [closing, _signoff_line(business, signoff)])
-    lo, _ = PLATFORMS[platform]
-    for extra in ("Your feedback helps us understand what mattered to you.",
-                  "We value the perspective you have shared about your experience.",
-                  "Your perspective matters to us."):
-        if len(assemble().split()) >= lo:
-            break
-        parts.append(extra)
-    return assemble()
+    return "\n\n".join([" ".join(parts)] + statements + [_signoff_line(business, signoff)])
 
 
 def template_reply(review, business, tone, stars, kind, rng, offer=None,
@@ -579,9 +562,6 @@ def followup_gaps(reply, original, previous, update, business,
 
     lo, hi = PLATFORMS.get(platform, PLATFORMS["generic"])
     words = len(reply.split())
-    if words < lo:
-        gaps.append(f"more substance (at least {lo} words for "
-                    f"{platform})")
     if words > hi:
         gaps.append(f"brevity (at most {hi} words for {platform})")
     if "[" in reply or "]" in reply:
@@ -593,8 +573,6 @@ def followup_gaps(reply, original, previous, update, business,
         gaps.append("an invented detail the customer never gave you "
                     "(%s) - only use names and facts from the thread"
                     % ", ".join(invented[:2]))
-    if not any(m in low for m in WARM_CLOSERS):
-        gaps.append("a warm closing")
     return gaps
 
 
@@ -622,7 +600,7 @@ def build_followup_prompt(original, previous, update, business, tone,
     elif tier == "mixed":
         guidance = ("- The update is mixed: thank them for it, "
                     "celebrate what is better, own what still is not, "
-                    "and say the next step.\n")
+                    "without inventing a next step or operational action.\n")
     else:
         guidance = ("- The update is happy: thank them for coming "
                     "back and updating, celebrate briefly, keep it "
@@ -665,7 +643,8 @@ def build_followup_prompt(original, previous, update, business, tone,
         "- Never invent a name, a date, an amount, or any contact "
         "detail. People the customer didn't name are referred to by "
         "role.\n"
-        f"- {lo} to {hi} words (this reply is for {platform}). "
+        f"- Keep this reply concise, at most {hi} words (for {platform}). No minimum length. "
+        "A return invitation is optional; do not add stock closing language or filler. "
         "No brackets, no placeholders.\n"
         + sign_line +
         "Write only the follow-up reply." + quality.prompt_brief(update) + policy_instructions(
@@ -885,7 +864,9 @@ def record_gaps(business, gaps, path=None):
 
 def top_gaps(business, path=None, limit=2):
     entry = load_ledger(path).get(business or "unknown business", {})
-    ranked = sorted(entry.items(), key=lambda kv: (-kv[1], kv[0]))
+    retired = {'enough substance', 'a closing invitation', 'a warm closing'}
+    ranked = sorted(((key, value) for key, value in entry.items() if key not in retired),
+                    key=lambda kv: (-kv[1], kv[0]))
     return [key for key, _ in ranked[:limit]]
 
 
