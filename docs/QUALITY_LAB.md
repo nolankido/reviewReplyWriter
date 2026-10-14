@@ -32,6 +32,12 @@ marked interrupted rather than silently omitting or rerunning it. Completed
 results cannot be rerun in place. Start a new evaluation to repeat the protocol.
 An interrupted case prevents that run from qualifying as complete live evidence.
 
+Use **Check saved evaluation** after an uncertain case or assessment response.
+It leaves pending assessment text alone; explicit loading rechecks the revision
+and leaves review confirmation unchecked. Active reservations cannot be treated
+as finished results or exported. See [request recovery](QUALITY_REQUEST_RECOVERY.md)
+for restart, lost-creation and unexecuted-browser limits.
+
 ## Terminal workflow
 
 Close the browser server first: the evaluation CLI shares its workspace lock.

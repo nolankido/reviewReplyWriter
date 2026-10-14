@@ -439,13 +439,16 @@ $('engine-mode').addEventListener('change', () => {
     ? 'Uses gemma3:4b through local Ollama. Enable Ollama local-only mode. Rejected or unavailable output falls back to a labelled template.'
     : 'Template preview lets you try the workflow without a model. Nothing is posted.';
 });
-window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || (window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention()) || (window.rrwGeneration && window.rrwGeneration.hasPending()) || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || qualityNeedsCheck || (window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention()) || (window.rrwGeneration && window.rrwGeneration.hasPending()) || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
 
 
 // Quality experiments are separate from real drafts and publication approvals.
 let qualityRun = null;
 let qualityCase = null;
 let qualityDirty = false;
+let qualityNeedsCheck = false;
+let qualityChecked = null;
+let qualityPendingAction = '';
 function showView(value) {
   const selected = value === 'submission' ? 'submission' : (value ? 'quality' : 'drafts');
   $('inbox-panel').hidden = selected !== 'drafts';
@@ -459,14 +462,74 @@ function qualityDiscard() {
   return !qualityDirty || window.confirm('Discard unsaved quality assessment changes? Saved results remain unchanged.');
 }
 function qualityRef() { return {id: qualityRun.id, revision: qualityRun.revision}; }
+function qualityUnresolved() { return qualityNeedsCheck || Boolean(qualityRun && qualityRun.active); }
+function qualityRequireResolved() {
+  if (!qualityUnresolved()) return true;
+  notify('Check and load the saved evaluation before another case, assessment or export. No request was sent.', true);
+  return false;
+}
 function qualityButtons() {
   if (busy) return;
   const summary = qualityRun && qualityRun.summary;
-  $('quality-next').disabled = !summary || summary.attempted >= summary.total || !qualityRun.sources_current ||
+  const unresolved = qualityUnresolved();
+  $('quality-next').disabled = unresolved || !summary || summary.attempted >= summary.total || !qualityRun.sources_current ||
     (qualityRun.mode === 'gemma' && !qualityRun.preflight.ready);
-  $('quality-next').textContent = summary && summary.attempted >= summary.total ? 'All cases recorded' : 'Run next case';
-  $('quality-start').disabled = $('quality-mode').value === 'gemma' && !$('quality-confirm').checked;
+  $('quality-next').textContent = unresolved ? 'Check saved result first' : summary && summary.attempted >= summary.total ? 'All cases recorded' : 'Run next case';
+  $('quality-start').disabled = unresolved || ($('quality-mode').value === 'gemma' && !$('quality-confirm').checked);
+  $('quality-assess').disabled = unresolved || !qualityCase;
+  $('quality-json').disabled = unresolved || !qualityRun;
+  $('quality-markdown').disabled = unresolved || !qualityRun;
+  $('quality-recovery-check').disabled = !qualityRun;
+  $('quality-recovery-load').disabled = !qualityChecked || qualityChecked.active;
 }
+function qualityRecoveryMessage(message) {
+  $('quality-recovery-message').textContent = message;
+  if (window.rrwFocus) window.rrwFocus.request('quality-recovery-message');
+}
+function clearQualityRecovery() {
+  qualityNeedsCheck = false; qualityChecked = null; qualityPendingAction = '';
+  $('quality-recovery-load').hidden = true;
+}
+function qualityUncertain(error, action) {
+  if (!error.uncertain && error.status !== 409) return;
+  qualityNeedsCheck = true; qualityChecked = null; qualityPendingAction = action;
+  $('quality-reviewed').checked = false;
+  $('quality-recovery-load').hidden = true;
+  qualityRecoveryMessage('The saved result is uncertain or changed elsewhere. Check it before another case, assessment or export. Your assessment text is kept. No retry has been sent.');
+}
+async function qualityAcknowledged(report, message, selected) {
+  clearQualityRecovery(); renderQuality(report, selected); notify(message);
+  try { await qualityList(); }
+  catch (error) { notify(message + ' The saved-evaluation list could not refresh. The acknowledged result is displayed; no write was repeated.', true); }
+}
+$('quality-recovery-check').addEventListener('click', () => run(async () => {
+  const report = await api('quality-get', {id: qualityRun.id});
+  qualityChecked = report;
+  qualityNeedsCheck = qualityNeedsCheck || report.active || report.revision !== qualityRun.revision;
+  $('quality-recovery-load').hidden = false;
+  const interrupted = report.summary.interrupted;
+  qualityRecoveryMessage(report.active ? 'A case is still running. Its last row is a reservation, not a finished result. Check again later; do not resend.'
+    : report.summary.attempted + '/' + report.summary.total + ' saved cases. ' +
+      (interrupted ? interrupted + ' interrupted case(s) remain in the evidence and will not be silently repeated. ' : '') +
+      'Your current assessment has not been replaced. Load this checked checkpoint only when ready.');
+}));
+$('quality-recovery-load').addEventListener('click', () => {
+  if (!qualityChecked || qualityChecked.active || !qualityDiscard()) return;
+  run(async () => {
+    const latest = await api('quality-get', {id: qualityChecked.id});
+    if (latest.revision !== qualityChecked.revision || latest.active) {
+      qualityNeedsCheck = true; qualityChecked = null;
+      $('quality-recovery-load').hidden = true;
+      qualityRecoveryMessage('The evaluation changed or is still running. Check again. Your assessment text has not been replaced.');
+      return;
+    }
+    const selected = qualityPendingAction === 'step' && latest.results.length ? latest.results[latest.results.length - 1].case_id : undefined;
+    clearQualityRecovery(); renderQuality(latest, selected);
+    $('quality-reviewed').checked = false; $('quality-confirm').checked = false;
+    notify('Checked saved evaluation loaded. Read the current result before a new assessment. No case was run or repeated.');
+    if (window.rrwFocus) window.rrwFocus.request('quality-progress');
+  });
+});
 async function qualityList() {
   const list = await api('quality-list', {});
   $('quality-runs').replaceChildren(new Option('Choose a saved evaluation', ''));
@@ -480,6 +543,10 @@ async function qualityList() {
 function renderQuality(report, selectCase) {
   qualityRun = report;
   $('quality-empty').hidden = true; $('quality-results').hidden = false;
+  $('quality-recovery-panel').hidden = false;
+  if (!qualityNeedsCheck) $('quality-recovery-message').textContent = report.active
+    ? 'A case is still running. Check its saved checkpoint; do not resend.'
+    : 'Check the saved checkpoint without replacing pending assessment text. Loading it is a separate explicit choice.';
   $('quality-run-name').textContent = report.execution + ' | ' + report.suite + ' evaluation';
   $('quality-provenance').textContent = report.provenance;
   const s = report.summary;
@@ -491,7 +558,7 @@ function renderQuality(report, selectCase) {
   $('quality-metrics').replaceChildren(...values.map(([label, value]) => {
     const box = node('div', undefined, 'quality-metric'); box.append(node('strong', String(value)), node('span', label)); return box;
   }));
-  $('quality-progress').textContent = (s.complete ? 'Run complete. ' : 'Progress saved. ') +
+  $('quality-progress').textContent = (report.active ? 'Case still running. The last row is a reservation, not a finished result. ' : s.complete ? 'Run complete. ' : 'Progress saved. ') +
     (report.sources_current ? '' : 'Code changed since this run. Start a new evaluation. ') +
     'First-try model drafts: ' + s.first_try_model + '. Retried cases: ' + s.retried_cases +
     '. Completed real API responses: ' + s.completed_api_responses + '.';
@@ -550,40 +617,50 @@ $('quality-check').addEventListener('click', () => run(async () => {
   notify(d.ready ? 'Installation identified. Run the smoke test to measure actual generation.' : d.message, !d.ready);
 }));
 $('quality-start').addEventListener('click', () => {
-  if (!qualityDiscard()) return;
-  run(async () => { const report = await api('quality-start', {mode: $('quality-mode').value,
-    suite: $('quality-suite').value, confirmed: $('quality-confirm').checked});
-    renderQuality(report); await qualityList();
-    notify(report.mode === 'gemma' && !report.preflight.ready ? report.preflight.message : 'Evaluation created. Run one case at a time. Customer drafts are not changed.'); });
+  if (!qualityRequireResolved() || !qualityDiscard()) return;
+  run(async () => {
+    let report;
+    try { report = await api('quality-start', {mode: $('quality-mode').value,
+      suite: $('quality-suite').value, confirmed: $('quality-confirm').checked}); }
+    catch (error) {
+      if (error.uncertain) error.message = 'Evaluation creation may have been saved. Refresh saved evaluations and select its run before creating another. No case runs automatically; your assessment text is kept.';
+      throw error;
+    }
+    await qualityAcknowledged(report, report.mode === 'gemma' && !report.preflight.ready ? report.preflight.message : 'Evaluation created. Run one case at a time. Customer drafts are not changed.');
+  });
 });
 $('quality-next').addEventListener('click', () => {
-  if (!qualityDiscard()) return;
+  if (!qualityRequireResolved() || !qualityDiscard()) return;
   run(async () => { notify('Running one fictional case. It may include one retry. Results are checkpointed locally.');
-    const report = await api('quality-step', qualityRef());
-    renderQuality(report, report.results[report.results.length - 1].case_id); await qualityList();
-    notify('Case recorded. Inspect its result before drawing a quality conclusion.'); });
+    let report;
+    try { report = await api('quality-step', qualityRef()); }
+    catch (error) { qualityUncertain(error, 'step'); throw error; }
+    await qualityAcknowledged(report, 'Case recorded. Inspect its result before drawing a quality conclusion.', report.results[report.results.length - 1].case_id); });
 });
 $('quality-runs').addEventListener('change', () => {
   if (!$('quality-runs').value || !qualityDiscard()) return;
-  run(async () => { renderQuality(await api('quality-get', {id: $('quality-runs').value})); });
+  run(async () => { const report = await api('quality-get', {id: $('quality-runs').value}); clearQualityRecovery(); renderQuality(report); });
 });
 $('quality-refresh').addEventListener('click', () => {
   if (!qualityDiscard()) return;
-  run(async () => { await qualityList(); if (qualityRun) renderQuality(await api('quality-get', {id: qualityRun.id})); });
+  run(async () => { await qualityList(); if (qualityRun) { const report = await api('quality-get', {id: qualityRun.id}); clearQualityRecovery(); renderQuality(report); } });
 });
 $('quality-assess-form').addEventListener('input', () => { qualityDirty = true; });
 $('quality-assess-form').addEventListener('submit', event => {
   event.preventDefault();
-  run(async () => { const report = await api('quality-assess', {...qualityRef(), case_id: qualityCase.case_id,
+  if (!qualityRequireResolved()) return;
+  run(async () => { let report;
+    try { report = await api('quality-assess', {...qualityRef(), case_id: qualityCase.case_id,
     result_sha256: qualityCase.result_sha256, reviewed: $('quality-reviewed').checked,
     decision: $('quality-decision').value, notes: $('quality-notes').value,
     edited_reply: $('quality-edited').value,
-    issues: [...document.querySelectorAll('.quality-issues input:checked')].map(x => x.value)});
-    renderQuality(report); await qualityList(); notify('Human assessment saved beside the unchanged original. This does not approve a reply for posting.'); });
+    issues: [...document.querySelectorAll('.quality-issues input:checked')].map(x => x.value)}); }
+    catch (error) { qualityUncertain(error, 'assess'); throw error; }
+    await qualityAcknowledged(report, 'Human assessment saved beside the unchanged original. This does not approve a reply for posting.'); });
 });
 for (const [id, format] of [['quality-json', 'json'], ['quality-markdown', 'markdown']]) {
   $(id).addEventListener('click', () => {
-    if (!qualityDiscard()) return;
+    if (!qualityRequireResolved() || !qualityDiscard()) return;
     run(async () => { const result = await api('quality-export', {...qualityRef(), format});
       const url = URL.createObjectURL(new Blob([result.text], {type: result.mime + ';charset=utf-8'}));
       const link = node('a'); link.href = url; link.download = result.filename; document.body.append(link); link.click(); link.remove();

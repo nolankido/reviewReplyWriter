@@ -287,6 +287,9 @@ class EvaluationLab:
                 row['finished_at'] = now()
             with self.workspace.lock:
                 self._read(dict(id=report['id'], revision=reserved))
+                # The response describes the completed checkpoint, not the
+                # in-flight reservation. finally still clears on every error.
+                self.active = None
                 return self._save(report)
         finally:
             self.active = None

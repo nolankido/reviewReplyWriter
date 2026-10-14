@@ -139,6 +139,11 @@ Gemma setup and explicitly select the installed model. Export the JSON evidence
 and readable report after reviewing each result. Unreviewed quality remains
 unknown, even when automatic checks pass. See [the Quality Lab guide](docs/QUALITY_LAB.md).
 
+An uncertain case or assessment can be checked read-only before explicitly loading
+its saved checkpoint. Pending notes are preserved during checking, active cases
+cannot be mistaken for finished evidence, and no case is retried automatically.
+See [Quality Lab request recovery](docs/QUALITY_REQUEST_RECOVERY.md).
+
 ## Open the app
 
 Requires Python 3.10 or newer. No extra runtime packages, framework installation,
