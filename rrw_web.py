@@ -36,6 +36,7 @@ ASSETS['/feedback.js'] = ('feedback.js', 'text/javascript; charset=utf-8')
 ASSETS['/recovery.js'] = ('recovery.js', 'text/javascript; charset=utf-8')
 ASSETS['/connection.js'] = ('connection.js', 'text/javascript; charset=utf-8')
 ASSETS['/generation.js'] = ('generation.js', 'text/javascript; charset=utf-8')
+ASSETS['/save-recovery.js'] = ('save-recovery.js', 'text/javascript; charset=utf-8')
 ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
            '/api/get': 'get', '/api/profile': 'profile', '/api/edit': 'edit',
            '/api/validate': 'validate', '/api/decision': 'decision',

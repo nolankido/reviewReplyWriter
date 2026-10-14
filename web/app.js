@@ -52,7 +52,7 @@ function setBusy(value) {
     else if ('wasDisabled' in control.dataset) { control.disabled = control.dataset.wasDisabled === 'true'; delete control.dataset.wasDisabled; }
   }
   $('generate').textContent = value ? 'Working...' : 'Generate draft ↗';
-  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); if (window.rrwFeedback) window.rrwFeedback.buttons(); if (window.rrwRecovery) window.rrwRecovery.buttons(); if (window.rrwGeneration) window.rrwGeneration.buttons(); }
+  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); if (window.rrwFeedback) window.rrwFeedback.buttons(); if (window.rrwRecovery) window.rrwRecovery.buttons(); if (window.rrwGeneration) window.rrwGeneration.buttons(); if (window.rrwSaveRecovery) window.rrwSaveRecovery.buttons(); }
 }
 async function run(task) {
   if (busy) return;
@@ -63,7 +63,8 @@ async function run(task) {
 }
 function updateProgress() {
   if (!current) return;
-  const stage = current.status === 'approved' && !dirty ? 3
+  const stage = current.status === 'approved' && !dirty &&
+    !(window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention()) ? 3
     : (!$('human-reviewed').checked || dirty || current.findings.length ? 1 : 2);
   for (const element of document.querySelectorAll('.review-progress li')) {
     const n = Number(element.dataset.step);
@@ -75,20 +76,23 @@ function updateProgress() {
 }
 function updateButtons() {
   if (busy) return;
-  const saved = current && !dirty;
-  const approved = saved && current.status === 'approved' && current.findings.length === 0;
-  $('save-edit').disabled = !current || !dirty || !$('reply-editor').value.trim();
+  const unresolved = Boolean(window.rrwSaveRecovery && window.rrwSaveRecovery.unresolved());
+  const saved = current && !dirty && !unresolved;
+  const approved = saved && current.status === 'approved' && current.findings.length === 0 &&
+    !(window.rrwSaveRecovery && window.rrwSaveRecovery.needsReview());
+  $('save-edit').disabled = !current || !dirty || unresolved || !$('reply-editor').value.trim();
   $('approve').disabled = !saved || current.findings.length > 0 || !$('human-reviewed').checked || approved;
   $('copy').disabled = !approved;
   $('download').disabled = !approved;
-  $('reroll').disabled = !current || Boolean(window.rrwGeneration && window.rrwGeneration.hasPending());
-  $('set-aside').disabled = !current;
+  $('reroll').disabled = !current || unresolved || Boolean(window.rrwGeneration && window.rrwGeneration.hasPending());
+  $('set-aside').disabled = !current || unresolved;
   $('human-reviewed').disabled = !saved || current.findings.length > 0 || approved;
   $('approve').textContent = approved ? 'Approved for manual posting' : 'Approve this reply';
   updateProgress();
 }
 function confirmDiscard(replaceInputs = true) {
-  return (!replaceInputs || !window.rrwRecovery || window.rrwRecovery.canReplace()) &&
+  return (!window.rrwSaveRecovery || window.rrwSaveRecovery.canLeave()) &&
+    (!replaceInputs || !window.rrwRecovery || window.rrwRecovery.canReplace()) &&
     (!dirty || window.confirm('Discard the unsaved reply edits? The last saved draft will be kept.')) &&
     (!window.rrwFeedback || window.rrwFeedback.canDiscard());
 }
@@ -135,6 +139,7 @@ function fillForm(view) {
   if (window.rrwRecovery) window.rrwRecovery.accept();
 }
 function clearEditor() {
+  if (window.rrwSaveRecovery) window.rrwSaveRecovery.selected();
   if (window.rrwFeedback) window.rrwFeedback.reset();
   resetReviewEvidence();
   current = null; dirty = false;
@@ -214,6 +219,7 @@ async function refreshWorkspace() {
   renderProfiles(); renderQueue();
 }
 function renderDraft(view) {
+  if (window.rrwSaveRecovery) window.rrwSaveRecovery.selected();
   showView(false);
   const manual = view.findings.filter(f => f.includes('manual review required'));
   if (manual.length) { showManualReview(reviewContext(view), manual); return false; }
@@ -296,25 +302,25 @@ $('reply-editor').addEventListener('input', () => {
     $('findings-box').className = 'findings' + (current.findings.length ? ' blocked' : '');
     $('findings-title').textContent = current.findings.length ? 'Changes needed before approval' : 'Passed the current checks. Your review comes next.';
     $('findings-list').replaceChildren(...current.findings.map(f => node('li', f)));
-    $('human-reviewed').checked = current.status === 'approved';
+    $('human-reviewed').checked = current.status === 'approved' &&
+      !(window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention());
   }
   updateButtons();
   if (window.rrwFeedback) window.rrwFeedback.buttons();
 });
 $('save-edit').addEventListener('click', () => run(async () => {
-  const view = await api('edit', {...idRevision(), reply: $('reply-editor').value});
-  await refreshWorkspace(); renderDraft(view);
-  notify(view.findings.length ? 'Edits saved, but checks found issues. This draft cannot be approved yet.' : 'Edits saved and checked. Previous approval was cleared.');
+  const view = await window.rrwSaveRecovery.submit('edit', {...idRevision(), reply: $('reply-editor').value});
+  await window.rrwSaveRecovery.finish(view, view.findings.length ? 'Edits saved, but checks found issues. This draft cannot be approved yet.' : 'Edits saved and checked. Previous approval was cleared.');
 }));
 $('human-reviewed').addEventListener('change', updateButtons);
 $('approve').addEventListener('click', () => run(async () => {
-  const view = await api('decision', {...idRevision(), status: 'approved', reviewed: $('human-reviewed').checked});
-  await refreshWorkspace(); renderDraft(view); notify('Approved. Copy or export this exact reply for manual posting.');
+  const view = await window.rrwSaveRecovery.submit('decision', {...idRevision(), status: 'approved', reviewed: $('human-reviewed').checked});
+  await window.rrwSaveRecovery.finish(view, 'Approved. Copy or export this exact reply for manual posting.');
 }));
 $('set-aside').addEventListener('click', () => {
   if (!confirmDiscard(false)) return;
-  run(async () => { const view = await api('decision', {...idRevision(), status: 'aside'});
-    await refreshWorkspace(); renderDraft(view); notify('Draft set aside. It remains in your workspace.'); });
+  run(async () => { const view = await window.rrwSaveRecovery.submit('decision', {...idRevision(), status: 'aside'});
+    await window.rrwSaveRecovery.finish(view, 'Draft set aside. It remains in your workspace.'); });
 });
 $('reroll').addEventListener('click', () => {
   if (!confirmDiscard(false)) return;
@@ -384,8 +390,9 @@ for (const button of document.querySelectorAll('[data-sample]')) button.addEvent
 });
 $('refresh-queue').addEventListener('click', () => run(async () => {
   await refreshWorkspace();
-  if (current && !dirty) renderDraft(await api('get', {id: current.id}));
-  notify(dirty ? 'Library refreshed. Your unsaved editor text was preserved.' : 'Workspace refreshed.');
+  const attention = window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention();
+  if (current && !dirty && !attention) renderDraft(await api('get', {id: current.id}));
+  notify(dirty || attention ? 'Library refreshed. Your editor and saved-state check were preserved.' : 'Workspace refreshed.');
 }));
 async function checkModel() {
   const result = await api('model');
@@ -408,7 +415,7 @@ $('engine-mode').addEventListener('change', () => {
     ? 'Uses gemma3:4b through local Ollama. Enable Ollama local-only mode. Rejected or unavailable output falls back to a labelled template.'
     : 'Template preview lets you try the workflow without a model. Nothing is posted.';
 });
-window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || (window.rrwGeneration && window.rrwGeneration.hasPending()) || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (dirty || busy || qualityDirty || (window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention()) || (window.rrwGeneration && window.rrwGeneration.hasPending()) || (window.rrwFeedback && window.rrwFeedback.hasUnsaved()) || (window.rrwRecovery && window.rrwRecovery.hasInputChanges())) { event.preventDefault(); event.returnValue = ''; } });
 
 
 // Quality experiments are separate from real drafts and publication approvals.

@@ -10,6 +10,7 @@
   <script src="/review-evidence.js" defer></script>
   <script src="/connection.js" defer></script>
   <script src="/app.js" defer></script>
+  <script src="/save-recovery.js" defer></script>
   <script src="/generation.js" defer></script>
   <script src="/feedback.js" defer></script>
   <script src="/recovery.js" defer></script>
@@ -111,7 +112,8 @@
           <p id="dirty-note" class="dirty-note" hidden>Unsaved changes. Save and recheck before approval or copying.</p>
           <p class="helper">Keep the details that matter. A complete short reply is fine, and an invitation to return is optional.</p>
           <div id="findings-box" class="findings"><strong id="findings-title"></strong><ul id="findings-list"></ul><p>Pattern checks are not a factuality guarantee. Read the reply yourself.</p></div>
-          <div class="editor-tools"><button id="save-edit" type="button" class="button secondary">Save &amp; recheck</button><button id="reroll" type="button" class="text-button">Regenerate</button><button id="set-aside" type="button" class="text-button">Set aside</button></div>
+          <div class="editor-tools"><button id="save-edit" type="button" class="button secondary">Save &amp; recheck</button><button id="save-recovery-check" type="button" class="text-button">Check latest saved reply</button><button id="reroll" type="button" class="text-button">Regenerate</button><button id="set-aside" type="button" class="text-button">Set aside</button></div>
+          <section id="save-recovery-panel" class="findings" aria-labelledby="save-recovery-title" hidden><h3 id="save-recovery-title">Continue from the checked saved version</h3><p id="save-recovery-message" class="helper" role="status" aria-live="polite"></p><p id="save-recovery-status" class="helper"></p><label for="save-recovery-reply">Latest saved reply, read only</label><textarea id="save-recovery-reply" rows="6" readonly spellcheck="false"></textarea><div class="editor-tools"><button id="save-recovery-keep" type="button" class="button secondary" disabled>Keep my editor text</button><button id="save-recovery-load" type="button" class="text-button" disabled>Use checked saved reply</button></div><p class="helper">Neither choice saves, approves or posts a reply. Current compose inputs stay unchanged and authorization must be confirmed again. Keep a private working copy before closing if you need recovery.</p></section>
           </div></div>
           <details id="trace-panel" class="trace-panel"><summary>Generation details</summary><div id="trace-content"></div></details>
           <details id="reply-comparison" class="reply-comparison"><summary>Compare the starting draft with your saved reply</summary><p id="comparison-state" class="helper" role="status"></p><div id="comparison-panes" class="comparison-panes"><div><h4>Starting draft</h4><p id="comparison-source" class="helper"></p><p id="comparison-before" class="preserve"></p></div><div><h4>Your saved reply</h4><p id="comparison-after" class="preserve"></p></div></div><button id="comparison-restore" class="text-button" type="button" disabled>Use starting draft in editor</button><p class="helper">Restoring changes the editor only. Save, recheck and review it before approval.</p></details>
