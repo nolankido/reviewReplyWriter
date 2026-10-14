@@ -4,6 +4,22 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+## A review inbox for recurring work
+
+Open **Review inbox** in the draft workspace. Load or paste a UTF-8 CSV for one
+business, preview all rows, confirm the business and save the inbox. **Draft next
+review** handles one ready row per click. Each resulting reply still needs its
+own human review and approval before copying.
+
+Use `review`, optional `stars` and optional `review_id` columns. Duplicates,
+invalid rows and personal-handling referrals remain visible. The inbox keeps
+its place across restarts and checks for an already saved draft after an
+interrupted write. Owner offers and operational statements are excluded from
+imports. The CLI's multi-business CSV format is separate.
+
+See [Review inbox](docs/REVIEW_INBOX.md) and the downloadable fictional sample
+in `web/inbox-sample.csv`.
+
 ## Keep the customer's actual details
 
 The draft editor now shows **Details to keep**, with exact excerpts from the
@@ -146,8 +162,10 @@ tracked file before making the repository public.
 keeps a review thread. `--learn-voice FILE --profile NAME` learns recurring
 phrases from replies separated by `---`. `--choices 2` compares two passing
 model candidates. `--tour` demonstrates the existing workflow. The browser
-respects saved voice metadata for the same business, but batch import, voice
-training, and best-of-two controls remain CLI features in this pass.
+respects saved voice metadata for the same business. Multi-business batch import,
+voice training and best-of-two controls remain CLI features. The new browser
+inbox supports one business and uses the selected tone and sign-off, with no
+automatic import of offers, actions or learned voice metadata.
 
 CSV row-level offers are owner-controlled policy input. Do not import an
 unreviewed third-party CSV as authorization. Different businesses do not inherit

@@ -94,6 +94,7 @@ class Workspace:
         self.generation = threading.Lock()
         self.caller = caller or gemma_caller
         self.evaluations = None
+        self.inboxes = None
 
     def _path(self, name):
         if not isinstance(name, str) or not re.fullmatch(r'reply-[a-z0-9-]+\.md', name):
@@ -275,7 +276,7 @@ class Workspace:
     def _write(self, draft, name=None):
         context = {k: draft[k] for k in ('stars', 'offer', 'signoff', 'approved_actions',
             'original', 'previous', 'choices', 'voice', 'generation_trace', 'generated_at',
-            'human_edited') if k in draft}
+            'human_edited', 'inbox_id', 'inbox_row_id') if k in draft}
         args = (draft['business'], draft['review'], draft['reply'],
                 draft.get('engine', 'imported draft'), draft['tone'], draft['kind'],
                 draft.get('tier') or rr.review_tier(draft['review'], draft.get('stars')),
@@ -309,6 +310,12 @@ class Workspace:
         data = {} if data is None else data
         if not isinstance(data, dict):
             raise WorkspaceError('Request must be a JSON object.')
+        if action.startswith('inbox-'):
+            from rrw_inbox import ReviewInbox
+            with self.lock:
+                if self.inboxes is None:
+                    self.inboxes = ReviewInbox(self)
+            return self.inboxes.dispatch(action, data)
         if action.startswith('quality-'):
             from rrw_evaluate import EvaluationLab
             with self.lock:

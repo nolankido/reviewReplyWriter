@@ -28,6 +28,9 @@ ASSETS = {'/': ('index.html', 'text/html; charset=utf-8'),
           '/style.css': ('style.css', 'text/css; charset=utf-8'),
           '/review-evidence.js': ('review-evidence.js', 'text/javascript; charset=utf-8'),
           '/review-evidence.css': ('review-evidence.css', 'text/css; charset=utf-8'),
+          '/inbox.js': ('inbox.js', 'text/javascript; charset=utf-8'),
+          '/inbox.css': ('inbox.css', 'text/css; charset=utf-8'),
+          '/inbox-sample.csv': ('inbox-sample.csv', 'text/csv; charset=utf-8'),
           '/submission.js': ('submission.js', 'text/javascript; charset=utf-8')}
 ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
            '/api/get': 'get', '/api/profile': 'profile', '/api/edit': 'edit',
@@ -35,6 +38,8 @@ ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
            '/api/approved-text': 'approved-text'}
 ACTIONS.update({f'/api/quality-{action}': f'quality-{action}' for action in
     ('diagnostics', 'list', 'get', 'start', 'step', 'assess', 'export')})
+ACTIONS.update({f'/api/inbox-{action}': f'inbox-{action}' for action in
+    ('preview', 'create', 'list', 'get', 'step', 'skip', 'retry')})
 
 
 ACTIONS.update({f'/api/submission-{action}': f'submission-{action}'

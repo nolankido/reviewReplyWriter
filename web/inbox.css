@@ -1,0 +1,19 @@
+.inbox-panel { margin: 0 0 24px; }
+.inbox-panel > details { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px; }
+.inbox-panel > details > summary { font-weight: 650; cursor: pointer; }
+.inbox-intro { margin: 14px 0; max-width: 800px; }
+.inbox-import { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; margin-top: 16px; }
+.inbox-import textarea { width: 100%; font: 12px/1.6 ui-monospace, monospace; }
+.inbox-summary { padding: 12px 0; font-weight: 600; }
+.inbox-rows { display: grid; gap: 10px; margin: 14px 0; max-height: 480px; overflow: auto; }
+.inbox-row { border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; overflow-wrap: anywhere; }
+.inbox-row header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.inbox-row p { margin-top: 6px; }
+.inbox-row details { margin-top: 8px; }
+.inbox-row summary { cursor: pointer; }
+.inbox-row .editor-tools { margin-top: 10px; }
+.inbox-row .helper { color: #526568; }
+.inbox-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 16px; }
+.inbox-controls .field { min-width: 170px; flex: 1; }
+.inbox-panel input[type=file] { width: 100%; max-width: 100%; }
+@media(max-width:800px) { .inbox-import { grid-template-columns: minmax(0,1fr); } }
