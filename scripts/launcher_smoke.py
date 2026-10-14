@@ -4,6 +4,8 @@ Uses the Windows batch launcher on Windows; the Python setup launcher elsewhere.
 No browser engine is involved. Session links and private paths are not printed.
 """
 import http.client
+import base64
+import io
 import json
 import os
 from pathlib import Path
@@ -14,6 +16,7 @@ import tempfile
 import threading
 import time
 from urllib.parse import parse_qs, urlsplit
+from zipfile import ZipFile
 
 HERE = Path(__file__).resolve().parents[1]
 
@@ -125,11 +128,21 @@ def main():
             after_quality = request(origin, token, 'approved-text', {'id': draft['id'], 'revision': draft['revision']})
             if after_quality['text'] != draft['reply']:
                 raise RuntimeError('Quality checkpoint reads changed the approved owner draft')
+            handoff = request(origin, token, 'submission-state', {})
+            packet = request(origin, token, 'submission-export', {'revision': handoff['revision'], 'format': 'zip',
+                'include_evaluation': False, 'sharing_confirmed': False, 'final': False})
+            with ZipFile(io.BytesIO(base64.b64decode(packet['base64']))) as archive:
+                readiness = json.loads(archive.read('READINESS.json'))
+                manifest = json.loads(archive.read('MANIFEST.json'))['files']
+                if (readiness['published'] or readiness['preflight_ready']
+                        or 'evidence/selected-evaluation.json' in archive.namelist()
+                        or any(manifest[name] != fingerprint for name, fingerprint in readiness['public_documents'].items())):
+                    raise RuntimeError('Working handoff packet has unbound documents or overstated evidence')
             print(json.dumps({'launcher': 'windows-batch' if os.name == 'nt' else 'python-setup',
                               'storage_path_with_spaces': True, 'free_port': True,
                               'template_draft_approval_export': True, 'comparison_and_private_notes': True,
                               'private_working_copy': True, 'generation_result_recovery': True,
-                              'quality_checkpoint_lookup': True, 'model_calls': 0}))
+                              'quality_checkpoint_lookup': True, 'working_packet_document_leases': True, 'model_calls': 0}))
         finally:
             if process.poll() is None:
                 if os.name == 'nt':

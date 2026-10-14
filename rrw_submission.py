@@ -13,8 +13,10 @@ from html import escape
 import io
 import ipaddress
 import json
+import os
 from pathlib import Path
 import re
+import stat
 import threading
 from urllib.parse import parse_qsl, quote, unquote, urlsplit
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -35,7 +37,7 @@ CONFIRMATIONS = {
     'development_window_confirmed': 'Original project and repository development were within the entry window, including imported work.',
     'repository_accessible_to_judges': 'I inspected code and history for private data and checked judge access to this repository.',
     'demo_accessible_to_judges': 'I watched the demo and tested this exact hosted link signed out.',
-    'firsthand_claims_reviewed': 'I reviewed the article and its technical and firsthand claims; no user feedback is invented.',
+    'firsthand_claims_reviewed': 'I reviewed the article, supporting packet documents and their technical and firsthand claims; no user feedback is invented.',
     'rules_reviewed': 'I checked the official rules, eligibility, team credits and submission instructions.',
 }
 FIELDS = ('demo_url', 'evaluation_id', *CONFIRMATIONS)
@@ -43,6 +45,51 @@ PUBLIC_DOCS = ('docs/REPLY_QUALITY_RESULTS.md', 'docs/SUBMISSION_CHECKLIST.md',
                'docs/OPERATOR_TRIAL.md',
                'examples/evaluation/template-quality-comparison.json')
 MAX_STATE_BYTES = 32768
+MAX_PUBLIC_DOCUMENT_BYTES = 1024 * 1024
+
+
+def read_public_documents(project):
+    """Read only fixed, single-link regular files, bounded and checked for change."""
+    base = Path(project).resolve()
+    files = {}
+    for name in PUBLIC_DOCS:
+        relative = Path(name)
+        path = base / relative
+        if (any((base.joinpath(*relative.parts[:i])).is_symlink()
+                for i in range(1, len(relative.parts) + 1))
+                or not path.resolve().is_relative_to(base)):
+            raise WorkspaceError('Public packet documents must not use filesystem links.')
+        try:
+            before = path.stat(follow_symlinks=False)
+        except OSError as exc:
+            raise WorkspaceError('A public packet document is missing or unreadable. Use a complete project copy.') from exc
+        if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
+                or before.st_size > MAX_PUBLIC_DOCUMENT_BYTES):
+            raise WorkspaceError('Public packet document must be a single-link regular file of at most 1 MiB.')
+        flags = (os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0)
+                 | getattr(os, 'O_BINARY', 0))
+        with os.fdopen(os.open(path, flags), 'rb') as stream:
+            opened = os.fstat(stream.fileno())
+            if (not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1
+                    or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)
+                    or opened.st_size > MAX_PUBLIC_DOCUMENT_BYTES):
+                raise WorkspaceError('Public packet document changed while opening; reload before exporting.', 409)
+            content = stream.read(MAX_PUBLIC_DOCUMENT_BYTES + 1)
+            after = os.fstat(stream.fileno())
+        current = path.stat(follow_symlinks=False)
+        if (len(content) > MAX_PUBLIC_DOCUMENT_BYTES or len(content) != opened.st_size
+                or not stat.S_ISREG(current.st_mode) or current.st_nlink != 1
+                or (current.st_dev, current.st_ino) != (opened.st_dev, opened.st_ino)
+                or (opened.st_size, opened.st_mtime_ns, opened.st_nlink) !=
+                   (after.st_size, after.st_mtime_ns, after.st_nlink)):
+            raise WorkspaceError('Public packet document changed while reading; reload before exporting.', 409)
+        files[name] = content
+    return files
+
+
+def public_document_fingerprints(files):
+    return {name: {'sha256': hashlib.sha256(content).hexdigest(), 'bytes': len(content)}
+            for name, content in files.items()}
 
 
 def public_demo_url(value):
@@ -208,7 +255,9 @@ class SubmissionDesk:
         raw, file_revision = self._read()
         template = (self.project / 'POST_FINAL.md').read_text(encoding='utf-8')
         sources = source_snapshot()
-        claims_version = digest({'post': template, 'sources': sources, 'rules_checked': RULES_CHECKED})
+        public_documents = public_document_fingerprints(read_public_documents(self.project))
+        claims_version = digest({'post': template, 'sources': sources, 'rules_checked': RULES_CHECKED,
+                                 'public_documents': public_documents})
         values = dict(raw['values'])
         if not values['demo_url']:
             values['demo_accessible_to_judges'] = False
@@ -247,6 +296,7 @@ class SubmissionDesk:
             internal_blockers=internal, document_blockers=document_gaps, evaluation_options=self._options(),
             selected_summary=summarize(report) if report else None,
             reference_summary=reference_summary, reference_sources_current=reference_current,
+            public_documents=public_documents,
             reference_sha256=reference['sha256'], post=post,
             preflight_ready=not official and not internal and not document_gaps, published=False,
             external_checks='Not performed. Link access, eligibility and claims are owner attestations.',
@@ -342,8 +392,11 @@ def make_packet(view, reference, selected=None, project=HERE, video_bytes=None):
     """Only explicit text/record allowlists. Never scan private workspace contents."""
     if video_bytes is not None and (len(video_bytes) > 100 * 1024 * 1024 or video_bytes[4:8] != b'ftyp'):
         raise WorkspaceError('Optional demo must be an MP4 of at most 100 MiB.')
+    documents = read_public_documents(project)
+    if public_document_fingerprints(documents) != view.get('public_documents'):
+        raise WorkspaceError('Public packet documents changed. Reload and review before exporting.', 409)
     readiness = {k: view[k] for k in ('schema', 'official_checks', 'official_blockers', 'internal_blockers', 'document_blockers',
-                    'preflight_ready', 'published', 'external_checks', 'test_status', 'deadline', 'rules_checked', 'reference_sources_current')}
+                    'preflight_ready', 'published', 'external_checks', 'test_status', 'deadline', 'rules_checked', 'reference_sources_current', 'public_documents')}
     readiness['selected_evaluation_included'] = selected is not None
     readiness['preflight_ready'] = bool(view['preflight_ready'] and selected is not None)
     if selected is None and not readiness['internal_blockers']:
@@ -368,11 +421,7 @@ def make_packet(view, reference, selected=None, project=HERE, video_bytes=None):
             'Before hosting any packet, inspect its files, notes and recorded replies.\n'
             'From the source repository, run: py check_submission.py --release --evidence PATH_TO_PACKET/submission_evidence.json --post PATH_TO_PACKET/DEV_SUBMISSION_DRAFT.md\n').encode('utf-8'),
     }
-    for name in PUBLIC_DOCS:
-        path = Path(project) / name
-        if path.is_symlink() or not path.resolve().is_relative_to(Path(project).resolve()) or path.stat().st_size > 1024 * 1024:
-            raise WorkspaceError('Public packet document is not a regular bounded project file.')
-        files[name] = path.read_bytes()
+    files.update(documents)
     files[REFERENCE] = files['evidence/recorded-smoke.json']
     if selected is not None:
         files['evidence/selected-evaluation.json'] = json.dumps(selected, indent=2, ensure_ascii=False).encode('utf-8')

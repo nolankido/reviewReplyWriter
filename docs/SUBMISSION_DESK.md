@@ -1,9 +1,10 @@
 # Submission Desk and no-install judge packet
 
-This pass connects the existing demo, model evidence and article to the remaining
-handoff steps. It does not add a new generation mode, change the drafting engine,
-or claim to have submitted the project. The recorded Gemma source fingerprints
-still match the unchanged engine. No new model inference is implied.
+The original pass connected the existing demo, model evidence and article to
+the remaining handoff steps. Later owner-workflow/engine changes make the bundled
+Gemma receipts historical. The desk checks that status from current source hashes.
+No new model inference or contest submission is implied by export or by the
+supporting-document freshness repair.
 
 ## In the browser
 
@@ -53,6 +54,22 @@ capabilities. The selected Quality Lab report, including its raw text and notes,
 is excluded unless explicitly enabled with per-export consent. Still inspect all
 exported files before sharing: allowlisting is not an audit of all document text.
 SHA-256 checksums detect accidental changes; they are not digital signatures.
+
+Supporting documents in the fixed public allowlist now participate in the saved
+review/version lease, alongside the article and evaluation. Changing one clears
+the current claim-review confirmation and makes an older save/export revision
+stale. Reload and review the article and packet documents before confirming again.
+The packet builder compares the bytes it will copy against that snapshot, and
+the browser export rechecks the snapshot before returning a ZIP. READINESS.json
+records the same byte counts and SHA-256 hashes as the payload manifest.
+
+Only bounded, single-link regular files are read for these documents. File and
+parent symlinks, hard links, directories, FIFOs and oversized/missing documents
+are refused rather than copied or opened as unbounded inputs. Missing documents
+require a complete project copy; the desk does not reconstruct them. The
+allowlist has not expanded and private workspace files remain excluded by default.
+Hashes do not identify secrets in ordinary document text or prevent deliberate
+local forgery. Inspect every exported file before sharing.
 
 ## Add an existing video to a local packet
 
