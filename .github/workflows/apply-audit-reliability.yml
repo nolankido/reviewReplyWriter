@@ -1,0 +1,53 @@
+name: Integrate verified audit remediation
+on:
+  push:
+    branches: [improve/audit-reliability]
+    paths: ['.development/**', '.github/workflows/apply-audit-reliability.yml']
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.ref == 'refs/heads/improve/audit-reliability'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Apply byte-verified remediation without changing the audit
+        run: |
+          mkdir -p evidence
+          set -o pipefail
+          python .development/apply_audit.py | tee evidence/applied.txt
+      - name: Verify application before committing
+        run: |
+          set -o pipefail
+          python -m unittest -v 2>&1 | tee evidence/tests.txt
+          python check_submission.py | tee evidence/development-check.txt
+          node --check web/app.js
+          git diff --check
+      - name: Commit verified application paths to development branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python - <<'PY'
+          import json, subprocess
+          from pathlib import Path
+          names = json.loads(Path('.development/applied-paths.json').read_text())
+          subprocess.run(['git','add','--',*names], check=True)
+          PY
+          git commit -m 'Apply verified audit reliability fixes and retain original counterexamples'
+          git push origin HEAD:improve/audit-reliability
+          git archive --format=zip --output=evidence/tested-source.zip HEAD
+      - name: Re-run original diagnostic probes and the unchanged template set
+        run: |
+          python docs/audits/2026-10-13/audit_probes.py --repo . --out evidence/audit-probes.json > evidence/audit-probes.txt
+          python rrw_evaluate.py --mode offline --suite full --data-dir evidence/evaluation > evidence/evaluation.txt
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: audit-integration-${{ github.sha }}
+          path: evidence/
+          include-hidden-files: true
+          retention-days: 7
