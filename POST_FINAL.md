@@ -102,6 +102,14 @@ replies and one labelled template fallback from five completed API responses.
 It is retained as historical evidence, not presented as a universal success rate
 or a prediction of performance on a customer's laptop.
 
+After the quality changes, a fresh run of the same three fictional scenarios
+produced three model-written drafts on the first attempt. The complaint kept the
+25-minute wait, and the mixed reply covered both check-in and the weak shower.
+Those cases took about 18 to 20 seconds each on a GitHub-hosted CPU runner.
+The raw outputs are retained in the repository. Three selected stochastic cases
+do not establish a general success rate, and none has been labelled as a real
+business owner's assessment.
+
 For the quality pass, I reran the unchanged 30-case template set. Both runs
 retained 29 drafts, one blocked oversized owner policy and no execution errors.
 Cases flagged by the existing limited rubric fell from four to zero. Median
