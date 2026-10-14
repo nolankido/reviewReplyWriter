@@ -7,7 +7,6 @@ tags: devchallenge, hf26challenge
 *This is a submission for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12).*
 
 <!-- RRW:NOTICE:START -->
-> Unpublished draft: judge access to the private repository remains unresolved. Original coding began October 13 at approximately 8 AM Hawaii time. The video below shows a historical build; current-source Gemma assessment remains pending.
 <!-- RRW:NOTICE:END -->
 
 ## What I Built
@@ -43,11 +42,13 @@ The current duplicate-billing path has executed HTTP fixture evidence using labe
 
 Repository: https://github.com/nolankido/reviewReplyWriter
 
-The application is MIT licensed; Gemma's model terms are separate. Judge access still needs confirmation.
+The repository is publicly accessible without a GitHub login. The application is MIT licensed; Gemma's model terms are separate.
 
 Run `py -3 rrw_setup.py --launch` on Windows or `python3 rrw_setup.py --launch` on macOS/Linux. The application uses Python's standard library and local browser assets. Model-written drafts require Ollama and downloaded `gemma3:4b` weights. Clearly labelled template preview works without either.
 
 ## How I Built It
+
+Original coding began October 13, 2026 at approximately 8 AM Hawaii time, during this challenge's development window.
 
 ### Keep the customer's concern visible
 

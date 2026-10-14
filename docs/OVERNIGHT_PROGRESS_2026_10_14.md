@@ -675,3 +675,44 @@ Receipt commit: `fc0228fddf24b76876a3d90f12c55e221041180c`.
 Verified complete tree: `791e75a788c18cb6a51ad5fb770baec2384da016`.
 The final candidate adds only this review reference; its exact head/tree and
 merge outcome are recorded in PR #39. No application source changed.
+
+## Public code and published DEV entry
+
+On October 14 at 1:38 PM Hawaii time Nolan explicitly authorized making the
+repository public and continuing submission. The next observed GitHub settings
+page already showed public, and repository metadata agreed; no additional
+visibility action was performed. Unauthenticated metadata and immutable README
+requests returned HTTP 200 at starting main
+`0985c65e8b8c7b7b9f344cd0541d223c7e73417b`, tree
+`e0d2c248d16fe3901d5cec5efa08c9da10034e7d`. Actions still showed Disable actions
+selected after the visibility change.
+
+Updated the article's access wording, removed the obsolete unpublished/private
+notice and kept the actual model/demo limits. The prepared browser body exactly
+matched the local article body: SHA-256
+`f9f251da50669985245db779a7fe7922035fce9232d01f49f5244adc39164771`.
+At 23:41:44 UTC Publish was clicked on the existing @kidon draft, not a new entry.
+DEV displayed Posted on Oct 14, both tags, the Fully Autonomous disclosure and
+the Week 2 Side Hustle Submission banner. Canonical published URL:
+https://dev.to/kidon/the-model-writes-the-review-reply-the-owner-keeps-the-promises-57a2
+
+After explicit DEV sign-out, that URL still rendered the complete article and
+code/demo links with Log in and Create account visible. Separate unauthenticated
+command-line HTML/API requests returned 404, and search could not retrieve the
+new URL. This mismatch remains unresolved; no successful external fetch or
+organizer acceptance is claimed. A signed-in publication screenshot was saved
+outside Git; a later signed-out screenshot timed out and is not claimed.
+
+The release checker executed all 569 Python tests successfully and correctly
+retained three internal blockers: current Gemma evidence, firsthand claim review
+and an assessed evaluation report. Publishing the disclosed entry did not clear
+or weaken these checks. The source article keeps published: false because it
+remains the application's non-publishing export template; the separate evidence
+records the real DEV publication. No application engine changed, no model or
+operator evidence was invented, and no Actions job was started.
+
+Next: read all three current-source Gemma cases on the intended computer and
+record genuine assessments, then replace the historical video with a reviewed
+current demonstration. Update the existing DEV article with actual evidence.
+The optional operator trial remains unperformed. Recheck the new public URL
+outside this browser when practical, retaining the observed fetch discrepancy.
