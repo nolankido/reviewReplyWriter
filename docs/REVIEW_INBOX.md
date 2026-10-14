@@ -103,6 +103,36 @@ of model prompts and owner policy, and are excluded from judge-packet exports.
 Handled items retain their manual-only classification. Handling status is your
 attestation, not independent verification of an external action.
 
+## Pending inbox input protection
+
+Unsaved CSV/name changes and private handling-note changes now participate in
+the app's close/reload warning. The inbox reuses the existing input tracker;
+only an acknowledged inbox save accepts its submitted CSV/name as saved. Preview
+does not save them, failed saves do not accept them, and a newer input change
+during the request remains pending. No checkbox or authorization is tracked or
+restored as part of this baseline.
+
+Selecting another file asks before replacing pending CSV/name changes. A
+cancelled choice keeps them. Size checking, fatal UTF-8 decoding and a check for
+newer source changes all finish before either CSV or name is replaced. An
+oversized, unreadable or invalid UTF-8 file leaves the current source intact.
+A successful file read is still unsaved until explicitly previewed, confirmed
+and saved; it clears import confirmation rather than carrying it to a new file.
+
+This is loss prevention, not automatic recovery. Browser unload warnings may
+not appear on every device or after a forced close. Unsaved inbox sources and
+handling notes are not silently stored in browser storage, working copies or
+backup archives. Save the inbox/note explicitly before closing; private backup
+includes saved inbox state only. Source text, handling notes and backup archives
+remain excluded from default judge exports.
+
+Actual Node checks execute the inbox module, shared input tracker and unload
+handler in a controlled DOM, with cancelled replacements, invalid/oversized and
+delayed reads, preview versus acknowledged/failed saves, newer pending changes
+and private notes. Python checks static load order, guard and atomic-read
+contracts. These are not current browser/mobile warning behavior, operator
+feedback or Gemma evidence. Target browser/device behavior remains unverified.
+
 ## Verification
 
 The final local suite has **341 passing Python tests**, including 29 new methods

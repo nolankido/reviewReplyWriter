@@ -5,6 +5,9 @@
   let selected = null;
   let initialized = false;
   const handlingDirty = new Set();
+  function sourceInputs() { return {csv: $('inbox-csv').value, label: $('inbox-label').value}; }
+  const sourceTracker = new InputTracker(sourceInputs());
+  function hasUnsaved() { return handlingDirty.size > 0 || sourceTracker.changed(sourceInputs()); }
   const status = {pending: 'Ready to draft', manual: 'Personal handling', invalid: 'Fix the source row',
     duplicate: 'Duplicate, not drafted', drafted: 'Draft saved', generating: 'Drafting',
     error: 'Needs attention', blocked: 'Draft blocked', interrupted: 'Interrupted', skipped: 'Skipped'};
@@ -148,13 +151,21 @@
     if (['business', 'signoff'].includes(id)) $(id).addEventListener('input', invalidatePreview);
   }
   $('inbox-file').addEventListener('change', () => run(async () => {
-    invalidatePreview();
     const file = $('inbox-file').files[0];
     if (!file) return;
-    $('inbox-csv').value = '';
-    if (file.size > 48 * 1024) throw new Error('Choose a UTF-8 CSV of at most 48 KiB.');
-    try { $('inbox-csv').value = new TextDecoder('utf-8', {fatal: true}).decode(await file.arrayBuffer()); }
-    catch (error) { throw new Error('This file is not valid UTF-8. Export a UTF-8 CSV and try again.'); }
+    if (sourceTracker.changed(sourceInputs()) &&
+        !window.confirm('Replace unsaved inbox CSV and name? Saved inboxes and handling notes will be kept.')) {
+      $('inbox-file').value = ''; return;
+    }
+    const before = sourceInputs();
+    if (file.size > 48 * 1024) throw new Error('Choose a UTF-8 CSV of at most 48 KiB. Your current CSV and name have been kept.');
+    let csv;
+    try { csv = new TextDecoder('utf-8', {fatal: true}).decode(await file.arrayBuffer()); }
+    catch (error) { throw new Error('This file could not be read as UTF-8. Your current CSV and name have been kept.'); }
+    if (JSON.stringify(sourceInputs()) !== JSON.stringify(before))
+      throw new Error('The inbox source changed while reading the file. Current text has been kept. Choose the file again.');
+    invalidatePreview();
+    $('inbox-csv').value = csv;
     $('inbox-label').value = file.name.slice(0, 140);
     notify('CSV loaded in this tab. Preview it before saving an inbox.');
   }));
@@ -179,8 +190,10 @@
     if (!discardHandling()) return;
     run(async () => {
     if (!previewRequest || !preview) throw new Error('Preview the CSV first.');
+    const source = {csv: previewRequest.csv, label: $('inbox-label').value};
     const record = await api('inbox-create', {...previewRequest, preview_revision: preview.revision,
-      confirmed: $('inbox-confirm').checked, label: $('inbox-label').value || 'Review inbox'});
+      confirmed: $('inbox-confirm').checked, label: source.label || 'Review inbox'});
+    sourceTracker.accept(source);
     render(record); invalidatePreview(); await reload();
     notify('Inbox saved locally. Draft one review at a time, then approve each reply separately.');
     });
@@ -206,6 +219,6 @@
       } else notify('This row needs personal attention. Read its findings in the inbox.', true);
     });
   });
-  window.rrwInbox = {buttons, invalidatePreview};
+  window.rrwInbox = {buttons, invalidatePreview, hasUnsaved};
   buttons();
 })();
