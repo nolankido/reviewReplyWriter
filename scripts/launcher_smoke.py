@@ -75,11 +75,17 @@ def main():
                 raise RuntimeError('Saved generation request was not recovered without duplication')
             if draft['status'] != 'pending' or not draft['engine'].startswith('template'):
                 raise RuntimeError('Expected a pending template draft')
+            if (draft['generation_status']['state'] != 'offline'
+                    or draft['generation_status']['attempts'] != 0):
+                raise RuntimeError('Template preview incorrectly claims model attempts')
             baseline = draft['reply']
             draft = request(origin, token, 'edit', {'id': draft['id'], 'revision': draft['revision'],
                                                   'reply': baseline + '\nThank you.'})
             if draft['reply_comparison']['baseline_reply'] != baseline or not draft['reply_comparison']['changed']:
                 raise RuntimeError('Starting reply was not preserved across the edit')
+            if (draft['generation_status']['state'] != 'offline'
+                    or not draft['generation_status']['owner_edited']):
+                raise RuntimeError('Generation explanation did not survive owner edit')
             request(origin, token, 'feedback-save', {'id': draft['id'], 'revision': draft['revision'],
                 'note_revision': 'new', 'assessment': {'role': 'demo', 'scenario': 'fictional',
                 'decision': 'needs_edits', 'reasons': ['tone'], 'note': 'SYNTHETIC_LAUNCHER_NOTE', 'review_seconds': None}})

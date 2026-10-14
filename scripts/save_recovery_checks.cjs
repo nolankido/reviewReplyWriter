@@ -42,6 +42,7 @@ function fixture() {
   vm.createContext(context);
   const section = (start, end) => app.slice(app.indexOf(start), app.indexOf(end));
   vm.runInContext(section('function setBusy(', 'function confirmDiscard('), context);
+  vm.runInContext(section('function renderGenerationStatus(', 'function renderQueue('), context);
   vm.runInContext(section('function renderDraft(', "$('compose-form').addEventListener"), context);
   vm.runInContext(section("$('reply-editor').addEventListener('input'", "$('copy').addEventListener"), context);
   vm.runInContext(controller, context);

@@ -42,7 +42,7 @@
       <p class="helper">A timeout does not cancel the server. No automatic retry is sent. Opening a result asks before replacing pending work.</p>
     </section>
     <nav class="view-switch" aria-label="Workspace view"><button id="view-drafts" class="button active" aria-pressed="true" type="button">Draft workspace</button><button id="view-quality" class="button" aria-pressed="false" type="button">Quality Lab</button><button id="view-submission" class="button" aria-pressed="false" type="button">Submission Desk</button></nav>
-    <details id="setup-guide" class="setup-guide"><summary>Getting started · Try a reply, connect Gemma, check its output</summary><div class="setup-steps">
+    <details id="setup-guide" class="setup-guide"><summary id="setup-heading">Getting started · Try a reply, connect Gemma, check its output</summary><div class="setup-steps">
       <div><h3>1. Try the workflow</h3><p class="helper">Templates work without installing a model. Load a fictional review, draft a reply, then read, edit and approve it.</p><button id="setup-example" class="button secondary" type="button">Load a complaint example</button></div>
       <div><h3>2. Connect local Gemma</h3><p id="setup-model-message" class="helper" aria-live="polite">Checking the local model installation.</p><p class="helper">Install and start Ollama, then run <code>ollama pull gemma3:4b</code>. Enable Ollama local-only mode and restart it before testing.</p><button id="setup-recheck" class="text-button" type="button">Recheck installation</button></div>
       <div><h3>3. Read actual AI output</h3><p class="helper">In Quality Lab, select local Gemma and the three-case smoke test. Run each case, read the results and record your assessment. An installation check cannot judge reply quality.</p><button id="setup-quality" class="button secondary" type="button">Open Quality Lab</button></div>
@@ -104,6 +104,7 @@
         </section>
         <div id="editor-content" hidden>
           <div class="draft-meta"><strong id="draft-business"></strong><span id="draft-tier" class="badge neutral"></span><span id="draft-source" class="source-label"></span></div>
+          <details id="generation-status-panel" class="findings generation-status"><summary id="generation-status-title"></summary><p id="generation-status-message" class="helper"></p><p id="generation-status-counts" class="helper"></p><p id="generation-status-edited" class="helper" hidden>This explains the starting generation, not your later edits. Check the current editor text before approval.</p><p id="generation-status-next" class="helper"></p><div class="editor-tools"><button id="generation-status-setup" type="button" class="text-button" hidden>Open local setup help</button><button id="generation-status-quality" type="button" class="text-button" hidden>Open Quality Lab</button></div></details>
           <ol class="review-progress" aria-label="Reply workflow">
             <li data-step="0">Draft</li><li data-step="1">Read &amp; edit</li><li data-step="2">Approve</li><li data-step="3">Copy</li>
           </ol>

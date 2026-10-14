@@ -176,6 +176,25 @@ function engineLabel(engine) {
   if (engine.includes('template')) return engine.includes('fallback') ? 'Template fallback, not AI output' : 'Template preview, no AI';
   return engine;
 }
+function renderGenerationStatus(view) {
+  const status = view.generation_status || {
+    title: 'Generation result not recorded', message: 'No recognized saved generation result is available.',
+    next_step: 'Read and check the current reply before approval.', action: null};
+  $('generation-status-title').textContent = status.title;
+  $('generation-status-panel').open = ['unavailable', 'invalid_response', 'rejected', 'model_unverified'].includes(status.state);
+  $('generation-status-message').textContent = status.message;
+  $('generation-status-next').textContent = status.next_step;
+  $('generation-status-counts').textContent = Number.isInteger(status.attempts) ?
+    status.attempts + ' local request attempts · ' + status.checked_completions + ' checked completion receipts' : '';
+  $('generation-status-edited').hidden = !view.human_edited;
+  $('generation-status-setup').hidden = status.action !== 'setup';
+  $('generation-status-quality').hidden = status.action !== 'quality';
+}
+$('generation-status-setup').addEventListener('click', () => {
+  $('setup-guide').open = true;
+  if (window.rrwFocus) window.rrwFocus.request('setup-heading', true);
+});
+$('generation-status-quality').addEventListener('click', () => $('view-quality').click());
 function renderQueue() {
   const search = $('queue-search').value.toLowerCase();
   const filter = $('queue-filter').value;
@@ -235,6 +254,7 @@ function renderDraft(view, focusSource = false) {
   $('draft-business').textContent = view.business || 'Business';
   $('draft-tier').textContent = (view.tier || 'Unclassified') + ' review';
   $('draft-source').textContent = engineLabel(view.engine) + (view.human_edited ? ' · edited by owner' : '');
+  renderGenerationStatus(view);
   $('saved-review').textContent = view.review;
   $('saved-thread').hidden = view.original === undefined;
   $('saved-original').textContent = view.original || '';
@@ -287,7 +307,7 @@ $('compose-form').addEventListener('submit', event => {
     renderDraft(view, true);
     if (window.rrwRecovery) window.rrwRecovery.accept();
     await refreshWorkspace();
-    notify(view.engine.includes('fallback') ? 'Gemma did not return a passing draft. A checked template was saved instead. See generation details.' : 'Draft saved. Read it, make any edits, then approve the exact reply.');
+    notify(view.engine.includes('fallback') ? 'A checked template was saved instead of AI output. Read the saved generation result for the reason and next steps.' : 'Draft saved. Read it, make any edits, then approve the exact reply.');
   });
 });
 $('manual-back').addEventListener('click', () => {

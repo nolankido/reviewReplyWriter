@@ -124,6 +124,8 @@ summary span{float:right;font-size:9px;color:var(--muted);font-weight:400;margin
 .findings{padding:13px;background:var(--tint);border:1px solid #d8e8de;border-radius:9px;font-size:11px;margin:16px 0}
 .findings.blocked{background:#fff6ef;border-color:#f0d9bc}
 .findings strong{font-size:11px}
+.generation-status summary{font-size:13px;color:var(--green)}
+.generation-status p.helper{font-size:12px;line-height:1.6}
 .findings ul{padding-left:18px;margin:6px 0;overflow-wrap:anywhere}
 .findings ul:empty{display:none}
 .findings p{color:var(--muted);font-size:10px;margin-top:5px}

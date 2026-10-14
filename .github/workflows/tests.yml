@@ -45,6 +45,8 @@ jobs:
         run: node scripts/save_recovery_checks.cjs
       - name: Check deferred keyboard focus handoffs
         run: node scripts/focus_checks.cjs
+      - name: Check saved generation explanations without implicit model calls
+        run: node scripts/generation_status_checks.cjs
 
   browser:
     runs-on: ubuntu-latest

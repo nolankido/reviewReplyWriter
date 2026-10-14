@@ -117,6 +117,8 @@ def main():
                 expect(page.locator('#draft-status')).to_have_text('Needs review')
                 expect(page.locator('#copy')).to_be_disabled()
                 expect(page.locator('#draft-source')).to_contain_text('Template preview, no AI')
+                expect(page.locator('#generation-status-title')).to_have_text('Template preview, no AI call')
+                assert page.locator('#generation-status-panel').evaluate('(el) => el.open') is False
                 expect(page.locator('#reply-editor')).not_to_have_value('')
                 library_item = page.locator('#queue-list .draft-item').first
                 library_item.focus(); library_item.press('Enter')
@@ -304,9 +306,20 @@ def main():
                 page.locator('#generate').click()
                 expect(page.locator('#notice')).to_contain_text('Draft saved')
                 expect(page.locator('#draft-source')).to_contain_text('retry')
+                expect(page.locator('#generation-status-title')).to_contain_text('completion receipt not verified')
                 page.locator('#trace-panel').evaluate('(el) => el.open = true')
                 expect(page.locator('#trace-content')).to_contain_text('Attempt 2')
                 assertions.append('Controlled model rejection and retry are visible in generation details')
+                def unavailable(*unused):
+                    raise OSError('Controlled browser fixture, not Gemma inference')
+                workspace.caller = unavailable
+                page.locator('#reroll').click()
+                expect(page.locator('#generation-status-title')).to_have_text('Template saved: local model request failed')
+                expect(page.locator('#generation-status-message')).to_be_visible()
+                page.locator('#generation-status-setup').click()
+                expect(page.locator('#setup-heading')).to_be_focused()
+                expect(page.locator('#copy')).to_be_disabled()
+                assertions.append('Controlled request failure opens saved template explanation and explicit setup help without approval')
                 # Finish screenshots in honest template mode.
                 page.locator('#engine-mode').select_option('offline')
                 page.locator('#reroll').click()
