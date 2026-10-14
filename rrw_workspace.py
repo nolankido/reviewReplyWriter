@@ -86,6 +86,13 @@ class Workspace:
         self.caller = caller or gemma_caller
         self.evaluations = None
         self.inboxes = None
+        self.review_notes = None
+
+    def _notes(self):
+        if self.review_notes is None:
+            from rrw_feedback import ReviewNotes
+            self.review_notes = ReviewNotes(self)
+        return self.review_notes
 
     def _path(self, name):
         if not isinstance(name, str) or not re.fullmatch(r'reply-[a-z0-9-]+\.md', name):
@@ -128,6 +135,7 @@ class Workspace:
         return state
 
     def _view(self, name, state=None):
+        from rrw_feedback import comparison
         draft, revision = self._read(name)
         findings = rr.draft_findings(draft)
         state = self._state() if state is None else state
@@ -146,6 +154,7 @@ class Workspace:
         review_evidence.update(source=draft['review'],
             source_label='Customer update' if 'original' in draft else 'Customer review')
         return dict(draft, id=name, revision=revision, findings=findings,
+                    reply_comparison=comparison(draft), review_note=self._notes().view(name, revision),
                     review_evidence=review_evidence,
                     status=status, approval_invalidated=invalidated,
                     word_count=len(draft['reply'].split()),
@@ -259,7 +268,8 @@ class Workspace:
                     draft['stars'], draft['kind'], random.Random(0), **common)
             engine = 'template engine (offline)' if mode == 'offline' else f'template engine (fallback: {reason})'
         result = dict(draft, reply=reply, engine=engine, generation_trace=trace,
-                      generated_at=datetime.now(timezone.utc).isoformat())
+                      generated_at=datetime.now(timezone.utc).isoformat(), human_edited=False)
+        result['generation_baseline'] = {key: str(result[key]) for key in ('reply', 'engine', 'generated_at')}
         result['tier'] = rr.review_tier(draft['review'], None if followup else draft.get('stars'))
         require_valid(rr.draft_findings(result))  # Independent final output check.
         return result
@@ -267,7 +277,7 @@ class Workspace:
     def _write(self, draft, name=None):
         context = {k: draft[k] for k in ('stars', 'offer', 'signoff', 'approved_actions',
             'original', 'previous', 'choices', 'voice', 'generation_trace', 'generated_at',
-            'human_edited', 'inbox_id', 'inbox_row_id') if k in draft}
+            'human_edited', 'generation_baseline', 'inbox_id', 'inbox_row_id') if k in draft}
         args = (draft['business'], draft['review'], draft['reply'],
                 draft.get('engine', 'imported draft'), draft['tone'], draft['kind'],
                 draft.get('tier') or rr.review_tier(draft['review'], draft.get('stars')),
@@ -301,6 +311,9 @@ class Workspace:
         data = {} if data is None else data
         if not isinstance(data, dict):
             raise WorkspaceError('Request must be a JSON object.')
+        if action.startswith('feedback-'):
+            with self.lock:
+                return self._notes().dispatch(action, data)
         if action.startswith('inbox-'):
             from rrw_inbox import ReviewInbox
             with self.lock:

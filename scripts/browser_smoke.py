@@ -69,6 +69,17 @@ def main():
                 assert page.locator('#review-evidence blockquote').first.inner_text() in page.locator('#saved-review').inner_text()
                 assertions.append('Detected details link to exact customer wording beside the saved draft')
                 original = page.locator('#reply-editor').input_value()
+                page.locator('#reply-comparison summary').click()
+                expect(page.locator('#comparison-state')).to_contain_text('matches the starting draft')
+                assert page.locator('#comparison-before').text_content() == original
+                page.locator('#review-notes summary').click()
+                page.locator('#review-note-role').select_option('demo')
+                page.locator('#review-note-scenario').select_option('fictional')
+                page.locator('#review-note-decision').select_option('as_is')
+                page.locator('#review-note-text').fill('SYNTHETIC_BROWSER_ASSESSMENT')
+                page.locator('#review-note-save').click()
+                expect(page.locator('#review-note-state')).to_contain_text('Assessment saved')
+                expect(page.locator('#copy')).to_be_disabled()
                 assertions.append('Offline example generates a saved unapproved draft with honest credit')
                 if args.screenshots:
                     page.evaluate('window.scrollTo(0, 0)')
@@ -98,10 +109,26 @@ def main():
                 page.locator('#save-edit').click()
                 expect(page.locator('#draft-status')).to_have_text('Needs changes')
                 expect(page.locator('#human-reviewed')).to_be_disabled()
+                assert page.locator('#comparison-before').text_content() == original
+                expect(page.locator('#comparison-after ins')).to_contain_text('We will refund you.')
+                expect(page.locator('#review-note-state')).to_contain_text('different saved draft')
                 assertions.append('Unsafe edit invalidates approval and stays blocked after saving')
-                page.locator('#reply-editor').fill(original)
+                page.locator('#comparison-restore').click()
+                expect(page.locator('#reply-editor')).to_have_value(original)
+                expect(page.locator('#copy')).to_be_disabled()
                 page.locator('#save-edit').click()
                 expect(page.locator('#draft-status')).to_have_text('Needs review')
+                page.locator('#review-note-save').click()
+                expect(page.locator('#review-note-state')).to_contain_text('Assessment saved')
+                with page.expect_download() as counts_download:
+                    page.locator('#review-note-export').click()
+                exported_counts = Path(counts_download.value.path()).read_text()
+                assert json.loads(exported_counts)['counts']['demo']['fictional']['as_is'] == 1
+                assert 'SYNTHETIC_BROWSER_ASSESSMENT' not in exported_counts
+                assert original not in exported_counts
+                page.locator('#reply-comparison summary').click()
+                page.locator('#review-notes summary').click()
+                assertions.append('Saved baseline survives edits; restoration requires review; assessments stay separate and export only counts')
                 page.locator('#human-reviewed').check()
                 page.locator('#approve').click()
                 expect(page.locator('#draft-status')).to_have_text('Approved')

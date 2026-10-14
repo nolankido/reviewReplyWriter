@@ -72,6 +72,8 @@ The application is MIT licensed. Gemma's model terms are separate. Judges need
 access to the repository before submission.
 
 Run `py rrw_web.py` on Windows, or `python3 rrw_web.py` on macOS/Linux. The app
+can also be opened with `py -3 rrw_setup.py --launch` on Windows or
+`python3 rrw_setup.py --launch` on macOS/Linux for setup checks and a free port. It
 uses Python's standard library and local UI assets. For model-written drafts,
 install Ollama and download `gemma3:4b`; template preview needs neither.
 
@@ -119,6 +121,12 @@ filler, and a return invitation is optional. Removing those stock requirements
 reduced median template length from 35 to 25 words on the unchanged 30-case
 fictional diagnostic set. That is a measured writing change, not a customer
 preference study or a time-saving claim.
+
+The editor now retains the accepted starting draft so the owner can inspect
+exact wording changes after saving. Restoring that wording still goes through
+rechecking and approval. Optional private review assessments can record real
+trial observations, with builder and demo judgments kept separate. No operator
+results have been assumed; exported counts describe drafts, not distinct users.
 
 ### Keep the failed experiments
 

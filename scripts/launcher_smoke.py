@@ -70,6 +70,18 @@ def main():
                 'stars': 2, 'mode': 'offline'})
             if draft['status'] != 'pending' or not draft['engine'].startswith('template'):
                 raise RuntimeError('Expected a pending template draft')
+            baseline = draft['reply']
+            draft = request(origin, token, 'edit', {'id': draft['id'], 'revision': draft['revision'],
+                                                  'reply': baseline + '\nThank you.'})
+            if draft['reply_comparison']['baseline_reply'] != baseline or not draft['reply_comparison']['changed']:
+                raise RuntimeError('Starting reply was not preserved across the edit')
+            request(origin, token, 'feedback-save', {'id': draft['id'], 'revision': draft['revision'],
+                'note_revision': 'new', 'assessment': {'role': 'demo', 'scenario': 'fictional',
+                'decision': 'needs_edits', 'reasons': ['tone'], 'note': 'SYNTHETIC_LAUNCHER_NOTE', 'review_seconds': None}})
+            counts = request(origin, token, 'feedback-summary', {})['text']
+            if (json.loads(counts)['counts']['demo']['fictional']['needs_edits'] != 1
+                    or 'SYNTHETIC_LAUNCHER_NOTE' in counts or baseline in counts):
+                raise RuntimeError('Expected anonymous draft counts without notes or reply text')
             draft = request(origin, token, 'decision', {'id': draft['id'], 'revision': draft['revision'],
                                                       'status': 'approved', 'reviewed': True})
             exported = request(origin, token, 'approved-text', {'id': draft['id'], 'revision': draft['revision']})
@@ -77,7 +89,8 @@ def main():
                 raise RuntimeError('Approved export differs from the reviewed draft')
             print(json.dumps({'launcher': 'windows-batch' if os.name == 'nt' else 'python-setup',
                               'storage_path_with_spaces': True, 'free_port': True,
-                              'template_draft_approval_export': True, 'model_calls': 0}))
+                              'template_draft_approval_export': True, 'comparison_and_private_notes': True,
+                              'model_calls': 0}))
         finally:
             if process.poll() is None:
                 if os.name == 'nt':
