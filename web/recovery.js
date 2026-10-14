@@ -51,11 +51,41 @@ else (() => {
     $('recovery-restore').disabled = !saved || !saved.available;
     $('recovery-clear').disabled = !saved || !saved.available;
   }
+  function copyMatches(actual, expected) {
+    const snapshot = payload => JSON.stringify({inputs: Object.keys(payload.inputs).sort().map(key => {
+      let value = payload.inputs[key];
+      if (typeof value === 'string') value = value.trim();
+      if (key === 'approved_actions') value = value.map(text => text.trim());
+      return [key, value];
+    }), editor: payload.editor === null ? null : Object.keys(payload.editor).sort().map(key => [key, payload.editor[key]])});
+    try { return snapshot(actual) === snapshot(expected); }
+    catch (error) { return false; }
+  }
+  async function changeCopy(action, data) {
+    try {
+      const value = await api(action, data);
+      if (!value || !/^[0-9a-f]{64}$/.test(value.revision || '') ||
+          value.available !== (action === 'recovery-save') ||
+          (value.available ? !copyMatches(value.payload, data.payload) : value.payload !== null)) {
+        const error = new Error('The working-copy change returned no matching receipt. Check the saved copy; your current inputs are kept.');
+        error.uncertain = true; throw error;
+      }
+      return value;
+    }
+    catch (error) {
+      if (error.uncertain || !error.status || error.status >= 500 || error.status === 409) {
+        saved = null;
+        $('recovery-status').textContent = 'The working-copy change is uncertain or changed elsewhere. Current inputs and reply edits are kept. Check the saved copy before saving, recovering or discarding it; no retry was sent.';
+        buttons();
+      }
+      throw error;
+    }
+  }
   $('recovery-check').addEventListener('click', () => run(async () => show(await api('recovery-get', {}))));
   $('recovery-save').addEventListener('click', () => run(async () => {
     if (!saved) throw new Error('Check for an earlier recovery copy first.');
     const editor = current && dirty ? {id: current.id, revision: current.revision, reply: $('reply-editor').value} : null;
-    show(await api('recovery-save', {revision: saved.revision, payload: {inputs: inputs(), editor}}));
+    show(await changeCopy('recovery-save', {revision: saved.revision, payload: {inputs: inputs(), editor}}));
     notify('Working copy saved privately. It does not save, approve or post the reply.');
   }));
   $('recovery-restore').addEventListener('click', () => {
@@ -95,7 +125,8 @@ else (() => {
   $('recovery-clear').addEventListener('click', () => {
     if (!saved || !saved.available || !window.confirm('Discard the saved recovery copy? Your current form and reply editor will be kept.')) return;
     run(async () => {
-      show(await api('recovery-clear', {revision: saved.revision}));
+      if (!saved) throw new Error('Check the saved recovery copy before discarding it.');
+      show(await changeCopy('recovery-clear', {revision: saved.revision}));
       $('recovery-orphan').hidden = true; $('recovery-orphan-text').value = '';
       notify('Recovery copy discarded. Current editor text and saved drafts were kept.');
     });

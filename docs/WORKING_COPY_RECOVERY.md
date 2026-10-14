@@ -36,9 +36,13 @@ and policy inputs and should stay on the owner's computer. They are excluded
 from judge packets. The application does not upload them. The copy is ordinary
 local JSON, not encrypted storage or an independently attested record.
 
-The combined copy is limited to 96 KiB with per-field length/type checks. A
-failed or oversized save keeps the existing file and current editor. Check the
-visible success message before relying on recovery.
+The combined copy is limited to 96 KiB with per-field length/type checks.
+Oversized inputs are rejected before writing. Save and discard require matching
+readback; an uncertain outcome may already have changed the file. Current form
+and reply text are kept, and observed files are preserved. **Check saved copy**
+must succeed before another save, recovery or discard after uncertainty. No
+request is repeated automatically. Check the visible success message before
+relying on recovery; readback is not a guarantee against later disk changes.
 
 ## Recover after reopening
 
@@ -64,6 +68,10 @@ are kept. Discarding is not a secure erase of filesystem history or backups.
 Concurrent tabs must use the latest recovery revision. A stale save/clear is
 rejected. Check the latest copy deliberately before replacing it. Corrupt or
 linked files are preserved and rejected; drafting remains usable separately.
+New saves and discards use a fresh random revision identifier, so clock changes
+do not reuse an earlier cleared-copy revision. Earlier working copies remain
+readable without rewriting them; explicit save/discard upgrades their record.
+Older application versions may need updating before reading a newly saved copy.
 
 ## Executed checks and limits
 
@@ -109,3 +117,47 @@ unexecuted. No dependencies, backend writes, private data, workflow dispatch,
 posting, upload or contest submission were added. Exact candidate/tree and merge
 outcome are recorded in the PR. Next: current target-computer verification,
 actual local Gemma and a consenting operator trial.
+
+## October 14 confirmed-change and revision repair
+
+Direct owner continuation started from verified main
+`94fdb6ceac78bfe834ea72a242566f8d1affab02`, tree
+`b62805fceeeb6701cf851a7ee7c5e9de51f1faa0`, matching clean local source.
+No AGENTS.md, new competing work or Actions workflows were present. The
+overnight automation remains paused; this is direct follow-up authorization.
+
+Controlled post-write damage previously returned an available working copy,
+although its next read failed. Save and clear now require exact stored-record
+readback, with uncertain 409 responses for a damaged, unreadable or different
+record. The browser checks the expected saved payload or cleared state before
+accepting the receipt, keeps current text and inspection-only edits, and drops
+cached copy actions until a fresh check succeeds. No rollback replaces observed
+files. Working-copy changes do not grant owner authorization or posting approval.
+
+A separate controlled frozen-clock sequence reproduced identical clear
+revisions and an accepted stale save after intervening save/clear operations.
+Schema `rrw-working-copy-v2` adds a random 128-bit mutation identifier inside the
+hashed record. Legacy v1 reads preserve the file and old fingerprint; only an
+explicit save or clear writes v2. Invalid identifiers fail while preserving the
+record. This is collision-resistant revision tracking, not a signature or
+protection against deliberate local file replacement.
+
+All 569 Python tests passed, including eight new regressions; 54 focused
+working-copy/backup tests passed. Actual loopback HTTP rejects a clear whose
+readback contains a copy, preserving that copy. Tests cover damaged/different
+readback, a failed read, repeated clock values, legacy save/clear compatibility
+and malformed identifiers. The final actual local verifier passed the
+development checker, both real Python launcher HTTP workflows and all nine
+actual Node scripts with unchanged inventoried source. Expanded actual recovery
+handlers cover lost/conflicting/malformed/mismatched save/clear receipts, retained
+inputs and editor/inspection text, action gating and explicit read-only checks.
+Compilation, JavaScript syntax and whitespace checks passed.
+
+All fault/clock/browser-state cases are controlled fixtures, not operator
+observations or model inference. Real Windows, browser/mobile/screen-reader
+behavior, fresh Gemma and operator use remain unexecuted. Historical model
+receipts remain unchanged and stale for current application source. No
+dependencies, model configuration, private data, Actions dispatch, upload,
+posting or contest submission were added. Exact candidate/tree and merge outcome
+are recorded in the PR. Next: target-computer verification, current local Gemma
+and a consenting operator trial.
