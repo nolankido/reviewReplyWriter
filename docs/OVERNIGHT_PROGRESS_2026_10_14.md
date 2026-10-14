@@ -101,13 +101,14 @@ actual operator feedback remain unverified. Historical Gemma receipts are kept.
 
 ## Next useful pass
 
-Inspect keyboard focus after async library/draft/recovery actions. Selecting a
-library draft calls renderDraft(), which reconstructs the library buttons without
-an explicit focus handoff. A focused selection can be removed from the DOM.
-Provide a deliberate source/editor handoff and preserve focus/current text when
-guards are cancelled. Test status announcements and mobile/keyboard recovery
-using actual Chromium when available; controlled DOM checks are not rendering or
-accessibility certification. Clearer model/fallback states remain useful later.
+Inspect saved template-fallback reasons and next actions. The current source label
+distinguishes template/fallback from model output, but the explanation often
+requires opening generation details and reading a raw engine/call error. Provide
+a concise bounded explanation for unavailable/unchecked model responses versus
+rejected replies, without presenting raw exceptions as public copy or claiming
+fresh inference. Preserve checked receipts and explicit owner approval. Test
+controlled unavailable, invalid-completion and rejected-output cases; current
+Gemma and target browser/device evidence still need a suitable real runtime.
 
 Actions has been failing before any steps run. Inspect new job steps once; do not
 retry or weaken tests to evade the unresolved account/runtime problem. Record
@@ -199,3 +200,42 @@ were empty). The PR records final candidate jobs without a retry. No test code
 ran in those pre-step failures. Windows batch execution, current
 Chromium rendering/keyboard/mobile navigation, fresh current-source Gemma and a
 real operator trial remain unverified. Historical Gemma receipts are preserved.
+
+## Fifth pass: deferred keyboard focus handoffs
+
+Startup verified main `4a209381eb0a6a8729507cd238b363abb7532bfd`, tree
+`f76707d5b362d63b0c002121ccbef9e4f2895a66`, from PR #18. It matched the
+clean local source. No repository AGENTS.md or new active PR needed repair.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/19
+
+Tested feature commit: `3b2dd4a6a0506ff1c2d5263aba3e1c49cffbf365`.
+Feature tree: `1a2b16907f2d2033af21a71c9e6333157b0aeb2b`, matched to the
+entire locally checked tree before committing. The final candidate adds this
+receipt; final head/tree/merge are recorded in the PR and must be verified fresh.
+
+Repaired library selection losing focus when its button is reconstructed, and
+recovery attempting focus while controls are disabled. A small local helper
+queues explicit handoffs until busy controls and existing gates are restored.
+New/opened replies land on the opened saved source/policy summary; manual handling,
+result/comparison checks, acknowledged saves, recovered edits and action failures
+have deliberate targets. Cancelled guards queue no move, ordinary renders do not
+queue source focus, and hidden/disabled/disconnected targets are ignored. There
+is no focus trap, shortcut, checkbox/value change, automatic selection, posting
+or new persistence behavior. See docs/KEYBOARD_HANDOFF.md.
+
+Executed locally: all 468 Python tests, including three static markup/local HTTP
+focus checks; actual Node focus helper and library/render/run code in a controlled
+DOM, alongside the three existing state scripts; development checker; both real
+Python launcher HTTP workflows, including recovered backup; JavaScript syntax,
+Python compilation and whitespace checks. Controlled checks cover removed library
+buttons, deferred enabled-editor focus, cancellation with kept work, source-panel
+opening, ordinary renders, invalid targets and error handoff.
+
+Chromium keyboard Enter/cancellation/focus scenarios were extended but not run.
+Actual target desktop/mobile navigation, virtual keyboard, focus visibility,
+screen-reader announcements, Windows batch and fresh Gemma remain unverified.
+This is not accessibility conformance or independently certified usability.
+Feature Actions run 38574966818 failed before all five jobs' steps (all arrays
+empty). Final candidate steps are inspected in the PR without workflow retries;
+these pre-step failures run no tests or cross-platform/browser verification.

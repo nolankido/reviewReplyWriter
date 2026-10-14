@@ -53,7 +53,6 @@
         fillForm({...record.settings, review: row.review, stars: row.stars});
         showView(false); showManualReview(row.review, row.findings);
         notify('This review needs personal handling. Routine drafting and approval are stopped.', true);
-        $('manual-review-title').setAttribute('tabindex', '-1'); $('manual-review-title').focus();
       });
       actions.append(read);
       const details = node('details');
@@ -92,8 +91,7 @@
         run(async () => {
           const view = await api('get', {id: row.draft_id});
           fillForm(view);
-          if (renderDraft(view)) {
-            $('reply-editor').focus();
+          if (renderDraft(view, true)) {
             notify('Inbox draft opened. Read, edit and approve this exact reply individually.');
           } else notify('This saved review needs personal handling. Routine approval is stopped.', true);
         });
@@ -203,7 +201,7 @@
       const newDraft = result.rows.find(x => x.draft_id && !before.has(x.draft_id));
       if (newDraft) {
         const view = await api('get', {id: newDraft.draft_id});
-        fillForm(view); renderDraft(view);
+        fillForm(view); renderDraft(view, true);
         notify('One draft saved. Review and approve it individually. The remaining queue is saved.');
       } else notify('This row needs personal attention. Read its findings in the inbox.', true);
     });
