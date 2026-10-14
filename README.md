@@ -53,6 +53,11 @@ keeps the original workspace intact and clears posting approvals.
 See [Private backup and recovery](docs/PRIVATE_BACKUP.md) for exact commands,
 included files, limits and opening the recovered workspace.
 
+Keyboard handoffs now wait until busy controls are enabled. Opening a draft moves
+to its saved review/policy summary, while recovered reply edits move to the
+editor. Cancelled replacement guards do not move focus or discard work. See
+[Keyboard recovery handoffs](docs/KEYBOARD_HANDOFF.md) for scope and test limits.
+
 ## Inspect edits and record review feedback
 
 New browser drafts retain the starting reply for their current generation.

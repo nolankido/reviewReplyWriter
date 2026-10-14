@@ -39,6 +39,7 @@
     // library read must not hide that success or leave the old revision loaded.
     renderDraft(view);
     notify(success);
+    if (window.rrwFocus) window.rrwFocus.request(view.status === 'approved' ? 'draft-status' : 'findings-title');
     try { await refreshWorkspace(); }
     catch (error) { notify(success + ' The library could not refresh; the saved reply is shown. Refresh the library later.', true); }
   }
@@ -59,6 +60,7 @@
     const same = view.reply === $('reply-editor').value;
     message((same ? 'The latest saved reply matches your editor text.' : 'The latest saved reply differs from your editor text. Both are kept separately.') +
       ' Checking has not changed the editor, review inputs, owner policy or approval. Choose which text to continue with.');
+    if (window.rrwFocus) window.rrwFocus.request('save-recovery-title');
   }
   async function adopt(keep) {
     if (!current || !checked || checked.id !== current.id) return;
@@ -88,7 +90,7 @@
     updateButtons(); buttons();
     notify(keep ? 'Editor text kept against the checked saved version. Save and recheck any differences, then review and approve explicitly.'
       : 'Checked saved reply loaded. Read its source and policy, then review and approve explicitly. Nothing was posted.');
-    $('reply-editor').focus();
+    if (window.rrwFocus) window.rrwFocus.request('reply-editor');
   }
   $('save-recovery-check').addEventListener('click', () => run(check));
   $('save-recovery-keep').addEventListener('click', () => run(() => adopt(true)));

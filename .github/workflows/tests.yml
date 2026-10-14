@@ -43,6 +43,8 @@ jobs:
         run: node scripts/connection_state_checks.cjs
       - name: Check uncertain saves without losing pending edits
         run: node scripts/save_recovery_checks.cjs
+      - name: Check deferred keyboard focus handoffs
+        run: node scripts/focus_checks.cjs
 
   browser:
     runs-on: ubuntu-latest

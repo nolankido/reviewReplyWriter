@@ -139,6 +139,8 @@ summary span{float:right;font-size:9px;color:var(--muted);font-weight:400;margin
 .export-row .button{flex:1;font-size:11px}
 .notice{padding:13px 16px;border-radius:9px;background:#eaf3ef;border:1px solid #bdd6ca;color:var(--green);font-size:12px;margin:0 0 20px;white-space:pre-wrap;overflow-wrap:anywhere}
 .notice.error{background:#fff0ed;border-color:#efc9c2;color:#8e3434}
+[tabindex="-1"]:focus,#saved-source-heading:focus{outline:3px solid var(--green);outline-offset:3px}
+#saved-source-heading,[tabindex="-1"]{scroll-margin-block:16px}
 .page-footer{display:flex;justify-content:space-between;gap:15px;color:var(--muted);font-size:10px;margin-top:25px}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .skip-link{position:fixed;top:-60px;left:12px;padding:10px;background:#fff;z-index:10}

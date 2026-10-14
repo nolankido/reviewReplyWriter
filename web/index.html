@@ -10,6 +10,7 @@
   <script src="/review-evidence.js" defer></script>
   <script src="/connection.js" defer></script>
   <script src="/app.js" defer></script>
+  <script src="/focus.js" defer></script>
   <script src="/save-recovery.js" defer></script>
   <script src="/generation.js" defer></script>
   <script src="/feedback.js" defer></script>
@@ -32,11 +33,11 @@
   </aside>
   <main id="main">
     <header class="page-header"><div><p class="eyebrow">THE OWNER'S WORKSPACE</p><h1>A thoughtful reply.<br>A human decision.</h1><p class="intro">Draft with local AI. Check every commitment. Keep your voice.</p></div><div class="model-box"><span id="model-status" class="badge neutral">Checking Ollama</span><button id="refresh-model" class="text-button" type="button">Check connection</button></div></header>
-    <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+    <div id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true" tabindex="-1" hidden></div>
     <p id="session-storage-note" class="notice" role="status" hidden></p>
     <section id="generation-recovery" class="card" aria-labelledby="generation-title" hidden>
       <h2 id="generation-title">Check a generation result</h2>
-      <p id="generation-message" class="helper" role="status" aria-live="polite"></p>
+      <p id="generation-message" class="helper" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
       <div class="editor-tools"><button id="generation-check" class="button secondary" type="button">Check result</button><button id="generation-open" class="button secondary" type="button" disabled>Open saved draft</button><button id="generation-dismiss" class="text-button" type="button">Dismiss result check</button></div>
       <p class="helper">A timeout does not cancel the server. No automatic retry is sent. Opening a result asks before replacing pending work.</p>
     </section>
@@ -90,11 +91,11 @@
         </form>
       </section>
       <section class="card editor-card" aria-labelledby="editor-title">
-        <header class="card-heading"><span class="step">02</span><div class="grow"><p class="eyebrow">REVIEW &amp; APPROVE</p><h2 id="editor-title">Make it yours</h2></div><span id="draft-status" class="badge neutral">No draft yet</span></header>
+        <header class="card-heading"><span class="step">02</span><div class="grow"><p class="eyebrow">REVIEW &amp; APPROVE</p><h2 id="editor-title">Make it yours</h2></div><span id="draft-status" class="badge neutral" tabindex="-1">No draft yet</span></header>
         <div id="editor-empty" class="editor-empty"><div class="empty-mark" aria-hidden="true">“</div><h3>Your next reply starts here.</h3><p>Add a review or try an example.<br>Every draft stays here until you decide what to do with it.</p><div class="mini-steps"><span>Draft</span><span aria-hidden="true">›</span><span>Check</span><span aria-hidden="true">›</span><span>You approve</span></div></div>
         <section id="manual-review-panel" class="manual-review-panel" role="alert" aria-labelledby="manual-review-title" hidden>
           <p class="eyebrow">HUMAN ATTENTION REQUIRED</p>
-          <h3 id="manual-review-title">This review needs personal handling.</h3>
+          <h3 id="manual-review-title" tabindex="-1">This review needs personal handling.</h3>
           <p>This review is outside routine drafting. A business owner needs to assess the situation before preparing any public response.</p>
           <div class="manual-case"><strong>Review or conversation submitted</strong><p id="manual-review-text" class="preserve"></p></div>
           <strong>Why routine drafting was stopped</strong><ul id="manual-review-reasons"></ul>
@@ -107,13 +108,13 @@
             <li data-step="0">Draft</li><li data-step="1">Read &amp; edit</li><li data-step="2">Approve</li><li data-step="3">Copy</li>
           </ol>
           <div class="reply-review-layout"><div class="review-source-column">
-          <details class="source-review" open><summary>Review and owner policy used for this draft</summary><p id="saved-review" class="preserve"></p><div id="saved-thread" hidden><h4>Original review</h4><p id="saved-original" class="preserve"></p><h4>Previously posted reply</h4><p id="saved-previous" class="preserve"></p></div><h4>Authorized statements</h4><p id="saved-policy" class="preserve"></p><p class="helper">This saved policy belongs to this draft. Changing the compose form does not change it.</p></details>
+          <details class="source-review" open><summary id="saved-source-heading">Review and owner policy used for this draft</summary><p id="saved-review" class="preserve"></p><div id="saved-thread" hidden><h4>Original review</h4><p id="saved-original" class="preserve"></p><h4>Previously posted reply</h4><p id="saved-previous" class="preserve"></p></div><h4>Authorized statements</h4><p id="saved-policy" class="preserve"></p><p class="helper">This saved policy belongs to this draft. Changing the compose form does not change it.</p></details>
           </div><div class="review-edit-column"><div class="field"><div class="label-row"><label for="reply-editor">Your reply</label><span id="reply-count" class="muted"></span></div><textarea id="reply-editor" rows="13" maxlength="20000" spellcheck="true"></textarea></div>
           <p id="dirty-note" class="dirty-note" hidden>Unsaved changes. Save and recheck before approval or copying.</p>
           <p class="helper">Keep the details that matter. A complete short reply is fine, and an invitation to return is optional.</p>
-          <div id="findings-box" class="findings"><strong id="findings-title"></strong><ul id="findings-list"></ul><p>Pattern checks are not a factuality guarantee. Read the reply yourself.</p></div>
+          <div id="findings-box" class="findings"><strong id="findings-title" tabindex="-1"></strong><ul id="findings-list"></ul><p>Pattern checks are not a factuality guarantee. Read the reply yourself.</p></div>
           <div class="editor-tools"><button id="save-edit" type="button" class="button secondary">Save &amp; recheck</button><button id="save-recovery-check" type="button" class="text-button">Check latest saved reply</button><button id="reroll" type="button" class="text-button">Regenerate</button><button id="set-aside" type="button" class="text-button">Set aside</button></div>
-          <section id="save-recovery-panel" class="findings" aria-labelledby="save-recovery-title" hidden><h3 id="save-recovery-title">Continue from the checked saved version</h3><p id="save-recovery-message" class="helper" role="status" aria-live="polite"></p><p id="save-recovery-status" class="helper"></p><label for="save-recovery-reply">Latest saved reply, read only</label><textarea id="save-recovery-reply" rows="6" readonly spellcheck="false"></textarea><div class="editor-tools"><button id="save-recovery-keep" type="button" class="button secondary" disabled>Keep my editor text</button><button id="save-recovery-load" type="button" class="text-button" disabled>Use checked saved reply</button></div><p class="helper">Neither choice saves, approves or posts a reply. Current compose inputs stay unchanged and authorization must be confirmed again. Keep a private working copy before closing if you need recovery.</p></section>
+          <section id="save-recovery-panel" class="findings" aria-labelledby="save-recovery-title" hidden><h3 id="save-recovery-title" tabindex="-1">Continue from the checked saved version</h3><p id="save-recovery-message" class="helper" role="status" aria-live="polite" aria-atomic="true"></p><p id="save-recovery-status" class="helper"></p><label for="save-recovery-reply">Latest saved reply, read only</label><textarea id="save-recovery-reply" rows="6" readonly spellcheck="false"></textarea><div class="editor-tools"><button id="save-recovery-keep" type="button" class="button secondary" disabled>Keep my editor text</button><button id="save-recovery-load" type="button" class="text-button" disabled>Use checked saved reply</button></div><p class="helper">Neither choice saves, approves or posts a reply. Current compose inputs stay unchanged and authorization must be confirmed again. Keep a private working copy before closing if you need recovery.</p></section>
           </div></div>
           <details id="trace-panel" class="trace-panel"><summary>Generation details</summary><div id="trace-content"></div></details>
           <details id="reply-comparison" class="reply-comparison"><summary>Compare the starting draft with your saved reply</summary><p id="comparison-state" class="helper" role="status"></p><div id="comparison-panes" class="comparison-panes"><div><h4>Starting draft</h4><p id="comparison-source" class="helper"></p><p id="comparison-before" class="preserve"></p></div><div><h4>Your saved reply</h4><p id="comparison-after" class="preserve"></p></div></div><button id="comparison-restore" class="text-button" type="button" disabled>Use starting draft in editor</button><p class="helper">Restoring changes the editor only. Save, recheck and review it before approval.</p></details>

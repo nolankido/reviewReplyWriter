@@ -53,6 +53,7 @@
       unknown: 'This workspace has no receipt for that request. It may not have arrived, or a different workspace may be open. Inspect the library before starting again.'
     };
     message(labels[result.state] || 'The request needs manual inspection.');
+    if (window.rrwFocus) window.rrwFocus.request('generation-message');
   }));
   $('generation-open').addEventListener('click', () => {
     if (!confirmDiscard()) return;
@@ -61,7 +62,7 @@
       const changed = view.revision !== checked.revision;
       // Opening is explicit. Never overwrite a newer draft or form in response
       // to a late completion, and never restore policy authorization.
-      fillForm(view); renderDraft(view); clear();
+      fillForm(view); renderDraft(view, true); clear();
       notify(changed ? 'The saved draft changed. Its current version is open. Read the reply and policy again.'
         : 'Saved generation opened. Read the current reply and policy before approving.');
       await refreshWorkspace();

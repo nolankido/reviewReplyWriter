@@ -79,9 +79,13 @@ else (() => {
       if (editorView && renderDraft(editorView)) {
         $('reply-editor').value = edit.reply;
         $('reply-editor').dispatchEvent(new Event('input', {bubbles: true}));
+        if (window.rrwFocus) window.rrwFocus.request('reply-editor');
       } else if (edit) {
         $('recovery-orphan').hidden = false; $('recovery-orphan').open = true;
         $('recovery-orphan-text').value = edit.reply;
+        if (window.rrwFocus) window.rrwFocus.request('recovery-orphan-text', true);
+      } else if (window.rrwFocus) {
+        window.rrwFocus.request('review');
       }
       accept(); recoveredInputs = true; show(value);
       notify('Working copy recovered. Confirm owner policy again. Reply edits still need saving, checks and human review.');

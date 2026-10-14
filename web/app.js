@@ -53,12 +53,14 @@ function setBusy(value) {
   }
   $('generate').textContent = value ? 'Working...' : 'Generate draft ↗';
   if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); if (window.rrwFeedback) window.rrwFeedback.buttons(); if (window.rrwRecovery) window.rrwRecovery.buttons(); if (window.rrwGeneration) window.rrwGeneration.buttons(); if (window.rrwSaveRecovery) window.rrwSaveRecovery.buttons(); }
+  if (!value && window.rrwFocus) window.rrwFocus.flush();
 }
 async function run(task) {
   if (busy) return;
   setBusy(true);
   try { await task(); }
-  catch (error) { notify(error.message || 'Could not complete that action. Your editor text has been kept.', true); }
+  catch (error) { notify(error.message || 'Could not complete that action. Your editor text has been kept.', true);
+    if (window.rrwFocus) window.rrwFocus.request('notice'); }
   finally { setBusy(false); }
 }
 function updateProgress() {
@@ -164,6 +166,7 @@ function showManualReview(review, findings) {
   $('draft-status').textContent = 'Manual only';
   $('draft-status').className = 'badge blocked';
   updateButtons();
+  if (window.rrwFocus) window.rrwFocus.request('manual-review-title');
 }
 function reviewContext(view) {
   return view.original !== undefined ? 'Original review: ' + view.original + '\n\nCustomer update: ' + view.review : view.review;
@@ -199,7 +202,7 @@ function renderQueue() {
       run(async () => {
         const view = await api('get', {id: draft.id});
         fillForm(view);
-        if (renderDraft(view)) notify('Saved draft opened. Its original owner policy is preserved.');
+        if (renderDraft(view, true)) notify('Saved draft opened. Its original owner policy is preserved.');
         else notify('This saved review needs personal handling. Routine approval is stopped.', true);
       });
     });
@@ -218,7 +221,7 @@ async function refreshWorkspace() {
   workspace = await api('state');
   renderProfiles(); renderQueue();
 }
-function renderDraft(view) {
+function renderDraft(view, focusSource = false) {
   if (window.rrwSaveRecovery) window.rrwSaveRecovery.selected();
   showView(false);
   const manual = view.findings.filter(f => f.includes('manual review required'));
@@ -255,6 +258,7 @@ function renderDraft(view) {
   if (view.approval_invalidated) notify('This draft changed after its earlier approval. Review and approve it again.');
   if (window.rrwFeedback) window.rrwFeedback.render(view);
   renderQueue(); updateButtons();
+  if (focusSource && window.rrwFocus) window.rrwFocus.request('saved-source-heading', true);
   return true;
 }
 function idRevision() { return {id: current.id, revision: current.revision}; }
@@ -280,7 +284,7 @@ $('compose-form').addEventListener('submit', event => {
       }
       throw error;
     }
-    renderDraft(view);
+    renderDraft(view, true);
     if (window.rrwRecovery) window.rrwRecovery.accept();
     await refreshWorkspace();
     notify(view.engine.includes('fallback') ? 'Gemma did not return a passing draft. A checked template was saved instead. See generation details.' : 'Draft saved. Read it, make any edits, then approve the exact reply.');
@@ -336,7 +340,7 @@ $('reroll').addEventListener('click', () => {
       }
       throw error;
     }
-    renderDraft(view); await refreshWorkspace(); notify('New draft saved. Review it before approving.'); });
+    renderDraft(view, true); await refreshWorkspace(); notify('New draft saved. Review it before approving.'); });
 });
 $('copy').addEventListener('click', () => run(async () => {
   const result = await api('approved-text', idRevision());

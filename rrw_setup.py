@@ -20,7 +20,7 @@ REQUIRED_FILES = ('review_reply.py', 'review_quality.py', 'reply_safety.py', 'rr
                   'web/index.html', 'web/app.js', 'web/style.css', 'web/inbox.js',
                   'web/inbox.css', 'web/inbox-sample.csv', 'web/submission.js',
                   'web/review-evidence.js', 'web/review-evidence.css', 'web/feedback.js', 'web/recovery.js',
-                  'web/connection.js', 'web/generation.js', 'web/save-recovery.js', 'rrw_backup.py')
+                  'web/connection.js', 'web/generation.js', 'web/save-recovery.js', 'web/focus.js', 'rrw_backup.py')
 MODEL_MESSAGES = {
     'installed': 'Gemma 3 is installed. Generation has not been tested by this check.',
     'missing': 'Ollama is running. Download gemma3:4b, then check again.',
