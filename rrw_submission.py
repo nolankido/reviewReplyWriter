@@ -46,6 +46,35 @@ PUBLIC_DOCS = ('docs/REPLY_QUALITY_RESULTS.md', 'docs/SUBMISSION_CHECKLIST.md',
                'examples/evaluation/template-quality-comparison.json')
 MAX_STATE_BYTES = 32768
 MAX_PUBLIC_DOCUMENT_BYTES = 1024 * 1024
+MAX_VIDEO_BYTES = 100 * 1024 * 1024
+
+
+def read_packet_file(path, maximum, label, missing_message):
+    """Read one explicitly selected regular file through a bounded, checked descriptor."""
+    try:
+        before = path.stat(follow_symlinks=False)
+    except OSError as exc:
+        raise WorkspaceError(missing_message) from exc
+    if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
+            or before.st_size > maximum):
+        raise WorkspaceError(f'{label} must be a single-link regular file within its size limit.')
+    def version(info):
+        return (info.st_dev, info.st_ino, info.st_mode, info.st_nlink,
+                info.st_size, info.st_mtime_ns)
+    changed = f'{label} changed while reading; choose a stable file before exporting.'
+    flags = (os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0)
+             | getattr(os, 'O_BINARY', 0))
+    with os.fdopen(os.open(path, flags), 'rb') as stream:
+        opened = os.fstat(stream.fileno())
+        if version(opened) != version(before):
+            raise WorkspaceError(changed, 409)
+        content = stream.read(maximum + 1)
+        after = os.fstat(stream.fileno())
+    current = path.stat(follow_symlinks=False)
+    if (len(content) > maximum or len(content) != opened.st_size
+            or version(after) != version(opened) or version(current) != version(opened)):
+        raise WorkspaceError(changed, 409)
+    return content
 
 
 def read_public_documents(project):
@@ -59,31 +88,8 @@ def read_public_documents(project):
                 for i in range(1, len(relative.parts) + 1))
                 or not path.resolve().is_relative_to(base)):
             raise WorkspaceError('Public packet documents must not use filesystem links.')
-        try:
-            before = path.stat(follow_symlinks=False)
-        except OSError as exc:
-            raise WorkspaceError('A public packet document is missing or unreadable. Use a complete project copy.') from exc
-        if (not stat.S_ISREG(before.st_mode) or before.st_nlink != 1
-                or before.st_size > MAX_PUBLIC_DOCUMENT_BYTES):
-            raise WorkspaceError('Public packet document must be a single-link regular file of at most 1 MiB.')
-        flags = (os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_NONBLOCK', 0)
-                 | getattr(os, 'O_BINARY', 0))
-        with os.fdopen(os.open(path, flags), 'rb') as stream:
-            opened = os.fstat(stream.fileno())
-            if (not stat.S_ISREG(opened.st_mode) or opened.st_nlink != 1
-                    or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)
-                    or opened.st_size > MAX_PUBLIC_DOCUMENT_BYTES):
-                raise WorkspaceError('Public packet document changed while opening; reload before exporting.', 409)
-            content = stream.read(MAX_PUBLIC_DOCUMENT_BYTES + 1)
-            after = os.fstat(stream.fileno())
-        current = path.stat(follow_symlinks=False)
-        if (len(content) > MAX_PUBLIC_DOCUMENT_BYTES or len(content) != opened.st_size
-                or not stat.S_ISREG(current.st_mode) or current.st_nlink != 1
-                or (current.st_dev, current.st_ino) != (opened.st_dev, opened.st_ino)
-                or (opened.st_size, opened.st_mtime_ns, opened.st_nlink) !=
-                   (after.st_size, after.st_mtime_ns, after.st_nlink)):
-            raise WorkspaceError('Public packet document changed while reading; reload before exporting.', 409)
-        files[name] = content
+        files[name] = read_packet_file(path, MAX_PUBLIC_DOCUMENT_BYTES, 'Public packet document',
+            'A public packet document is missing or unreadable. Use a complete project copy.')
     return files
 
 
@@ -390,7 +396,7 @@ def exhibit(view, reference, video=False):
 
 def make_packet(view, reference, selected=None, project=HERE, video_bytes=None):
     """Only explicit text/record allowlists. Never scan private workspace contents."""
-    if video_bytes is not None and (len(video_bytes) > 100 * 1024 * 1024 or video_bytes[4:8] != b'ftyp'):
+    if video_bytes is not None and (len(video_bytes) > MAX_VIDEO_BYTES or video_bytes[4:8] != b'ftyp'):
         raise WorkspaceError('Optional demo must be an MP4 of at most 100 MiB.')
     documents = read_public_documents(project)
     if public_document_fingerprints(documents) != view.get('public_documents'):
@@ -453,9 +459,8 @@ def main(argv=None):
             view, _, reference, _ = desk._snapshot()
             video = None
             if args.video:
-                if args.video.is_symlink() or args.video.stat().st_size > 100 * 1024 * 1024:
-                    raise WorkspaceError('Demo file is not an ordinary MP4 under 100 MiB.')
-                video = args.video.read_bytes()
+                video = read_packet_file(args.video, MAX_VIDEO_BYTES, 'Demo file',
+                    'Demo file is missing or unreadable. Choose an existing reviewed MP4.')
             content = make_packet(view, reference, project=HERE, video_bytes=video)
             args.output.parent.mkdir(parents=True, exist_ok=True)
             with args.output.open('xb') as fh:
