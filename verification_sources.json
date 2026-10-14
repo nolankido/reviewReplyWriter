@@ -30,6 +30,7 @@
   "scripts/backup_smoke.py",
   "scripts/browser_smoke.py",
   "scripts/connection_state_checks.cjs",
+  "scripts/copy_state_checks.cjs",
   "scripts/focus_checks.cjs",
   "scripts/generation_status_checks.cjs",
   "scripts/inbox_browser_smoke.py",

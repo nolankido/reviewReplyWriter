@@ -13,7 +13,7 @@ py rrw_verify.py
 ```
 
 macOS/Linux: `python3 rrw_verify.py`. This runs the development checker, both real
-launcher HTTP workflows and all seven Node state checks using fixed commands.
+launcher HTTP workflows and all eight Node state checks using fixed commands.
 Node is a development-test tool; it is not required to use the app. Missing Node
 is reported as unavailable and cannot produce a complete development pass.
 Each check has a deadline; failure does not stop the remaining diagnostics.

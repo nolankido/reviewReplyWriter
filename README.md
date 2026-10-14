@@ -185,6 +185,11 @@ edit it, use **Save & recheck**, then confirm human review and approve. Only the
 exact approved text can be copied or exported through the app. Edits clear
 approval; stale tabs cannot overwrite or copy a changed draft.
 
+If automatic clipboard access fails, a separate read-only box shows the exact
+server-checked approved reply for manual selection. Editing or opening a draft
+clears that box; the live editor is never selected by a delayed copy callback.
+[Approved-copy fallback](docs/APPROVED_COPY.md).
+
 The workspace includes saved business profiles, explicit policy confirmation,
 first replies and follow-ups, a searchable/filterable draft library, generation
 details, and approved-only clipboard/text export. It uses the same draft files
@@ -282,7 +287,7 @@ py rrw_verify.py
 ```
 
 One command runs the existing development suite, real launcher/backup HTTP
-workflows and seven Node checks, then saves an explicit local receipt under
+workflows and eight Node checks, then saves an explicit local receipt under
 ignored `.rrw/verification/`. Missing tools and changed source cannot claim a
 complete pass. Browser checks require an already installed development runtime
 and an explicit `--browser`; no tools or models are installed. Receipts exclude

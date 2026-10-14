@@ -92,8 +92,12 @@ Hash checks detect many external edits, but this is not database-style isolation
 If a tab closes during generation, the request may finish and save an unapproved
 draft. Nothing is posted automatically.
 
-Copy uses the browser Clipboard API. When access is denied, the approved reply
-is selected for manual Ctrl+C/Command+C. The operating system clipboard may have
+Copy uses the browser Clipboard API. If access is denied or the API is missing,
+the server-checked approved reply appears in a separate labelled read-only box.
+Focus waits until controls are enabled. Select that box's text for manual
+Ctrl+C/Command+C, or touch and hold on a touch device. Editing, opening or clearing
+a draft clears the box. The live editor is not selected by a delayed callback.
+See [approved-copy fallback](APPROVED_COPY.md). The operating system clipboard may have
 its own history or synchronization settings; copying deliberately leaves the app.
 
 ## Verification

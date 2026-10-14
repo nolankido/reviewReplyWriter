@@ -141,6 +141,7 @@ function fillForm(view) {
   if (window.rrwRecovery) window.rrwRecovery.accept();
 }
 function clearEditor() {
+  $('manual-copy-panel').hidden = true; $('manual-copy-text').value = '';
   if (window.rrwSaveRecovery) window.rrwSaveRecovery.selected();
   if (window.rrwFeedback) window.rrwFeedback.reset();
   resetReviewEvidence();
@@ -241,6 +242,7 @@ async function refreshWorkspace() {
   renderProfiles(); renderQueue();
 }
 function renderDraft(view, focusSource = false) {
+  $('manual-copy-panel').hidden = true; $('manual-copy-text').value = '';
   if (window.rrwSaveRecovery) window.rrwSaveRecovery.selected();
   showView(false);
   const manual = view.findings.filter(f => f.includes('manual review required'));
@@ -315,6 +317,7 @@ $('manual-back').addEventListener('click', () => {
   $('review').scrollIntoView({behavior: 'smooth', block: 'center'});
 });
 $('reply-editor').addEventListener('input', () => {
+  $('manual-copy-panel').hidden = true; $('manual-copy-text').value = '';
   dirty = Boolean(current && $('reply-editor').value !== current.reply);
   $('dirty-note').hidden = !dirty;
   $('human-reviewed').checked = false;
@@ -362,10 +365,24 @@ $('reroll').addEventListener('click', () => {
     }
     renderDraft(view, true); await refreshWorkspace(); notify('New draft saved. Review it before approving.'); });
 });
+function approvedCopyMatches(reference, text) {
+  return Boolean(current && !dirty && current.status === 'approved' && current.findings.length === 0 &&
+    current.id === reference.id && current.revision === reference.revision && text === current.reply &&
+    !(window.rrwSaveRecovery && window.rrwSaveRecovery.needsAttention()));
+}
 $('copy').addEventListener('click', () => run(async () => {
-  const result = await api('approved-text', idRevision());
+  $('manual-copy-panel').hidden = true; $('manual-copy-text').value = '';
+  const reference = idRevision();
+  const result = await api('approved-text', reference);
+  if (!approvedCopyMatches(reference, result.text)) throw new Error('The selected reply changed. Save, review and approve its current text before copying.');
   try { await navigator.clipboard.writeText(result.text); notify('Approved reply copied. Nothing has been posted.'); }
-  catch (error) { requestAnimationFrame(() => { $('reply-editor').focus(); $('reply-editor').select(); }); notify('Automatic copy is unavailable. Approved text is selected; press Ctrl+C or Command+C.'); }
+  catch (error) {
+    if (!approvedCopyMatches(reference, result.text)) throw new Error('The selected reply changed. Save, review and approve its current text before copying.');
+    $('manual-copy-text').value = result.text;
+    $('manual-copy-panel').hidden = false;
+    notify('Automatic copy is unavailable. The read-only approved reply is shown below. Select that text and press Ctrl+C or Command+C, or touch and hold to copy. Nothing has been posted.');
+    if (window.rrwFocus) window.rrwFocus.request('manual-copy-text');
+  }
 }));
 $('download').addEventListener('click', () => run(async () => {
   const result = await api('approved-text', idRevision());
