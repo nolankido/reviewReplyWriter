@@ -91,6 +91,21 @@ class WorkspaceTests(unittest.TestCase):
         self.assertTrue(changed['approval_invalidated'])
         self.assertEqual(changed['status'], 'pending')
 
+    def test_previous_policy_version_approval_is_invalidated_without_rewriting(self):
+        draft = self.approve(self.draft())
+        state = self.workspace._state()
+        state[draft['id']]['safety_version'] = 'owner-policy-v6-material-complaints'
+        path = self.workspace.drafts / rr.TRIAGE_NAME
+        rr.atomic_json(str(path), state); before = path.read_bytes()
+        reopened = self.workspace.dispatch('get', {'id': draft['id']})
+        self.assertTrue(reopened['approval_invalidated']); self.assertEqual(reopened['status'], 'pending')
+        with self.assertRaises(ws.WorkspaceError):
+            self.workspace.dispatch('approved-text', self.ref(draft))
+        self.assertEqual(path.read_bytes(), before)
+        with self.assertRaises(ws.WorkspaceError):
+            self.workspace.dispatch('decision', dict(self.ref(draft), status='approved', reviewed=False))
+        self.assertEqual(self.approve(reopened)['status'], 'approved')
+
     def test_cli_and_browser_share_approvals(self):
         draft = self.approve(self.draft())
         state = rr.load_triage(str(self.workspace.drafts))
@@ -398,6 +413,20 @@ class HttpBoundaryTests(unittest.TestCase):
         self.assertEqual(self.request('POST', '/api/approved-text', ref)[0], 409)
         self.assertEqual(self.request('POST', '/api/decision', dict(ref, status='approved', reviewed=True))[0], 200)
         self.assertEqual(self.request('POST', '/api/approved-text', ref)[0], 200)
+
+    def test_http_unapproved_plan_is_saved_blocked_and_cannot_be_copied(self):
+        status, _, body = self.request('POST', '/api/generate',
+            {'business': 'Demo Cafe', 'review': REVIEW, 'stars': 2, 'mode': 'offline'})
+        self.assertEqual(status, 200); draft = json.loads(body)
+        ref = {'id': draft['id'], 'revision': draft['revision']}
+        status, _, body = self.request('POST', '/api/edit', dict(ref,
+            reply=draft['reply'] + '\nOur team will make sure this never happens.'))
+        self.assertEqual(status, 200); edited = json.loads(body)
+        self.assertEqual(edited['status'], 'blocked')
+        self.assertTrue(any('business action or promise' in f for f in edited['findings']))
+        ref = {'id': edited['id'], 'revision': edited['revision']}
+        self.assertEqual(self.request('POST', '/api/decision', dict(ref, status='approved', reviewed=True))[0], 422)
+        self.assertEqual(self.request('POST', '/api/approved-text', ref)[0], 409)
 
     def test_model_status_handles_malformed_and_unavailable_services(self):
         for result in ({}, [], {'models': []}, {'models': [None]}):

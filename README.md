@@ -118,6 +118,8 @@ checks and source quotations use the same selection. The original requirements
 remain, and any other detected complaints outside the checklist get a reminder
 to read the full review. Existing approvals require fresh review under the new
 check version. [Material complaint coverage](docs/MATERIAL_COMPLAINTS.md).
+Unapproved business plans and team promises also block approval and approved
+copy; exact owner statements remain required. [Planned-action checks](docs/PLANNED_ACTIONS.md).
 
 ## High-risk review routing and checked local Gemma calls
 
