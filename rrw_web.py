@@ -30,6 +30,8 @@ ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
            '/api/get': 'get', '/api/profile': 'profile', '/api/edit': 'edit',
            '/api/validate': 'validate', '/api/decision': 'decision',
            '/api/approved-text': 'approved-text'}
+ACTIONS.update({f'/api/quality-{action}': f'quality-{action}' for action in
+    ('diagnostics', 'list', 'get', 'start', 'step', 'assess', 'export')})
 
 
 def strict_object(pairs):

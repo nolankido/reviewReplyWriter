@@ -65,6 +65,26 @@ input errors and approval invalidation. Test callers simulate model responses;
 they must not be presented as live Gemma evaluations. Fresh model runs and a
 business-owner usability test are still outstanding.
 
+## Testing the Difference Between a Demo and Evidence
+
+Quality Lab runs a separate, developer-written set of fictional reviews. It
+records raw attempts, checked fallbacks, blocked outputs, model metadata and
+source fingerprints. Model timings exclude template-only cases, and a passed
+wording check never becomes a claim of customer satisfaction.
+
+There are three smoke scenarios and 30 stress scenarios. The latter deliberately
+includes rating/text conflicts, negation, sarcasm, prompt injection, authorized
+and unauthorized promises, and follow-up threads. These fixtures are not an
+unbiased benchmark or real-customer validation. The initial template run exposed
+sentiment and topic-selection weaknesses; those observations remain visible.
+
+A human can assess each exact result and preserve corrections beside the original.
+The exported evidence keeps these judgments separate from generated output and
+from posting approval. A recorded evaluation file is now needed for the project's
+release check; toggling a checkbox alone is no longer enough to claim a fresh run.
+Fresh real-model evidence, operator feedback and a public demo still need to be
+supplied and reviewed before publishing this article.
+
 ## Why Open Innovation Matters
 
 The intended model configuration uses downloaded Gemma weights through Ollama,
