@@ -148,8 +148,10 @@ class Workspace:
             status = 'pending'
         if findings:
             status = 'blocked'
-        return dict(draft, id=name, revision=revision, findings=findings,
+        analysis = rr.quality.analyze_review(draft['review'], None if 'original' in draft else draft.get('stars'))
+        return dict(draft, id=name, revision=revision, findings=findings, tier=analysis['tier'],
                     status=status, approval_invalidated=invalidated,
+                    review_analysis=analysis,
                     word_count=len(draft['reply'].split()),
                     word_target=rr.PLATFORMS.get(draft.get('platform'), rr.PLATFORMS['generic']))
 

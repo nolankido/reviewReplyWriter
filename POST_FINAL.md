@@ -82,19 +82,25 @@ A human can assess each exact result and preserve corrections beside the origina
 The exported evidence keeps these judgments separate from generated output and
 from posting approval. A recorded evaluation file is now needed for the project's
 release check; toggling a checkbox alone is no longer enough to claim a fresh run.
-A real three-case Gemma smoke run on a GitHub-hosted CPU runner produced two
+The first real three-case Gemma smoke run on a GitHub-hosted CPU runner produced two
 model-written drafts and one template fallback, with five completed API responses.
 The complaint retry exposed a false positive: "should have addressed" was matched
-as a completed action. The mixed-review fallback was still repetitive. These
-results support another quality pass, not a claim of perfect safety or adoption.
+as a completed action. The mixed-review fallback was still repetitive. The next code pass addressed these observed failures: a match-level retrospective
+exception, multi-complaint coverage, preserved durations, and shorter fallbacks.
+A separate retained comparison uses the unchanged 30-case template set. The four
+original diagnostic warnings became zero while the oversized policy still blocked.
+These cases informed development, so this is not an unbiased quality score.
 
-The [measurement report](docs/QUALITY_RESULTS.md) and complete JSON preserve those
+The [original measurement report](https://github.com/nolankido/reviewReplyWriter/blob/main/docs/QUALITY_RESULTS.md) and complete JSON preserve those
 results. No human assessments were manufactured. Operator feedback, user-device
 testing and a public demo still need to be supplied and reviewed before publication.
 
 ## Why Open Innovation Matters
 
-The intended model configuration uses downloaded Gemma weights through Ollama,
+An owner can inspect and change the rules as well as the prompts. The local model
+can be tested against the same saved reviews after a change without per-request
+API fees. Hardware, electricity, setup and human editing still have costs. The
+intended model configuration uses downloaded Gemma weights through Ollama,
 so the owner can run inference on their own machine rather than make a paid
 API call for every draft. The Python policy and workflow code are inspectable
 and modifiable. Local operation depends on the selected model and Ollama's
@@ -102,12 +108,22 @@ configuration, which the application does not fully audit.
 
 ## Side Hustle Direction
 
-The proposed customer is a small-business operator who wants consistent drafts
+The narrow customer is an independent cafe, shop or accommodation operator who
+already answers reviews but wants consistent drafts
 without sending additional review and policy context to a hosted writing tool.
 The local browser interface is now implemented, but remains a supervised
 prototype rather than a market-ready service. Real operator feedback and
-measured model quality are the next product steps. No paying customer, time-saving measurement or adoption result is
-claimed here.
+measured model quality are the next product steps. A paid version could package local setup, business-specific policy onboarding and
+support, but willingness to pay has not been measured. No paying customer,
+time-saving measurement or adoption result is claimed here. The next validation
+step is five operator-selected reviews with editing effort and rejected drafts
+recorded, not a testimonial written in advance.
+
+## Development Assistance
+
+AI coding assistance was used during implementation, testing, and this write-up.
+The repository records the changes and repeatable checks. Automated tests and
+AI-assisted analysis are not represented as customer feedback.
 
 ## Prize Categories
 
