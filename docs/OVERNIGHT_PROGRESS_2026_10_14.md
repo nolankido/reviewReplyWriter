@@ -239,3 +239,51 @@ This is not accessibility conformance or independently certified usability.
 Feature Actions run 38574966818 failed before all five jobs' steps (all arrays
 empty). Final candidate steps are inspected in the PR without workflow retries;
 these pre-step failures run no tests or cross-platform/browser verification.
+
+## Sixth pass: saved generation explanations and safe next actions
+
+Startup at 2026-10-14 13:58 UTC verified main
+`10fcec2dc4f7e51461001e294046e56566dc810a`, tree
+`a3efe5fa895fe173355918f68ab99378585a0a2f`, merged PR #19. The clean local
+tree matched. No repository AGENTS.md or new active PR needed repair. This pass
+finishes the current fallback priority rather than repeating recovery work.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/20
+
+Tested feature commit: `93972f9bd7364185984007999006adcfa04e1927`.
+Feature tree: `750c27fcd724b346af0fb35a58b1e7548393676d`, compared with the
+entire locally checked tree before committing. The final candidate adds this
+receipt; final head/tree/merge are recorded in the PR and must be verified fresh.
+
+New workspace drafts save bounded outcomes: template preview, selected checked
+Gemma completion, unverified selected model output, transport/request failure,
+unaccepted response, or two rejected replies. The native result summary opens
+for fallback/unverified results and keeps normal success compact. Fixed copy
+explains what happened and offers explicit setup/Quality Lab navigation without
+retrying, downloading, changing configuration, posting, discarding pending text
+or authorizing policy/approval. Edits keep the starting explanation; regeneration
+replaces it. Legacy/imported drafts are not rewritten or certified retroactively.
+A receipt for an unselected second candidate cannot certify the selected first
+reply. Request attempts and checked completion counts are distinct. The module
+is included in setup completeness and current evaluation source hashes. See
+docs/GENERATION_RESULTS.md.
+
+Executed locally: all 480 Python tests, including 12 controlled caller, real
+loopback HTTP and markup regressions; development checker; five actual Node
+state scripts with controlled DOMs; both real Python launcher HTTP workflows,
+including private backup recovery; offline CLI; JavaScript syntax, Python
+compilation and whitespace checks. The initial isolated save-recovery harness
+needed its new renderer dependency added; the repaired save and focus harnesses
+execute that renderer and pass. No failing check was omitted or weakened.
+
+Feature Actions run 38578155251 failed before all five jobs' steps (each array
+empty), so it executed no tests. Final candidate jobs are inspected in the PR
+without retries. Prepared Chromium assertions were extended but not executed.
+Windows batch, real Chromium/mobile/screen-reader behavior, fresh Gemma inference
+and operator feedback remain unverified. Controlled completion fixtures are not
+hardware/model evidence; historical receipts remain preserved and stale.
+
+Next highest-value inspection: interrupted Quality Lab/demo requests and saved
+checkpoint recovery. Improve any observable uncertain-result gap without
+duplicate model calls or misleading incomplete evidence. Recheck current main,
+active work and these receipts before choosing the next bounded pass.
