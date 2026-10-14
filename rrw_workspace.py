@@ -205,6 +205,8 @@ class Workspace:
         if data.get('followup', False) is True:
             draft['original'] = text(data.get('original', ''), 'Original review', rr.MAX_REVIEW_CHARS, True)
             draft['previous'] = text(data.get('previous', ''), 'Previously posted reply', rr.MAX_REVIEW_CHARS, True)
+            rr.validate_input(draft['original'], None, draft['platform'],
+                              draft['offer'], draft['approved_actions'])
             draft['stars'] = None  # The existing follow-up engine grades the update text.
         return draft
 
