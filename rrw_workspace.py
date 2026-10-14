@@ -68,17 +68,8 @@ def gemma_caller(prompt, model, temperature):
 
 
 def model_status():
-    try:
-        result = local_request('/api/tags')
-        if not isinstance(result, dict) or not isinstance(result.get('models'), list):
-            raise ValueError('Unexpected model listing')
-        ready = any(isinstance(m, dict) and m.get('name') == rr.DEFAULT_MODEL
-                    for m in result['models'])
-        return {'ready': ready, 'model': rr.DEFAULT_MODEL,
-                'message': 'Gemma 3 is installed' if ready else 'Download gemma3:4b in Ollama'}
-    except (OSError, ValueError, urllib.error.URLError):
-        return {'ready': False, 'model': rr.DEFAULT_MODEL,
-                'message': 'Ollama is not available. Template preview still works.'}
+    from rrw_model import inspect_model
+    return inspect_model(local_request)
 
 
 class Workspace:

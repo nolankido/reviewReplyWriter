@@ -345,7 +345,14 @@ class HttpBoundaryTests(unittest.TestCase):
         with patch.object(ws, 'local_request', side_effect=OSError('offline')):
             self.assertFalse(ws.model_status()['ready'])
         with patch.object(ws, 'local_request', return_value={'models': [{'name': 'gemma3:4b'}]}):
-            self.assertTrue(ws.model_status()['ready'])
+            self.assertFalse(ws.model_status()['ready'])
+            self.assertEqual(ws.model_status()['state'], 'unverified')
+        tags = {'models': [{'name': 'gemma3:4b', 'digest': 'a' * 64, 'size': 3000000000,
+                           'details': {'family': 'gemma3'}}]}
+        with patch.object(ws, 'local_request', side_effect=lambda p: tags if p == '/api/tags' else {'version': 'fixture'}):
+            result = ws.model_status()
+            self.assertTrue(result['ready'])
+            self.assertFalse(result['local_execution_verified'])
 
     def test_gemma_model_is_fixed_and_response_is_checked(self):
         with self.assertRaises(ValueError):

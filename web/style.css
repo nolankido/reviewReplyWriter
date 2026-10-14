@@ -47,6 +47,11 @@ main{padding:38px 42px 20px;max-width:1620px;width:100%;margin:auto}
 .eyebrow{font-size:10px;letter-spacing:1.9px;font-weight:650;color:var(--muted);margin-bottom:7px}
 .intro{font-size:13px;margin-top:14px;color:var(--muted)}
 .model-box{text-align:right;max-width:230px;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.setup-guide{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:20px}
+.setup-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:18px}
+.setup-steps h3{font-size:14px}
+.setup-steps code{overflow-wrap:anywhere}
+@media(max-width:900px){.setup-steps{grid-template-columns:1fr;gap:18px}}
 .badge{display:inline-block;border-radius:6px;padding:4px 8px;line-height:1.4;font-size:10px;font-weight:650;white-space:normal}
 .badge.neutral{background:#eef2f3;color:#52666d}
 .badge.pending,.badge.aside{background:#fcf2df;color:var(--warn)}

@@ -1282,22 +1282,11 @@ def tour(model, offline, drafts_dir, caller=None, print_fn=print):
 # ------------------------------------------------------------------- doctor
 
 def doctor(model):
+    from rrw_model import MODEL, inspect_model
     lines = ["Review Reply Writer - doctor"]
-    reachable, has_model = False, False
-    try:
-        req = urllib.request.Request(OLLAMA_TAGS_URL)
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            tags = json.loads(resp.read().decode("utf-8"))
-        reachable = True
-        names = [m.get("name", "") for m in tags.get("models", [])]
-        has_model = any(n.split(":")[0] == model.split(":")[0]
-                        and n == model for n in names) or model in names
-    except (urllib.error.URLError, OSError, ValueError) as exc:
-        lines.append(f"  model:    down  Ollama not reachable ({exc})")
-    if reachable:
-        state = "OK  " if has_model else "down"
-        note = f"{model} found" if has_model else f"{model} not installed"
-        lines.append(f"  model:    {state}  Ollama reachable, {note}")
+    inspected = inspect_model() if model == MODEL else {
+        'ready': False, 'message': 'Only gemma3:4b is supported by the checked model adapter.'}
+    lines.append(f"  model:    {'OK  ' if inspected['ready'] else 'down'}  {inspected['message']}")
     sample = ("Cold coffee, a 25 minute wait, and the barista never "
               "looked up. Really disappointing for the price.")
     probe = template_reply(sample, "Moe's Coffee", "warm", 2, "cafe",
@@ -1311,14 +1300,15 @@ def doctor(model):
             pretty = ", ".join(f"{k} ({v}x)" for k, v in top)
             lines.append(f"  ledger:   {name} drafts most often miss: "
                          f"{pretty}")
-    if reachable and has_model and sane:
-        verdict = "ready - Gemma will write the replies"
+    if inspected['ready'] and sane:
+        verdict = "templates ready; Gemma installed, generation not tested"
     elif sane:
         verdict = ("ready - templates only; model replies need Ollama "
                    f"with {model}")
     else:
         verdict = "not ready - validator sanity check failed"
     lines.append(f"  verdict:  {verdict}")
+    lines.append("  next:     python rrw_setup.py --verify-gemma for a saved three-case test")
     print("\n".join(lines))
     return 0 if sane else 1
 

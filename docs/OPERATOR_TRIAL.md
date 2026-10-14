@@ -13,6 +13,10 @@ are drafts, checks are heuristic, and nothing is posted automatically.
 
 Show how to launch the browser workspace. Ask the operator to add a business name
 and only offers they actually authorize. Do not pre-check authorization boxes.
+Use [the setup guide](LOCAL_SETUP.md) to verify the target computer first. An
+installation check and a completed Gemma smoke test are different observations.
+If setup fails, record that outcome instead of reporting an AI trial. Templates
+can still support a separate trial of the owner review and approval workflow.
 
 ## Observe, do not coach every click
 

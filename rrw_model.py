@@ -69,7 +69,8 @@ def inspect_model(request=None):
             raise ValueError('A model digest is required for reproducible evaluation')
         if type(item.get('size')) is not int or item['size'] <= 0:
             raise ValueError('A nonempty downloaded model is required')
-        if item.get('remote_host') or item.get('remote_model') or details.get('remote_host'):
+        if any(source.get(key) for source in (item, details)
+               for key in ('remote_host', 'remote_model')):
             raise ValueError('Cloud-backed model metadata is not accepted by this evaluation')
         if details.get('family') != 'gemma3':
             raise ValueError('This alias does not report the gemma3 family')
