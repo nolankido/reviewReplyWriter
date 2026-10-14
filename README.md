@@ -147,6 +147,11 @@ See [the reliability pass](docs/RELIABILITY_PASS_2026_10_13.md).
 
 ## Submission Desk and judge handoff
 
+For the five remaining entry tasks, follow the ordered
+[submission checklist](docs/SUBMISSION_CHECKLIST.md): eligibility/access, a current
+Gemma assessment, the duplicate-billing demo, article review and an optional
+operator trial. Historical model receipts are not current-source verification.
+
 The browser now has a **Submission Desk** beside Draft workspace and Quality Lab.
 Save the hosted demo link, record only confirmations you actually checked, and
 export a DEV draft or a no-install judge packet. Extract the ZIP and open

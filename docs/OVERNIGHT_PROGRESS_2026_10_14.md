@@ -513,3 +513,53 @@ do not start another engineering branch near or after the stop. Remaining owner
 activation tasks are current-source local Gemma evidence and human assessments,
 real-platform/operator checks, privacy/eligibility/development-window review,
 signed-out demo-link inspection and deliberate manual publication/submission.
+
+## Direct follow-up: focused submission preparation
+
+Nolan's October 14 12:06 PM Hawaii-time request shifted work to eligibility and
+access, current Gemma assessment, a focused demo, article quality and an optional
+operator trial. This is direct follow-up work after the original window; no
+scheduled job was resumed. Starting main was
+`568b8b8d60accff66cf318b8203311889422d7da`, tree
+`a8d03682cb62f056348c1122f2349eb1920fd87d`. The local source matched, no
+AGENTS.md or Actions workflows were present, and older PRs #4/#7 were unchanged.
+
+All 17 files in the original supplied archive match the import commit exactly.
+Repository creation/import dates and timezone-less ZIP timestamps are recorded
+in the ordered submission checklist with their limits. Original development
+start and deliberate judge access remain unconfirmed; the repository stays
+private. The 144-file starting path inventory is not a history/secret audit.
+
+Prepared target-machine commands and exact assessment criteria, an approximately
+two-minute recording card, and a private unfilled operator observation sheet.
+Aligned the optional recorder with duplicate billing, actual source/fallback
+labels, disabled approval/copy and manual-copy fallback. It refuses an existing
+output directory and records drafting-source hashes with a post-recording check.
+The article is about one-quarter shorter and centers the same case; old model,
+recording and platform results are now explicitly historical throughout the
+public results page. Rules-review metadata is dated October 14. No drafting
+engine or approval rule was changed and no confirmation was manufactured.
+
+Executed: 569 passing Python tests through the actual local verifier, both real
+Python launcher HTTP workflows and all nine Node scripts. A separate real
+loopback HTTP template rehearsal retained all demo details, blocked approval
+and export after an unauthorized refund, then approved/exported the corrected
+saved text exactly. Recorder help/compilation and whitespace checks passed.
+The setup probe passed Python, files, storage, loopback and templates; the model
+was unavailable. The verifier receipt remains outside Git. Browser checks were
+not requested because no Chromium binary was available. There was no Gemma
+inference, browser video, target Windows execution, human assessment or operator
+session. No model/runtime installation, outreach, hosting or entry publication
+occurred; historical JSON receipts were preserved.
+
+Next action: Nolan verifies the original start and code-access route, then runs
+the checklist's current-source Gemma steps on the intended computer. Assess the
+actual outputs before recording and reviewing the final article. Source/PR/tree
+publication receipts for this focused pass are recorded in its review.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/36
+
+Tested preparation commit: `8a36b883fd423758f0a900810ae33d743331b556`.
+Tested preparation tree: `4891992a9d04699cffb7518f6b9d02e02ec08d3f`, verified
+equal to the complete local tree before committing. The final candidate adds
+this publication receipt only; its head/tree and merge outcome are in PR #36.

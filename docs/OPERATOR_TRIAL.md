@@ -53,3 +53,40 @@ comparison in a separate study record. Review notes are never auto-published.
 Quality Lab assessments are diagnostic judgments on fictional fixtures. They
 are not customer adoption, publication approval or independent endorsements.
 Nothing in Submission Desk inserts a first-user story automatically.
+
+## Private observation sheet
+
+Copy the following fields into a local note under `.rrw/operator-trials/`, which
+is ignored by Git. Do not fill this out in a tracked document or a judge packet.
+The empty structure below is a protocol, not a completed session. No participant
+has been contacted or observed by the submission-preparation workflow.
+
+Record session date/time, participant role, observer, permission to participate,
+device/OS, exact source commit and whether the engine was Gemma or templates.
+Use an anonymous role label in any shareable summary; keep identity and consent
+details private. Record setup success or failure before counting drafting tasks.
+
+| Task | Completed without help? | Starting engine label | Required edits or missed details | Observed difficulty |
+| --- | --- | --- | --- | --- |
+| Positive review | Not observed | Not recorded | Not recorded | Not recorded |
+| Negative review | Not observed | Not recorded | Not recorded | Not recorded |
+| Mixed review | Not observed | Not recorded | Not recorded | Not recorded |
+
+For each task, retain the original draft and the final saved reply privately.
+Ask whether the participant would actually post the corrected result. If using
+the app's private assessment, select the real operator role and fictional/real
+scenario accurately. A builder should not fill it as though the operator gave
+an answer. Skip timing unless start/end definitions and actual observations
+were recorded; do not estimate retrospective savings.
+
+End with these neutral questions, then record the answer or **Not asked**:
+
+- What would stop you from using this again?
+- Would you want to use it for your next set of reviews? Why?
+- Would you pay for installation or support? What would have to be included?
+- What is the first change you would ask for?
+
+Keep observations separate from interpretation. A shareable result should name
+the number of participants, engine, task completions, required edits and limits.
+Quote a participant only with separate approval of the exact public wording.
+If no session takes place, leave the first-user section out of the article.
