@@ -218,3 +218,6 @@ summary span{float:none;display:block;margin-top:6px}
 #quality-case-title{overflow-wrap:anywhere}
 @media(max-width:1050px){.quality-setup{grid-template-columns:1fr}.quality-review-grid{grid-template-columns:1fr}.quality-cases{max-height:240px}.quality-metrics{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:620px){.quality-run-bar{flex-direction:column;align-items:stretch}.quality-heading{align-items:flex-start}.quality-heading h2{font-size:23px}.quality-metric{padding:13px}.quality-review-grid .card{padding:17px}.quality-issues{grid-template-columns:1fr}.quality-export .button{width:100%}.view-switch{width:100%}.view-switch .button{flex:1;font-size:12px}}
+
+.detail-checklist{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:16px 0;font-size:12px;overflow-wrap:anywhere}
+.detail-checklist strong{font-size:12px}.detail-checklist p{margin:7px 0;line-height:1.6}.detail-checklist small{color:var(--muted);font-size:11px}

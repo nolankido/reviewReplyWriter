@@ -54,7 +54,11 @@ def main():
                 expect(page.locator('#copy')).to_be_disabled()
                 expect(page.locator('#draft-source')).to_contain_text('Template preview, no AI')
                 expect(page.locator('#reply-editor')).not_to_have_value('')
+                expect(page.locator('#detail-targets')).to_contain_text('25-minute')
+                expect(page.locator('#detail-targets')).to_contain_text('question')
                 original = page.locator('#reply-editor').input_value()
+                assert '25-minute' in original and 'unanswered question' in original
+                assertions.append('Review detail panel and fallback retain precise wait and unanswered question')
                 assertions.append('Offline example generates a saved unapproved draft with honest credit')
                 if args.screenshots:
                     page.evaluate('window.scrollTo(0, 0)')
@@ -148,6 +152,15 @@ def main():
                 page.locator('#trace-panel').evaluate('(el) => el.open = true')
                 expect(page.locator('#trace-content')).to_contain_text('Attempt 2')
                 assertions.append('Controlled model rejection and retry are visible in generation details')
+                # A lost material detail also prevents approval after an owner edit.
+                page.locator('#reply-editor').fill(original.replace('25-minute', 'long'))
+                page.locator('#save-edit').click()
+                expect(page.locator('#draft-status')).to_have_text('Needs changes')
+                expect(page.locator('#findings-list')).to_contain_text('25-minute')
+                page.locator('#reply-editor').fill(original)
+                page.locator('#save-edit').click()
+                expect(page.locator('#draft-status')).to_have_text('Needs review')
+                assertions.append('Removing a material wait detail blocks approval until repaired')
                 # Finish screenshots in honest template mode.
                 page.locator('#engine-mode').select_option('offline')
                 page.locator('#reroll').click()

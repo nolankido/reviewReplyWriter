@@ -201,6 +201,16 @@ function renderDraft(view) {
   $('findings-box').className = 'findings' + (view.findings.length ? ' blocked' : '');
   $('findings-title').textContent = view.findings.length ? 'Changes needed before approval' : 'Passed the current checks. Your review comes next.';
   $('findings-list').replaceChildren(...view.findings.map(f => node('li', f)));
+  const analysis = view.review_analysis || {concerns: [], praise: [], anchors: [], warnings: []};
+  const details = [...analysis.concerns.map(t => t.label), ...analysis.anchors.map(t => t.text + ' ' + t.topic)];
+  if (analysis.tier === 'mixed') details.push(...analysis.praise.map(t => 'Liked: ' + t.topic));
+  $('detail-targets').textContent = [...new Set(details)].join(' · ') || 'Read the review for its specific details and tone.';
+  const cueWarnings = {rating_text_conflict: 'Rating and review wording disagree. Check the tone.',
+    possible_sarcasm: 'Possible sarcasm: read the original carefully.',
+    instruction_like_text: 'Instruction-like customer text is not owner authorization.',
+    no_recognized_topics: 'No familiar topic was detected. The wording checks have limited coverage here.'};
+  $('detail-warnings').textContent = analysis.warnings.map(w => cueWarnings[w] || w).join(' ');
+  $('detail-warnings').hidden = !analysis.warnings.length;
   $('human-reviewed').checked = view.status === 'approved';
   $('trace-content').replaceChildren(node('p', 'Source: ' + (view.engine || 'Imported draft')));
   const trace = view.generation_trace || [];

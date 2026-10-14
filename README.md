@@ -148,3 +148,14 @@ visibility change is performed by running the app.
 Local state is plaintext, not encrypted. Use one writer at a time; external CLI
 processes do not share the browser process lock. Do not host this prototype on
 the public internet. MIT covers this source, not third-party model terms.
+
+## Detail-aware reply update
+
+The current checker preserves recognized complaint topics and material quantities,
+rather than accepting a reply that merely mentions coffee. Fallbacks now cover
+multiple concerns without repeating thanks. The browser's **Details to preserve**
+panel shows the detected targets and reading warnings. These are English-language
+heuristics, not proof of understanding or factuality.
+
+See [the measured quality pass](docs/DETAIL_QUALITY_PASS.md) and
+[the recording and first-operator trial plan](docs/HACKATHON_DEMO.md).

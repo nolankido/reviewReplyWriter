@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v1"
+SAFETY_VERSION = "owner-policy-v2-details"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 
@@ -85,10 +85,10 @@ _RULES = (
     ("unauthorized business action or promise", re.compile(
         r"\b(?:we|i|our\s+(?:team|staff|manager|owner)|management)\s*"
         r"(?:(?:'ve|'re|'ll)|(?:have|has|had|are|is|will|can|shall|promise\s+to|guarantee))?\s*"
-        r"(?:already\s+|now\s+|personally\s+|immediately\s+|just\s+|been\s+|are\s+)*"
+        r"(?:already\s+|now\s+|personally\s+|immediately\s+|just\s+|been\s+|are\s+|actively\s+|always\s+|currently\s+)*"
         r"(?:fix\w*|repair\w*|replac\w*|refund\w*|address\w*|resolv\w*|train\w*|retrain\w*|"
         r"discuss\w*|talk\w*|forward\w*|investigat\w*|chang\w*|improv\w*|streamlin\w*|"
-        r"contact\w*|call\w*|send\w*|sort\w*|escalat\w*|work\w*\s+on|look\w*\s+into|pass(?:ed)?\s+(?:this|it|your))\b|"
+        r"contact\w*|call\w*|send\w*|sort\w*|escalat\w*|work\w*\s+(?:on|to)|look\w*\s+into|pass(?:ed)?\s+(?:this|it|your))\b|"
         r"\b(?:we|i)\s*(?:'ll|will|shall|promise\s+to|guarantee)\b|"
         r"\b(?:has|have|is|are|was|were)\s+(?:already\s+|now\s+|been\s+)*"
         r"(?:fixed|repaired|replaced|resolved|retrained|addressed|refunded|sorted)\b|"
@@ -117,9 +117,16 @@ def policy_gaps(reply, offer=None, approved_actions=None):
     remainder = re.sub(r"\b(?:that's|that is|the mistake is) on us\b", "our mistake", remainder)
     findings = []
     for name, pattern in _RULES:
-        match = pattern.search(remainder)
-        if match:
+        for match in pattern.finditer(remainder):
+            # Active retrospective regret is not a claim of a completed action.
+            # Apply only to this match: a later actual claim still gets checked.
+            retrospective = (name == "unauthorized business action or promise"
+                and re.match(r"have\s+(?:(?:already|just)\s+)?(?:addressed|fixed|repaired|replaced|resolved|retrained|sorted)\b", match.group())
+                and re.search(r"\b(?:should|ought to)\s+(?:not\s+)?$", remainder[max(0, match.start()-30):match.start()]))
+            if retrospective:
+                continue
             findings.append(f"policy: {name} ({match.group(0)[:80]})")
+            break
     return findings
 
 
@@ -147,3 +154,8 @@ def require_valid(findings):
 
 def content_fingerprint(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def without_authorized_statements(reply, offer=None, approved_actions=None):
+    """Coverage must come from the response body, not an offer pasted below it."""
+    return _strip_authorized(_policy_text(reply), validate_owner_statements(offer, approved_actions))

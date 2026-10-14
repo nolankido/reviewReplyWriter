@@ -25,7 +25,7 @@ from rrw_model import inspect_model
 HERE = Path(__file__).resolve().parent
 CORPUS = HERE / 'examples' / 'evaluation_cases.json'
 VERSION = 'rrw-evaluation-v1'
-SOURCES = ('review_reply.py', 'reply_safety.py', 'rrw_workspace.py',
+SOURCES = ('rrw_quality.py', 'review_reply.py', 'reply_safety.py', 'rrw_workspace.py',
            'rrw_model.py', 'rrw_evaluate.py', 'examples/evaluation_cases.json')
 ISSUES = ('unapproved_promise', 'invented_fact', 'missed_complaint',
           'wrong_tone', 'too_generic', 'other')

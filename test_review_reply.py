@@ -21,7 +21,7 @@ MIXED = ("Beautiful room and a stunning ocean view, but check-in took "
 
 GOOD_NEGATIVE_REPLY = (
     "Thank you for telling us straight - we appreciate the honesty. "
-    "You mentioned the coffee and the wait, and those details matter. "
+    "You mentioned the coffee, the 25-minute wait and the price, and those details matter. "
     "We are genuinely sorry; that's on us. Your explanation tells us "
     "what did not meet your expectations. We hope you'll stop by "
     "again soon.\n\n- The Moe's Coffee team")
@@ -29,9 +29,9 @@ GOOD_NEGATIVE_REPLY = (
 
 
 class SentimentTests(unittest.TestCase):
-    def test_stars_decide(self):
+    def test_low_stars_and_explicit_complaints_decide(self):
         self.assertTrue(rr.is_negative(GLOWING, 2))
-        self.assertFalse(rr.is_negative(ANGRY, 5))
+        self.assertTrue(rr.is_negative(ANGRY, 5))
 
     def test_words_decide_without_stars(self):
         self.assertTrue(rr.is_negative(ANGRY))
@@ -352,7 +352,7 @@ class PlatformTests(unittest.TestCase):
             for platform in rr.PLATFORMS:
                 reply = rr.template_reply(review, "Moe's Coffee",
                                           "warm", stars, kind,
-                                          random.Random(2))
+                                          random.Random(2), platform=platform)
                 with self.subTest(platform=platform, stars=stars):
                     self.assertTrue(rr.validate_reply(
                         reply, review, "Moe's Coffee", stars,
