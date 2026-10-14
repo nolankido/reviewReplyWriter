@@ -277,9 +277,11 @@ py check_submission.py --release
 ```
 
 The deterministic suite includes workspace tests and real-loopback HTTP tests.
-GitHub checks run on Ubuntu and Windows, Python 3.10 and 3.13. A separate Chromium
-job exercises the browser workflow and retains screenshots/results. Read the
-actual workflow conclusion, not just its configuration, for passing evidence.
+GitHub Actions workflows were removed at the owner's request on October 14,
+2026. No push, pull-request, scheduled or manual Actions workflow is configured
+on current main. Verification remains available locally; see
+[local verification](docs/LOCAL_VERIFICATION.md). Earlier workflow definitions
+and historical results in Git history do not establish current platform evidence.
 
 Development checks do not prove model quality, eligibility, or contest readiness.
 The separate `--release` check remains blocked until actual demo and owner
