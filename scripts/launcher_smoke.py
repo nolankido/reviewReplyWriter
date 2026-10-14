@@ -65,9 +65,14 @@ def main():
             if origin is None:
                 raise RuntimeError('Launcher did not serve a session within 20 seconds')
             token = parse_qs(origin.fragment)['token'][0]
-            draft = request(origin, token, 'generate', {
+            generation = {
                 'business': 'Demo Cafe', 'review': 'Cold coffee and a 25 minute wait. Disappointing.',
-                'stars': 2, 'mode': 'offline'})
+                'stars': 2, 'mode': 'offline', 'request_id': 'a' * 32}
+            draft = request(origin, token, 'generate', generation)
+            result_check = request(origin, token, 'generation-check', {'request_id': generation['request_id']})
+            repeated = request(origin, token, 'generate', generation)
+            if result_check['state'] != 'saved' or repeated['id'] != draft['id']:
+                raise RuntimeError('Saved generation request was not recovered without duplication')
             if draft['status'] != 'pending' or not draft['engine'].startswith('template'):
                 raise RuntimeError('Expected a pending template draft')
             baseline = draft['reply']
@@ -108,7 +113,7 @@ def main():
             print(json.dumps({'launcher': 'windows-batch' if os.name == 'nt' else 'python-setup',
                               'storage_path_with_spaces': True, 'free_port': True,
                               'template_draft_approval_export': True, 'comparison_and_private_notes': True,
-                              'private_working_copy': True, 'model_calls': 0}))
+                              'private_working_copy': True, 'generation_result_recovery': True, 'model_calls': 0}))
         finally:
             if process.poll() is None:
                 if os.name == 'nt':
