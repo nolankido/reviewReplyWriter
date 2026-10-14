@@ -1,115 +1,150 @@
 ---
-title: A Local Review-Reply Writer That Knows When It Cannot Promise a Refund
+title: A Local Review Writer That Does Not Invent Your Refund Policy
 published: false
 tags: devchallenge, hf26challenge
 ---
 
-> TODO: This is an unpublished working draft. A hosted CPU Gemma smoke run is
-> recorded, but owner-device testing, human assessments, the public demo, contest
-> development-window confirmation and judge access still need review.
+*This is a submission for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12).*
+
+> TODO before publication: insert a judge-accessible video URL, check repository
+> access and the original development window, review the final live evidence,
+> and remove this notice. This file is a draft, not a submitted entry.
 
 ## What I Built
 
-Review Reply Writer drafts replies to customer reviews using a local Ollama
-model. Its central design question is not whether AI can sound polite. It is
-whether a draft promises something the owner never authorized.
+A customer says their coffee was cold and they waited 25 minutes. A model can
+write a polite apology. It can also offer a full refund, invent an email address,
+or announce that the shop has retrained its staff.
 
-The application combines a local model, conservative policy and format checks,
-one coached retry, a checked template fallback, and a human approval queue.
-It does not post to review platforms. Its default response to an unhappy
-customer is an acknowledgment and apology, not an automatic refund.
+Those are not merely writing mistakes. They are decisions the owner never made.
 
-The local browser workspace puts that pipeline behind a single Python launch:
-review input, business settings, an editable draft, visible findings, explicit
-approval, and copy/export controls. Edited replies lose their approval, and a
-stale tab cannot copy an earlier version. No review-platform credentials or
-publishing integration are involved.
+Review Reply Writer is a local browser app for small-business owners who want
+help drafting replies without handing the model authority to set their policies.
+It uses Gemma 3 through Ollama, checks the proposed response, allows one coached
+retry, and uses a clearly labelled template when the model cannot produce an
+acceptable draft. A person still edits, reviews and approves the final text.
+Nothing is posted automatically.
+
+The proposed buyer is an independent shop, cafe or accommodation operator with
+a recurring review queue. The product offers a saved business voice, exact
+owner-authorized statements, first replies and follow-ups, and a searchable
+local draft library. A possible business model is paid installation, policy
+setup and support around the free code. That is a commercial hypothesis, not a
+claim that someone has paid or that a time-saving target has been validated.
 
 ## Demo
 
-TODO: Add a public video showing real local Gemma generation, a rejected
-unauthorized promise, the retry or labelled fallback, and human approval.
-The deterministic examples in `examples/safety/` are template outputs, not
-new Gemma results. They demonstrate the safety checks without claiming model
-performance.
+TODO: Replace this paragraph with the actual hosted video link after reviewing
+it. The recording script captures the running application, a fictional review,
+real engine labels, a deliberately unsafe edit, and approval/export controls.
+A template-only recording is explicitly marked as no AI. Demonstration clicks
+are not real customer approval or a first-user testimonial.
+
+The application starts with `py rrw_web.py` or the Windows launcher. Its browser
+interface requires no additional Python runtime packages. Ollama and downloaded
+Gemma weights are needed for model-written drafts, not for template preview.
 
 ## Code
 
 Repository: https://github.com/nolankido/reviewReplyWriter
 
-The code is MIT licensed. Repository visibility and judge access still need
-owner confirmation. The license does not replace Gemma's model terms.
+The application code is MIT licensed. Gemma's model terms are separate. The
+repository must be accessible to judges before this article is submitted.
 
 ## How I Built It
 
-The first prototype required concrete make-it-right offers and trusted its own
-fallback templates. Code review exposed the flaw: a refund or a claim that a
-machine has been repaired is a business commitment, even when a deterministic
-template says it.
+The first version made a tempting mistake: it required a concrete make-it-right
+offer in negative replies and trusted its own templates. A fallback could then
+promise a refund even when no owner had authorized one.
 
-The revised pipeline treats customer text and earlier replies as untrusted
-data, not permission. An owner can configure an exact offer or confirmed action.
-A larger amount, extra refund, invented contact instruction or operational
-claim is checked separately. Approved text must stand alone and cannot be
-silently expanded. These are conservative English-language heuristics, not a
-proof that every possible promise or false statement will be caught.
+I changed that boundary. Review text, earlier replies and voice examples are
+untrusted context, not permission. An owner can authorize an exact offer or
+operational statement. The checker looks separately for compensation, actions
+and customer instructions. An authorized credit does not authorize a larger
+credit, a refund on top, or invented instructions for redeeming it.
 
-All generation routes validate their final output. If a fallback cannot meet
-policy and length constraints, it blocks instead of being presented as ready.
-The approval queue checks the current text again. Approval is tied to the saved
-file's fingerprint and policy version, so an edit requires another review.
+The same final checks apply to model output, retries and templates. A fallback
+that fails is blocked rather than treated as safe because it is deterministic.
+The approval queue rechecks the saved text. Approval belongs to a content
+fingerprint and policy version, so editing the text or using a stale tab cannot
+silently carry forward an old approval.
 
-Tests exercise unauthorized compensation, exact authorization, coached retry,
-fallback failures, per-business policy isolation, follow-up conversations,
-input errors and approval invalidation. Test callers simulate model responses;
-they must not be presented as live Gemma evaluations. A separate real Gemma
-smoke run is now retained in the repository; operator usability remains untested.
+These are conservative English-language checks, not a proof of truthfulness.
+The software trusts owner-authorized statements; it cannot know whether a repair
+actually happened. That is why the human decision is part of the workflow.
 
-## Testing the Difference Between a Demo and Evidence
+### A useful failure in the checker itself
 
-Quality Lab runs a separate, developer-written set of fictional reviews. It
-records raw attempts, checked fallbacks, blocked outputs, model metadata and
-source fingerprints. Model timings exclude template-only cases, and a passed
-wording check never becomes a claim of customer satisfaction.
+A real hosted Gemma test produced the phrase "should have addressed" about a
+barista's missed response. The checker matched "have addressed" and rejected
+it as a claim that an action had already happened.
 
-There are three smoke scenarios and 30 stress scenarios. The latter deliberately
-includes rating/text conflicts, negation, sarcasm, prompt injection, authorized
-and unauthorized promises, and follow-up threads. These fixtures are not an
-unbiased benchmark or real-customer validation. The initial template run exposed
-sentiment and topic-selection weaknesses; those observations remain visible.
+That was our false positive, not a safety success. A later quality pass added a
+narrow exception for past-modal wording while continuing to scan for actual
+commitments elsewhere in the sentence. It does not exempt a refund or an
+explicit future deadline just because the word "should" appears nearby.
 
-A human can assess each exact result and preserve corrections beside the original.
-The exported evidence keeps these judgments separate from generated output and
-from posting approval. A recorded evaluation file is now needed for the project's
-release check; toggling a checkbox alone is no longer enough to claim a fresh run.
-A real three-case Gemma smoke run on a GitHub-hosted CPU runner produced two
-model-written drafts and one template fallback, with five completed API responses.
-The complaint retry exposed a false positive: "should have addressed" was matched
-as a completed action. The mixed-review fallback was still repetitive. These
-results support another quality pass, not a claim of perfect safety or adoption.
+The same test showed another problem: the accepted retry turned a 25-minute
+wait into an "extended wait." The reply sounded smoother but lost useful detail.
+The current prompt now includes a complaint checklist, and output checks retain
+explicit reported wait durations. Mixed reviews must cover detected complaint
+topics and acknowledge a detected positive point, not answer only the praise.
 
-The [measurement report](docs/QUALITY_RESULTS.md) and complete JSON preserve those
-results. No human assessments were manufactured. Operator feedback, user-device
-testing and a public demo still need to be supplied and reviewed before publication.
+### Evidence instead of a polished anecdote
 
-## Why Open Innovation Matters
+Quality Lab runs fictional regression reviews without touching the customer's
+drafts, profiles or publication approvals. It preserves the original attempts,
+rejection reasons, retries, final engine and available model timing receipts.
+Human assessments and edited versions stay beside the unchanged original.
 
-The intended model configuration uses downloaded Gemma weights through Ollama,
-so the owner can run inference on their own machine rather than make a paid
-API call for every draft. The Python policy and workflow code are inspectable
-and modifiable. Local operation depends on the selected model and Ollama's
-configuration, which the application does not fully audit.
+The earlier three-case hosted Gemma smoke produced two model-written final
+replies and one labelled template fallback from five completed API responses.
+It is retained as historical evidence, not presented as a universal success rate
+or a prediction of performance on a customer's laptop.
 
-## Side Hustle Direction
+For the quality pass, I reran the unchanged 30-case template set. Both runs
+retained 29 drafts, one blocked oversized owner policy and no execution errors.
+Cases flagged by the existing limited rubric fell from four to zero. Median
+reply length fell from 64 to 38 words. The fixes target known cases, so this is
+not a blind benchmark or evidence that every reply is good. No human assessments
+or customer endorsements were manufactured.
 
-The proposed customer is a small-business operator who wants consistent drafts
-without sending additional review and policy context to a hosted writing tool.
-The local browser interface is now implemented, but remains a supervised
-prototype rather than a market-ready service. Real operator feedback and
-measured model quality are the next product steps. No paying customer, time-saving measurement or adoption result is
-claimed here.
+The deterministic suite now contains 247 tests, including targeted counterexamples
+for authorization, omitted details, negation and rating conflicts. Browser tests
+exercise editing, stale tabs, clipboard copying and evidence export. Controlled
+model responses in unit tests are kept distinct from actual inference records.
+
+AI coding assistance helped implement and test this project. The repository
+history and retained reports are inspectable evidence of the engineering work;
+they are not a claim that every implementation step was handwritten.
+
+## Why Does Open Innovation Matter?
+
+Downloaded Gemma weights let this workflow use the owner's machine for inference
+instead of requiring a paid hosted model request for every draft. That does not
+make computing literally free: hardware, electricity and setup still have costs.
+The benefit is control over the model and how the application handles context.
+
+The open application code also makes the important behavior inspectable: what
+counts as an owner statement, why a reply was rejected, and when a fallback was
+used. The check that rejected "should have addressed" was a bug I could inspect,
+change and protect with a regression test.
+
+The UI loads no external fonts, scripts or analytics. Local privacy still depends
+on the machine and Ollama configuration, and the initial model download requires
+internet access. A localhost address is not an independent network audit. Copying
+a reply intentionally moves it into the operating system clipboard, whose own
+history or synchronization settings are outside this app.
+
+## What Is Still Missing
+
+This is a supervised prototype. Complex sarcasm, unfamiliar topics, subtle factual
+claims and creative paraphrases can defeat lexical checks. The generated text
+still needs a person who understands the business. Real operator testing and
+willingness to pay have not been established. Those are the next product tests,
+not numbers to invent for a competition entry.
 
 ## Prize Categories
 
-Intended category: Best Use of Gemma. Confirm eligibility and supply a fresh
-Gemma demonstration before submitting this entry.
+**Best Use of Gemma.** Gemma 3 is the model that generates the AI drafts through
+Ollama. Templates are separately identified and are not counted as Gemma output.

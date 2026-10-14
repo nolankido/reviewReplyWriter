@@ -1,0 +1,38 @@
+[
+  {
+    "path": "reply_safety.py",
+    "before": "9fd44ec1d51ddbd1ad077fe8e56c0847340c2e22f2b06a327d99442138a53602",
+    "after": "05c1a776b652453bf34eae6c3ea9a59df1467b44d2bd37b4ba02851ff5741d50",
+    "edits": [
+      {"start":14,"end":15,"text":"SAFETY_VERSION = \"owner-policy-v2-detail\"\n"},
+      {"start":119,"end":121,"text":"        for match in pattern.finditer(remainder):\n            # Only past counterfactuals: 'should have addressed' is regret,\n            # not a report that an action happened. Never exempt future or\n            # conditional promises; keep scanning later matches in the sentence.\n            before = remainder[max(0, match.start() - 35):match.start()]\n            if (name == \"unauthorized business action or promise\"\n                    and re.match(r\"have\\b\", match.group(0), re.I)\n                    and re.search(r\"\\b(?:should|could|would)\\s+(?:not\\s+)?$\", before)\n                    and not re.search(r\"\\b(?:tomorrow|next|tonight|soon)\\b\",\n                        re.split(r\"[.!?;\\n]\", remainder[match.end():], maxsplit=1)[0])):\n                continue\n"},
+      {"start":122,"end":122,"text":"            break\n"}
+    ]
+  },
+  {
+    "path":"review_reply.py",
+    "before":"b6221f1ae76b5b104653f430ccae772f5a29a21d5de7f78e62818aa1eeffd4c6",
+    "after":"47b664ef67ed3bdf4abb762fd709ad93b715016409e91dd4dda51a468381076e",
+    "edits":[
+      {"start":14,"end":14,"text":"import review_quality as quality\n"},
+      {"start":125,"end":148,"text":"    \"\"\"Bounded wording checks with explicit handling of rating conflicts.\"\"\"\n    return quality.analyze(review, stars)['tier']\n"},
+      {"start":285,"end":285,"text":"    gaps.extend(quality.detail_gaps(body, review, stars))\n"},
+      {"start":295,"end":296,"text":"        if not any(m in low for m in APOLOGY_MARKERS + (\"disappoint\", \"frustrat\", \"fell short\")):\n"},
+      {"start":394,"end":395,"text":"        \"Write only the reply.\" + quality.prompt_brief(review, stars)\n        + policy_instructions(offer, approved_actions))\n"},
+      {"start":503,"end":503,"text":"def _finish_template(parts, statements, business, signoff, platform):\n    closing = \"We hope you'll visit again and have a better experience.\" if any('sorry' in p for p in parts) else \"We hope you'll visit again soon.\"\n    def assemble():\n        return \"\\n\\n\".join([\" \".join(parts)] + statements + [closing, _signoff_line(business, signoff)])\n    lo, _ = PLATFORMS[platform]\n    for extra in (\"Your feedback helps us understand what mattered to you.\",\n                  \"We value the perspective you have shared about your experience.\",\n                  \"Your perspective matters to us.\"):\n        if len(assemble().split()) >= lo:\n            break\n        parts.append(extra)\n    return assemble()\n\n\n"},
+      {"start":507,"end":509,"text":""},
+      {"start":510,"end":521,"text":"    parts = quality.fallback_body(review, business, tone, stars)\n"},
+      {"start":522,"end":525,"text":"    reply = _finish_template(parts, statements, business, signoff, platform)\n"},
+      {"start":574,"end":574,"text":"    gaps.extend(quality.detail_gaps(body, update))\n"},
+      {"start":681,"end":682,"text":"        \"Write only the follow-up reply.\" + quality.prompt_brief(update) + policy_instructions(\n"},
+      {"start":733,"end":734,"text":""},
+      {"start":736,"end":743,"text":"    parts = quality.fallback_body(update, business, tone, followup=True)\n"},
+      {"start":744,"end":747,"text":"    reply = _finish_template(parts, statements, business, signoff, platform)\n"}
+    ]
+  },
+  {"path":"rrw_evaluate.py","before":"471d842816de1a7a726151032cb8643363f0f2d4cb55c81315319a5df5533545","after":"76ef37d880322ca3f0c00727982034e95acb39ba8ff551c754852ab8f833e08a","edits":[{"start":27,"end":28,"text":"SOURCES = ('review_reply.py', 'reply_safety.py', 'review_quality.py', 'rrw_workspace.py',\n"}]},
+  {"path":"test_review_reply.py","before":"7d7c46fcc74e56f8d850c7b6f8422edb39b5fa2c1fc7ecb8df6d261a903f835f","after":"6df5431afa2ff4dd1632991f3f811461ef1ac7c517a33f9585454e34b1fe29de","edits":[{"start":23,"end":24,"text":"    \"You mentioned the coffee, the 25 minute wait and the price; those details matter. \"\n"},{"start":354,"end":355,"text":"                                          random.Random(2), platform=platform)\n"}]},
+  {"path":"test_evaluation_lab.py","before":"4752c565eaecd295c50e1980bb213028c3b4ad18730925f87ce74caff0a74595","after":"292c97c748d906d1656a05bb84cddf977e4b61c2927f69bf992ddbd196c3fe2d","edits":[{"start":117,"end":118,"text":"    def test_full_run_preserves_corpus_and_records_fixed_wording_cases(self):\n"},{"start":121,"end":123,"text":"        self.assertEqual(rows['high-stars-complaint']['rubric_findings'], [])\n        self.assertEqual(rows['negation']['rubric_findings'], [])\n"}]},
+  {"path":"check_submission.py","before":"7b02d142b57aaae52e9702de00f2581e8647f65db05f40b553b4a333ca070638","after":"992e1ba4d80f1ee0c083238472daeea4f7ff5301a4712e47ae2254885c953cd8","edits":[{"start":105,"end":106,"text":"                    \"## Prize Categories\"):\n"},{"start":108,"end":108,"text":"    if not any(h in post_text for h in (\"## Why Open Innovation Matters\", \"## Why Does Open Innovation Matter?\")):\n        blockers.append(\"missing submission section: Why Does Open Innovation Matter?\")\n"}]},
+  {"path":"README.md","before":"63849c0eb707eb2072cf99f3d31efe55cd3a6a299450c01a53469b9700b2e155","after":"83f81f836282d6dde0b71826aa1949adcd0ec75928b752a4adbc1546d59844e9","edits":[{"start":150,"end":150,"text":"\n## Reply-quality update and submission\n\nThe current checker preserves detected complaint topics and explicit wait durations,\nhandles selected negation and rating conflicts, and distinguishes past regret from\ncompleted-action claims. Fallbacks are shorter and more specific. This is still a\nheuristic drafting aid, not autonomous customer service. Existing approvals need\na fresh review under the updated policy version.\n\nSee [the measured quality pass](docs/REPLY_QUALITY_PASS.md) and the\n[submission checklist](docs/SUBMISSION_CHECKLIST.md). The earlier live smoke remains\nhistorical evidence. Current-code evaluations and actual human assessments are\nstill required by the internal release check.\n"}]}
+]
