@@ -4,6 +4,15 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+## Owner-first browser workflow
+
+The editor now shows the saved original review and policy beside the reply on
+wide screens, with an explicit Draft, Read & Edit, Approve, Copy progression.
+When the engine routes a serious allegation to manual-only handling, the
+browser replaces any previously displayed reply with a dedicated explanation.
+No response is created, saved or made available for approval in that case.
+See [Owner-first workflow](docs/OWNER_FIRST_WORKFLOW.md).
+
 ## High-risk review routing and checked local Gemma calls
 
 Potential poisoning, allergy, harassment, threats, sensitive-data exposure and

@@ -250,3 +250,29 @@ summary span{float:none;display:block;margin-top:6px}
 .view-switch{flex-wrap:wrap}
 @media(max-width:1000px){.submission-grid{grid-template-columns:1fr}.submission-heading{flex-wrap:wrap}}
 @media(max-width:560px){.submission-summary{grid-template-columns:1fr}.submission-summary>div{padding:15px 19px}.submission-summary strong{font-size:1.35rem}.submission-form-actions{align-items:stretch}.submission-export .editor-tools{display:grid;gap:14px}}
+
+/* Owner-first workflow: review source beside the draft on wide screens. */
+.workspace-grid.has-draft{grid-template-columns:minmax(310px,.75fr) minmax(0,1.6fr)}
+.workspace-grid.has-draft .fields.three{grid-template-columns:1fr}
+.reply-review-layout{display:grid;gap:20px;align-items:start}
+.review-source-column,.review-edit-column{min-width:0}
+.review-source-column .source-review{font-size:13px;line-height:1.65;margin:0}
+.review-source-column .source-review summary{font-size:13px}
+.review-source-column .preserve{font-size:13px;line-height:1.65}
+.review-edit-column .editor-tools{margin-bottom:12px}
+.review-progress{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:0;margin:0 0 20px}
+.review-progress li{border-top:3px solid #d7e0dd;padding:8px 2px 0;color:#5b6d68;font-size:12px;font-weight:600}
+.review-progress li.complete{border-color:#4f8d72;color:#315a49}
+.review-progress li.active{border-color:var(--green);color:var(--ink)}
+.manual-review-panel{background:#fff9f4;border:1px solid #eac9b2;padding:24px;border-radius:12px}
+.manual-review-panel h3{font-size:22px;margin-bottom:12px;line-height:1.25}
+.manual-review-panel p{font-size:13px;line-height:1.7;margin-bottom:14px}
+.manual-review-panel strong{display:block;font-size:13px}
+.manual-review-panel ul{padding-left:22px;font-size:13px;line-height:1.6;margin:12px 0 20px}
+.manual-case{background:#fff;border:1px solid #e6d9cf;border-radius:10px;padding:16px;margin:16px 0}
+.manual-case .preserve{font-size:14px;margin:8px 0 0;max-height:280px;overflow:auto}
+.manual-review-panel .manual-limits{color:#5e5149;font-size:12px}
+@media(min-width:1650px){.workspace-grid.has-draft{grid-template-columns:minmax(320px,.6fr) minmax(0,1.8fr)}.reply-review-layout{grid-template-columns:minmax(240px,.85fr) minmax(0,1.15fr)}.review-source-column{position:sticky;top:20px}}
+@media(max-width:1180px){.workspace-grid.has-draft{grid-template-columns:1fr}.workspace-grid.has-draft .fields.three{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.review-progress li{font-size:10px}.manual-review-panel{padding:17px}.workspace-grid.has-draft .fields.three{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.manual-review-panel{scroll-behavior:auto}}
