@@ -160,6 +160,21 @@ def main():
                 page.locator('#copy').click()
                 expect(page.locator('#notice')).to_contain_text('Approved reply copied')
                 assert page.evaluate('navigator.clipboard.readText()') == original
+                # Controlled clipboard denial, with the actual browser workflow.
+                page.evaluate("Object.defineProperty(navigator, 'clipboard', {configurable: true, value: {writeText: async () => {throw new DOMException('Controlled denial', 'NotAllowedError');}}})")
+                page.locator('#copy').click()
+                expect(page.locator('#manual-copy-panel')).to_be_visible()
+                expect(page.locator('#manual-copy-text')).to_have_value(original)
+                expect(page.locator('#manual-copy-text')).to_be_focused()
+                assert page.locator('#manual-copy-text').get_attribute('readonly') is not None
+                page.locator('#reply-editor').fill(original + '\nSYNTHETIC_MANUAL_COPY_EDIT')
+                expect(page.locator('#manual-copy-panel')).to_be_hidden()
+                expect(page.locator('#manual-copy-text')).to_have_value('')
+                expect(page.locator('#copy')).to_be_disabled()
+                page.locator('#reply-editor').fill(original)
+                page.evaluate('delete navigator.clipboard')
+                expect(page.locator('#copy')).to_be_enabled()
+                assertions.append('Clipboard denial shows exact read-only approved text and editing clears it')
                 with page.expect_download() as download_info:
                     page.locator('#download').click()
                 download = download_info.value

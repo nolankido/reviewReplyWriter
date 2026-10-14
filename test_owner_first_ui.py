@@ -53,6 +53,17 @@ class OwnerFirstMarkupTests(unittest.TestCase):
         self.assertIn("showManualReview(submitted, reasons);", js)
         self.assertIn("clearEditor();", js.split('function showManualReview(', 1)[1].split('function engineLabel(', 1)[0])
 
+    def test_manual_copy_is_labelled_read_only_hidden_and_described(self):
+        parser = ElementCollector()
+        parser.feed((Path(__file__).parent / 'web/index.html').read_text(encoding='utf-8'))
+        for name in ('manual-copy-panel', 'manual-copy-title', 'manual-copy-text', 'manual-copy-help'):
+            self.assertEqual(len(parser.ids.get(name, [])), 1)
+        self.assertIn('hidden', parser.ids['manual-copy-panel'][0][1])
+        tag, attributes = parser.ids['manual-copy-text'][0]
+        self.assertEqual(tag, 'textarea'); self.assertIn('readonly', attributes)
+        self.assertEqual(attributes['aria-describedby'], 'manual-copy-help')
+        self.assertEqual(parser.ids['manual-copy-panel'][0][1]['aria-labelledby'], 'manual-copy-title')
+
 
 class ManualRoutingHttpTests(unittest.TestCase):
     def setUp(self):

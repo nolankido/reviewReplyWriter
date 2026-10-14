@@ -120,3 +120,14 @@ private state and historical model receipts are preserved. See
 [material complaint coverage](MATERIAL_COMPLAINTS.md) for reproduction, actual
 533-test/local-verifier evidence and the remaining limits. No scoring uplift,
 real operator result or new model evidence is inferred from this repair.
+
+## Continued repair: clipboard denial and exact approved text
+
+The next direct continuation reproduced a deferred-selection gap: the previous
+clipboard fallback could select a later edited live reply while its message
+called the text approved. It now uses a separately labelled read-only box with
+the server-checked approved string, clears it when the draft changes and waits
+until controls are enabled for focus. Approval and exact-revision checks remain
+in place. See [approved-copy fallback](APPROVED_COPY.md) for controlled reproduction,
+534-test/local-verifier evidence and unexecuted real-platform limits. Real browser
+usability and operator success are not inferred from this engineering repair.
