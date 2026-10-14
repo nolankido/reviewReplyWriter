@@ -12,6 +12,8 @@ integration or public web server has been introduced.
   allegations and legal disputes route to manual-only handling before any
   Gemma/template generation. Follow-ups also check the original review.
   Saved drafts, approval and copy/export paths use the same final gate.
+  The safety-version change invalidates previously approved content and
+  requires a new review under the updated boundary.
 - Policy validation recognizes more benefit paraphrases ("our treat" and
   "with our compliments"), personnel actions, repairs and investigations.
   The benign "feel free" idiom is no longer treated as a free-goods promise.

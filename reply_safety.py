@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v2-detail"
+SAFETY_VERSION = "owner-policy-v3-sensitive-triage"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 

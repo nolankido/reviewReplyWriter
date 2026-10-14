@@ -27,6 +27,7 @@ _SERIOUS = (
         r"\b(?:lawsuit|suing|lawyer|attorney|legal\s+action|police\s+report)\b",
         r"\b(?:identity\s+theft|stolen\s+(?:card|identity)|leaked\s+(?:my|our)\s+(?:data|information|details))\b",
         r"\b(?:private\s+(?:information|photos|data)\s+(?:was|were)\s+(?:shared|exposed))\b",
+        r"\b(?:exposed|published|shared|leaked)\s+(?:my|our)\s+(?:private|personal)\s+(?:information|data|photos|details)\b",
     )),
 )
 _COMPILED = tuple((label, tuple(re.compile(pattern, re.I) for pattern in patterns))
