@@ -356,6 +356,7 @@ $('save-profile').addEventListener('click', () => run(async () => {
   const result = await api('profile', {...settings(), name: $('profile-name').value,
     profiles_revision: workspace.profiles_revision});
   await refreshWorkspace(); $('profile-select').value = result.name; notify('Business profile saved locally. Existing drafts keep their original policy.');
+  if (window.rrwRecovery) window.rrwRecovery.profileLoaded();
 }));
 $('profile-select').addEventListener('change', () => {
   const key = $('profile-select').value;

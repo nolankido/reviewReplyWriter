@@ -53,12 +53,15 @@ new job steps once; do not retry them or weaken tests to evade the unresolved
 account/runtime problem. Record real failing-code checks separately. No paid
 infrastructure, repository visibility change, public hosting, contest submission
 or messages to other people are authorized by this improvement window.
-+## First-pass review receipt
+
+## First-pass review receipt
 
 Review: https://github.com/nolankido/reviewReplyWriter/pull/15
 
 Tested feature commit: `7de6d69effdde87580938d135a4140e53116f9ed`.
 Tested feature tree: `930274f64827554226dea5be94df5b9334a65d04`.
-The subsequent receipt-only commit records these identifiers; executable source
-is unchanged. Verify the PR merge and current main instead of assuming the
-feature branch remains the published head.
+The final candidate also accepts the newly saved profile settings in the input
+tracker, while retaining pending review changes. This prevents a cancelled
+profile switch from reverting to an obsolete profile selection. Final candidate
+checks are recorded in the PR. Verify the PR merge and current main instead of
+assuming the feature branch remains the published head.
