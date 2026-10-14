@@ -82,6 +82,15 @@ async function main() {
   get('generation-open').events.click(); await lastRun;
   assert.equal(opened, 1); assert.equal(stored, '');
   assert.equal(context.window.rrwGeneration.hasPending(), false);
+  context.sessionStorage.setItem = () => {throw new Error('Controlled storage quota');};
+  await assert.rejects(context.window.rrwGeneration.submit('generate', {}));
+  assert.equal(context.window.rrwGeneration.hasPending(), true);
+  assert.equal(get('session-storage-note').hidden, false);
+  assert.match(get('session-storage-note').textContent, /could not keep this result check/);
+  get('generation-dismiss').events.click();
+  assert.equal(context.window.rrwGeneration.hasPending(), true); // Cancelling keeps the memory-only check.
+  confirmed = true; get('generation-dismiss').events.click();
+  assert.equal(context.window.rrwGeneration.hasPending(), false);
   console.log(JSON.stringify({connection_and_result_state: 'passed', browser_navigation: false, model_calls: 0}));
 }
 main().catch(error => {console.error(error); process.exitCode = 1;});

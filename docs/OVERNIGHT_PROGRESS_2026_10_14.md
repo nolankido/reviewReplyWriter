@@ -38,22 +38,6 @@ extended for pending-input replacement and reload recovery, but were not run
 in a real browser in this environment. The source publication and exact merge
 receipt are recorded in the corresponding PR.
 
-## Next useful pass
-
-Inspect recoverable request failures and in-flight generation. Currently a
-browser fetch has no explicit deadline and a disconnected client may not know
-whether a result was saved. Keep generation idempotent or provide a safe way to
-find the saved result before retrying. Do not claim client cancellation stops
-Ollama or silently repeat a timed-out generation. Also inspect the first-line
-session-storage calls: blocked browser storage can fail app startup before the
-owner sees a reconnect message. Choose a reproducible defect and test it.
-
-The existing Actions checks have been failing before any steps run. Inspect
-new job steps once; do not retry them or weaken tests to evade the unresolved
-account/runtime problem. Record real failing-code checks separately. No paid
-infrastructure, repository visibility change, public hosting, contest submission
-or messages to other people are authorized by this improvement window.
-
 ## First-pass review receipt
 
 Review: https://github.com/nolankido/reviewReplyWriter/pull/15
@@ -65,3 +49,66 @@ tracker, while retaining pending review changes. This prevents a cancelled
 profile switch from reverting to an obsolete profile selection. Final candidate
 checks are recorded in the PR. Verify the PR merge and current main instead of
 assuming the feature branch remains the published head.
+
+Startup for the next pass verified main
+`bee07cef1194be447376b7f6fdf69369d0feab31`, tree
+`3f4749f29015bd30089a4abf5c4feb2e0ce6a15c`, the PR #15 merge. It matched
+the clean local source. Older open PRs #4 and #7 retain prior candidate work
+already incorporated on main; this pass did not reapply them. No AGENTS.md was
+present in the current repository tree.
+
+## Second pass: recover disconnected generation results
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/16
+
+Tested feature commit: `4ba179089a2ebc11dbaec4ada51a61d782475717`.
+Feature tree: `1fdc7ca68174127a1ce3d8a1f3844f0d4715bb04`, verified equal to
+the full locally tested tree before committing. The final candidate adds a
+notice when pending-request session storage fails and this progress receipt.
+Read the PR and fresh main for the final candidate/merge rather than assuming
+the initial feature commit is still the published head.
+
+Compose/regenerate reserve a private request identifier before engine execution.
+Repeating an identifier with identical inputs finds a saved current draft without
+another engine call. Conflicting, unfinished and failed requests are not replayed.
+Draft provenance recovers results after disconnect, server restart or a failed
+final checkpoint. Changed/missing results are explicit. Result checking never
+replaces the current form; opening respects pending input/editor/assessment
+guards and leaves policy confirmation unchecked.
+
+Browser fetches now have 15-second ordinary and 390-second generation/step
+deadlines. Expiration releases the UI without claiming server/model cancellation
+or sending a retry. Blocked session storage no longer prevents launcher-link
+startup. The pending identifier remains in memory if storage fails, with a visible
+reload limitation. Reviews and policy are not saved automatically in the browser.
+See docs/CONNECTION_RECOVERY.md for private receipt and legacy API boundaries.
+
+Executed locally: all 430 Python tests; actual Node connection/startup/result
+controller and input-state checks; development checker; JavaScript syntax;
+Python compilation; real Python setup launcher template/result lookup and repeat
+request plus edit/assessment/approval/export/working-copy workflow. The 15 new
+regressions include an actual dropped loopback HTTP response with a controlled
+engine, exactly one engine execution, restart, checkpoint failure, stale reroll,
+changed/missing results and integrity/link refusal. No real Gemma call or operator
+assessment was made.
+
+Actions run 38555237148 for the feature commit failed with all five jobs having
+empty step arrays. It executed no test code and supplies no Windows/Chromium
+evidence. The final candidate's actual jobs are inspected in the PR without a
+retry. Expanded Chromium scenarios are prepared but unexecuted in this workspace.
+Windows batch execution, real Chromium rendering, fresh current-source Gemma and
+actual operator feedback remain unverified. Historical Gemma receipts are kept.
+
+## Next useful pass
+
+Inspect uncertain edit/approval saves and read-after-write refresh failures.
+The generation path is now protected, but a lost edit response can leave unsaved
+browser text beside a newer saved revision. Provide deliberate comparison/reload
+without discarding pending edits or accepting stale approvals. Prefer a
+reproducible owner-workflow defect over another feature quota. Privacy-safe backup
+and accessible keyboard/mobile recovery remain useful follow-on priorities.
+
+Actions has been failing before any steps run. Inspect new job steps once; do not
+retry or weaken tests to evade the unresolved account/runtime problem. Record
+real failing-code checks separately. No paid infrastructure, repository visibility
+change, public hosting, contest submission or outreach is authorized here.

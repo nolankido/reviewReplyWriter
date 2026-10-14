@@ -6,7 +6,10 @@
       if (action === 'read') return sessionStorage.getItem('rrw-generation-request') || '';
       if (value) sessionStorage.setItem('rrw-generation-request', value);
       else sessionStorage.removeItem('rrw-generation-request');
-    } catch (error) { /* Keep this tab usable when browser storage is blocked. */ }
+    } catch (error) {
+      $('session-storage-note').hidden = false;
+      $('session-storage-note').textContent = 'Browser storage could not keep this result check across reloads. Keep this tab open to check it, or inspect saved drafts in the library after reopening with a current launcher link.';
+    }
     return '';
   }
   const stored = storage('read');
