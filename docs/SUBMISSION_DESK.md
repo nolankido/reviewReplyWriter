@@ -112,15 +112,16 @@ Host/Origin and request-size boundaries. No arbitrary paths can be supplied thro
 the browser. A competing local process or malicious file editor is still outside
 database-style isolation; hashes do not defeat deliberate local forgery.
 
-The original drafting/approval and Quality Lab source files remain byte-identical
-for this pass. The browser launcher and UI gain the additional view, and the
-submission checker gains explicit evidence/post paths. The local browser policy
-blocks loopback access in this assistant environment, so Chromium interaction
-verification runs in the existing GitHub CI environment, not by bypassing policy.
+The original Submission Desk pass added the extra view and explicit checker
+evidence/post paths. Its historical Chromium evidence applies to that earlier
+snapshot. Current browser execution remains unverified in the assistant
+workspace, which has no Chromium binary. GitHub Actions workflows were removed
+at the owner's request; this is not an instruction to dispatch CI. Use an
+already available target browser and the local verification guide instead.
 
 ## Rules basis
 
-Checked October 13, 2026. Recheck before publishing; this is a local checklist,
+Checked October 14, 2026. Recheck before publishing; this is a local checklist,
 not a legal determination or a guarantee of acceptance.
 
 - Official Week 2 rules: https://dev.to/page/hacktoberfest-week2-2026-10-12-contest-rules

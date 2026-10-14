@@ -7,169 +7,145 @@ tags: devchallenge, hf26challenge
 *This is a submission for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12).*
 
 <!-- RRW:NOTICE:START -->
-> TODO before publication: add a judge-accessible demo link, confirm code access
-> and the original development window, review fresh current-code Gemma evidence,
-> and remove this notice. This is an unpublished draft.
+> TODO before publication: confirm the original development window and judge
+> access, add the watched and access-checked demo link, review current-source
+> Gemma results, and verify the claims below. This is an unpublished draft.
 <!-- RRW:NOTICE:END -->
 
 ## What I Built
 
-A customer writes: “The coffee was excellent, but I was charged twice.”
+“The coffee was excellent, but I was charged twice. The waiter ignored my
+question about the bill.”
 
-A useful reply needs to acknowledge both parts. A fluent reply can still fail:
-it might thank the customer for the coffee, apologize vaguely about billing,
-and promise a refund that the owner never authorized.
+That fictional review has three things worth answering. Thanking the customer
+for the coffee is easy. Acknowledging the double charge and unanswered question
+takes more care. Promising a refund introduces a different decision: does the
+person writing the reply have permission to offer one?
 
-Review Reply Writer is a local browser app for independent cafe and small
-hospitality operators. Gemma drafts the language. The business owner decides
-what the business can promise and what gets posted.
-
-The workflow is deliberately small:
-
-1. Add the customer review and any exact owner-authorized statements.
-2. Generate a draft with local Gemma, or try a clearly labelled template preview.
-3. Compare the reply with the customer's words, edit it, and save for rechecking.
-4. Approve the exact saved text, then copy it for manual posting.
-
-Saved profiles, first replies, follow-ups and a searchable draft library make
-this a repeatable task. Nothing is posted to a review platform automatically.
-
-For a recurring queue, the browser also accepts a CSV for one business. A preview
-shows duplicate rows, invalid inputs and items requiring personal handling.
-The saved inbox drafts one review per click and resumes after reopening the app.
-It does not import refund policies or bulk-approve the resulting replies.
+I built Review Reply Writer for independent cafe and small hospitality
+operators. Gemma drafts the language locally. The owner supplies the business
+policy, reads the result, and approves the exact text before copying it for
+manual posting.
 
 The Side Hustle hypothesis is paid installation, policy setup and support for
-an operator who values local control but does not want to configure a model.
-The application code stays free. I have not established demand, revenue or
-measured time savings. The next test is an observed session with a real operator,
-including whether setup is worth paying for.
+an operator who wants local control without configuring a model. The application
+code stays free. Demand, willingness to pay and time saved remain unproven.
 
 ## Demo
 
 <!-- RRW:DEMO:START -->
-TODO: Add the reviewed, publicly accessible video or deployed-demo URL.
-Record the actual current interface and distinguish live Gemma output from
-no-AI template preview. A local recording is not a hosted link.
+TODO: Add the reviewed, judge-accessible video or deployed-demo URL.
+The recording must show the current interface and distinguish actual Gemma
+output from template preview or fallback. No current recording is claimed here.
 <!-- RRW:DEMO:END -->
 
-The best short demonstration uses the fictional **Duplicate billing** example.
-Show the source wording under **Details to keep**, then edit the reply to remove
-the double-charge detail. Save and watch the check identify the omission. Add an
-unauthorized refund and show why approval remains blocked. Restore the details,
-review the reply, then approve and copy it.
+The focused walkthrough uses the fictional **Duplicate billing** example with
+no compensation authorized:
 
-This sequence demonstrates the product's main decision in one case: help with
-the words, preserve the customer's concern, and keep business authority with
-its owner. A template demonstration proves the workflow; it does not prove
-Gemma inference.
+1. Generate a draft and show its actual source label.
+2. Compare the reply with **Details to keep** and the customer's quoted wording.
+3. Add “We will give you a full refund.” Choose **Save & recheck** and show
+   blocked approval.
+4. Remove that added promise, save, read the reply, then approve and copy it.
+
+Any other corrections should remain visible. An edited reply is not untouched
+Gemma output. Demonstration approval clicks are not operator feedback.
 
 ## Code
 
 Repository: https://github.com/nolankido/reviewReplyWriter
 
-The application is MIT licensed. Gemma's model terms are separate. Judges need
-access to the repository before submission.
+The application is MIT licensed; Gemma's model terms are separate. Judge access
+still needs confirmation.
 
-Run `py rrw_web.py` on Windows, or `python3 rrw_web.py` on macOS/Linux. The app
-can also be opened with `py -3 rrw_setup.py --launch` on Windows or
-`python3 rrw_setup.py --launch` on macOS/Linux for setup checks and a free port. It
-uses Python's standard library and local UI assets. For model-written drafts,
-install Ollama and download `gemma3:4b`; template preview needs neither.
+Run `py -3 rrw_setup.py --launch` on Windows or
+`python3 rrw_setup.py --launch` on macOS/Linux. The application uses Python's
+standard library and local browser assets. Model-written drafts require Ollama
+and downloaded `gemma3:4b` weights. Clearly labelled template preview works
+without either.
 
 ## How I Built It
 
-### Fluent language is not permission
+### Keep the customer's concern visible
+
+The editor places the saved review beside the reply. **Details to keep** links
+recognized concerns to exact excerpts of the original text. Prompts, fallbacks
+and checks share a bounded interpretation, so “charged twice” does not quietly
+become a generic billing apology.
+
+An unanswered question also matters. A reply can mention the coffee and still
+leave the customer's main frustration untouched. Unsaved edits mark the checks
+stale until the owner saves and rechecks.
+
+The interface says **Mention detected** because a phrase match cannot establish
+understanding. The owner still reads the whole review and reply.
+
+### Customer wording cannot authorize a business promise
 
 The first version required a make-it-right offer in negative replies. That was
-a bad default: it encouraged business promises even when the owner supplied
-none, and the fallback templates were trusted too readily.
+a bad default: it encouraged commitments without permission.
 
-Now customer reviews, earlier replies and voice examples cannot authorize
-compensation or business actions. Owner statements are checked separately. An
-approved credit cannot silently become a larger credit plus a refund, and a
-repair claim must be explicitly authorized.
+Now authorization is separate from customer text, earlier replies and voice
+examples. Exact owner statements can permit an offer or action. Detected
+unauthorized promises block approval, whether introduced by the model, a
+fallback or an edit. An authorized credit cannot silently become a larger
+credit plus a refund.
 
-Model output, one coached retry and template fallbacks go through final checks.
-Approval is tied to the saved content fingerprint and policy version. Editing
-invalidates it; a stale tab cannot export a changed reply using an old approval.
-Potentially serious allegations are routed to personal handling before routine
-AI or template generation.
+Approval is tied to the saved text and check version. Changing the reply
+requires a new review. Serious allegations are conservatively referred for
+personal handling before routine generation.
 
-Personal handling has its own screen and private inbox notes. Marking an item
-handled records the owner's work; it does not turn the allegation into an AI
-draft, an authorized business promise or a publication approval.
+### Preserve the work around the words
 
-### An apology should preserve the actual complaint
+A lost response should not mean a lost draft. Saved generation receipts let the
+owner check an interrupted request without automatically running it again.
+Pending edits, private recovery copies and checked backups support recovery.
+Recovery leaves authorization unchecked and does not resurrect old approval.
 
-“I was charged twice” is more useful than a generic billing topic. The current
-interpretation retains that reported duplicate charge, unanswered questions and
-explicit wait durations. Prompts, detail checks and fallbacks use the same
-bounded review analysis.
+The recurring workflow includes saved profiles and a one-business CSV inbox.
+Each reply still needs individual review. Nothing posts automatically.
 
-The editor shows exact excerpts from the original review beside the detected
-details. Each excerpt includes offsets into the untouched source text. That
-helps an owner inspect the interpretation instead of trusting an unexplained
-checkmark. Unsaved edits mark the displayed coverage stale until rechecking.
+### Keep evidence separate from confidence
 
-A detail being mentioned does not prove that the reply handles it correctly.
-That is why the interface says **Mention detected**, and the owner still reads
-the complete review and response.
+On October 14, the local release check ran 569 passing Python tests. Linux
+launcher HTTP workflows and Node state checks also have executed evidence.
+These checks do not establish current Windows, browser/mobile or model behavior.
 
-The same owner control applies to style. A short complete reply does not need
-filler, and a return invitation is optional. Removing those stock requirements
-reduced median template length from 35 to 25 words on the unchanged 30-case
-fictional diagnostic set. That is a measured writing change, not a customer
-preference study or a time-saving claim.
+Two historical three-case Gemma smoke runs remain in the repository. The later
+run produced three model drafts on first attempts, but both runs predate current
+drafting-source changes and have no recorded human assessments. They do not
+validate this version's reply quality.
 
-The editor now retains the accepted starting draft so the owner can inspect
-exact wording changes after saving. Restoring that wording still goes through
-rechecking and approval. Optional private review assessments can record real
-trial observations, with builder and demo judgments kept separate. No operator
-results have been assumed; exported counts describe drafts, not distinct users.
+A historical false rejection of “should have addressed” and an accepted reply
+that softened an exact wait duration helped expose limits in the checks.
+Quality Lab preserves attempts, rejection reasons, retries, fallbacks and
+available model receipts so those failures remain inspectable.
 
-### Keep the failed experiments
-
-A previous live Gemma test rejected “should have addressed” as if it claimed
-a completed business action. Another accepted draft reduced a 25-minute wait
-to an “extended wait.” Those failures led to narrower action checks and exact
-reported-duration checks.
-
-The repository retains two three-case hosted Gemma smoke runs. The later run
-produced three model-written drafts on their first attempts, taking about
-18 to 20 seconds each on the recorded GitHub-hosted CPU machine. Those are
-historical results from an earlier engine version, not measurements of this
-new pass or predictions for a customer's laptop.
-
-Quality Lab retains raw attempts, rejection reasons, retries, final engine
-labels and available timing receipts. Templates, real model output and human
-assessments remain separate. Deterministic regressions also test source excerpts,
-negation, duplicate billing, unanswered questions and the approval boundary.
-
-AI coding assistance helped implement and test the project. The code and
-retained evidence make the changes inspectable.
+AI coding assistance helped implement and test the project.
 
 ## Why Does Open Innovation Matter?
 
-Downloaded Gemma weights let the owner run the model on their machine, without
-a hosted-model bill for each draft. Hardware, electricity and setup still cost
-money. The practical advantage is control over inference and customer context.
+Downloaded Gemma weights support inference on the owner's machine without a
+hosted-model charge for each draft. Hardware, electricity and setup still cost
+money. Local execution gives the owner control over the customer context sent
+to the model and the runtime processing it.
 
-Open application code makes policy handling inspectable too: what entered the
-prompt, why a candidate was rejected, and which fallback was used. The false
-positive around “should have addressed” was a bug I could inspect and fix.
+Open application code makes the policy boundary inspectable: what entered the
+prompt, why a candidate was rejected, and which fallback was used. The browser
+uses local assets without external fonts, scripts or analytics.
 
-The UI uses no external fonts, scripts or analytics. Local privacy depends on
-the machine and Ollama configuration, and the initial model download requires
-internet access. A loopback address alone does not prove local inference.
+The initial model download needs internet access. Privacy still depends on the
+computer and Ollama configuration; a loopback URL alone does not prove a private
+model runtime.
 
 ## What I Still Need to Prove
 
-These English pattern checks can miss unfamiliar topics, sarcasm and subtle
-claims. They trust owner-supplied facts; they cannot prove a repair happened.
-Fresh Gemma tests on the current code, real operator task times, comparative
-reply preferences and willingness to pay remain work to do. Test counts are
-engineering evidence, not customer validation.
+The English pattern checks can miss unfamiliar topics, sarcasm and subtle
+claims. They cannot establish whether an owner-supplied fact is true.
+
+Current-source Gemma results need genuine human assessment. Setup usability,
+operator preferences, comparative task times and willingness to pay need real
+observation. No operator trial, customer adoption or revenue is claimed.
 
 ## Prize Categories
 
