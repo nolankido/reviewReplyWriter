@@ -345,3 +345,62 @@ Next useful inspection: inbox import/note/step failure paths for retained owner
 text and safe saved-result binding. Recheck current main, active work and these
 receipts first; repair an observable gap rather than duplicating completed
 recovery features or inventing evidence to meet an improvement quota.
+
+## Eighth pass: finish held work and protect pending inbox inputs
+
+Startup at 2026-10-14 16:01 UTC verified main
+`07c22d9e8353b4bf109d93dafd5f51f93f811cad`, tree
+`99055ae1743fa5cc4070780c9b6608d6faea5e7f`. PR #21 had synchronized with
+final head `e485da2257610be969190ec765d9236305199dd4`, tree
+`a886879d6172586ce3abe394c8455c683a16dc1b`, matching the clean local
+candidate. No AGENTS.md or unrelated active work required repair.
+
+The held Quality Lab pass was finished first. All 488 tests, six Node state
+scripts, both real Python launcher workflows and the focused 54-case evaluation/
+recovery suite passed again. Final Actions run 38589238784 failed before all
+five jobs' steps (empty arrays); no retry was sent. PR #21 merged at
+`719dbd1c6263e882ba1d2edea3a111b5a6ca3de1`, verified tree
+`a886879d6172586ce3abe394c8455c683a16dc1b`, before new work began.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/22
+
+Tested feature commit: `a681e6e142f911330f027ca8ee1892e3173d60a6`.
+Feature tree: `82dff3af6f5ad905dc170718c4b87b9e7eb96086`, matched to the
+complete locally tested tree before committing. The final candidate adds this
+receipt; final head/tree/merge are recorded in the PR and must be read fresh.
+
+Observed work-loss gaps: choosing an invalid CSV cleared the current source
+before validation, and the unload guard omitted pending inbox source/name and
+private handling notes. The inbox now reuses the existing InputTracker, guards
+unsaved source replacement, warns on pending inbox work and accepts only source
+inputs acknowledged by an inbox save. Preview/failed saves do not accept them;
+newer unsubmitted inputs remain pending. Size/UTF-8 decoding and a delayed-read
+source check precede replacement. Cancelled, oversized, invalid and stale reads
+keep current CSV/name. Successful replacement clears import confirmation.
+No authorization checkbox is tracked or restored. See docs/REVIEW_INBOX.md.
+
+No automatic browser/server persistence, restore, model request, policy change,
+approval or posting was added. This prevents incidental loss; browser warnings
+are not a backup and forced/device-specific closure remains a limitation.
+Unsaved inbox source/handling work is not silently included in working copies
+or backups. Save it explicitly. Saved inbox data and notes remain private and
+excluded from default judge exports.
+
+Executed locally: all 491 Python tests, including three static load-order/
+unload/atomic-read contracts; development checker; all seven actual Node state
+scripts, including the actual inbox module/shared tracker/app unload handler in
+a controlled DOM; both real Python launcher HTTP workflows; offline CLI;
+JavaScript syntax and whitespace checks. Controlled checks cover cancelled,
+invalid, oversized and delayed file reads, preview versus acknowledged/failed
+saves, newer input during save and pending private handling notes.
+
+Feature Actions run 38596164811 failed before all five jobs' steps (all empty).
+Final candidate steps are inspected in the PR without retries or weaker checks.
+Actual current browser/mobile unload and file-picker behavior, screen-reader
+navigation, Windows batch execution, fresh Gemma and operator feedback remain
+unverified. Fixtures are controlled and fictional, not operator/model evidence.
+
+Next useful pass: audit the final owner launch/demo and private evidence handoff
+for a concrete usability or freshness gap. Prefer a bounded tested repair over
+additional features or fabricated activation evidence. Honor the read-only final
+pass and hard stop; recheck active work and current refs before any new writes.
