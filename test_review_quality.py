@@ -246,7 +246,8 @@ class FallbackQualityTests(unittest.TestCase):
             self.assertEqual(view['status'],'pending')
 
     def test_corpus_was_not_tuned_to_improve_results(self):
-        self.assertEqual(hashlib.sha256((ROOT/'examples/evaluation_cases.json').read_bytes()).hexdigest(),
+        # Git may checkout CRLF on Windows. Compare canonical LF text, not checkout bytes.
+        self.assertEqual(hashlib.sha256((ROOT/'examples/evaluation_cases.json').read_text(encoding='utf-8').encode('utf-8')).hexdigest(),
                          '31bf76007f6b9b76e424e29b1ff52119746c2f03a1eed7176a2adf452de7211f')
 
     def test_safety_version_invalidates_old_approvals(self):
