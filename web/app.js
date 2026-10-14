@@ -60,7 +60,7 @@ function setBusy(value) {
     else if ('wasDisabled' in control.dataset) { control.disabled = control.dataset.wasDisabled === 'true'; delete control.dataset.wasDisabled; }
   }
   $('generate').textContent = value ? 'Working...' : 'Generate draft ↗';
-  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); }
+  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); if (window.rrwInbox) window.rrwInbox.buttons(); }
 }
 async function run(task) {
   if (busy) return;
@@ -113,6 +113,7 @@ function fillSettings(values) {
   }
   $('approved-actions').value = (values.approved_actions || []).join('\n');
   policyChanged();
+  if (window.rrwInbox) window.rrwInbox.invalidatePreview();
 }
 function fillForm(view) {
   fillSettings(view);
@@ -337,6 +338,7 @@ let qualityCase = null;
 let qualityDirty = false;
 function showView(value) {
   const selected = value === 'submission' ? 'submission' : (value ? 'quality' : 'drafts');
+  $('inbox-panel').hidden = selected !== 'drafts';
   for (const [name, panel] of [['drafts', 'draft-panel'], ['quality', 'quality-panel'], ['submission', 'submission-panel']]) {
     $(panel).hidden = selected !== name;
     $('view-' + name).classList.toggle('active', selected === name);

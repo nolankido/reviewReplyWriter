@@ -34,6 +34,11 @@ The workflow is deliberately small:
 Saved profiles, first replies, follow-ups and a searchable draft library make
 this a repeatable task. Nothing is posted to a review platform automatically.
 
+For a recurring queue, the browser also accepts a CSV for one business. A preview
+shows duplicate rows, invalid inputs and items requiring personal handling.
+The saved inbox drafts one review per click and resumes after reopening the app.
+It does not import refund policies or bulk-approve the resulting replies.
+
 The Side Hustle hypothesis is paid installation, policy setup and support for
 an operator who values local control but does not want to configure a model.
 The application code stays free. I have not established demand, revenue or

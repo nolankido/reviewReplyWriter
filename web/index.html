@@ -6,8 +6,10 @@
   <title>Review Reply Writer | Local workspace</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/review-evidence.css">
+  <link rel="stylesheet" href="/inbox.css">
   <script src="/review-evidence.js" defer></script>
   <script src="/app.js" defer></script>
+  <script src="/inbox.js" defer></script>
   <script src="/submission.js" defer></script>
 </head>
 <body>
@@ -27,6 +29,29 @@
     <header class="page-header"><div><p class="eyebrow">THE OWNER'S WORKSPACE</p><h1>A thoughtful reply.<br>A human decision.</h1><p class="intro">Draft with local AI. Check every commitment. Keep your voice.</p></div><div class="model-box"><span id="model-status" class="badge neutral">Checking Ollama</span><button id="refresh-model" class="text-button" type="button">Check connection</button></div></header>
     <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
     <nav class="view-switch" aria-label="Workspace view"><button id="view-drafts" class="button active" aria-pressed="true" type="button">Draft workspace</button><button id="view-quality" class="button" aria-pressed="false" type="button">Quality Lab</button><button id="view-submission" class="button" aria-pressed="false" type="button">Submission Desk</button></nav>
+    <section id="inbox-panel" class="inbox-panel" aria-label="Review inbox">
+      <details id="inbox-details"><summary>Review inbox · Work through several reviews</summary>
+        <p class="helper inbox-intro">Import reviews for one business, preview duplicates and items that need personal handling, then draft one review at a time. Every reply still needs your individual approval.</p>
+        <div class="inbox-import"><div>
+          <div class="field"><label for="inbox-file">Choose a UTF-8 CSV</label><input id="inbox-file" type="file" accept=".csv,text/csv"><small>Up to 48 KiB and 50 reviews. Columns: review, optional stars, optional review_id.</small></div>
+          <p class="helper"><a href="/inbox-sample.csv" download="fictional-review-inbox.csv">Download a fictional sample</a>. Your file stays in this local workspace.</p>
+          <div class="field"><label for="inbox-csv">Or paste CSV text</label><textarea id="inbox-csv" rows="5" maxlength="49152" spellcheck="false" placeholder="review,stars,review_id"></textarea></div>
+          <div class="field"><label for="inbox-label">Inbox name</label><input id="inbox-label" maxlength="140" value="Review inbox"></div>
+          <p class="helper">Uses the business name, voice, style and sign-off in the compose form below. Owner offers and confirmed actions are excluded. CSV files cannot supply business promises.</p>
+          <button id="inbox-preview-button" type="button" class="button secondary">Preview import</button>
+        </div><div id="inbox-preview" hidden>
+          <h3>Check before saving</h3><p id="inbox-preview-info" class="helper"></p><p id="inbox-preview-counts" class="inbox-summary"></p>
+          <div id="inbox-preview-rows" class="inbox-rows"></div>
+          <label class="check-row"><input id="inbox-confirm" type="checkbox"><span>These reviews belong to the selected business. I checked the import preview.</span></label>
+          <button id="inbox-create" type="button" class="button primary" disabled>Save review inbox</button>
+        </div></div>
+        <div class="inbox-controls"><div class="field"><label for="inbox-select">Saved inboxes</label><select id="inbox-select"><option value="">Choose a saved inbox</option></select></div><button id="inbox-refresh" type="button" class="text-button">Reload inboxes</button></div>
+        <section id="inbox-saved" hidden aria-labelledby="inbox-saved-title"><h3 id="inbox-saved-title"></h3><p id="inbox-saved-info" class="helper"></p><p id="inbox-saved-counts" class="inbox-summary"></p>
+          <div class="inbox-controls"><div class="field"><label for="inbox-mode">Inbox drafting engine</label><select id="inbox-mode"><option value="offline">Template preview (no AI)</option><option value="gemma">Local Gemma 3 (4B)</option></select></div><button id="inbox-next" type="button" class="button primary" disabled>Draft next review</button></div>
+          <p class="helper">One review per click. You can stop between reviews and resume later. There is no bulk approval or automatic posting.</p><div id="inbox-saved-rows" class="inbox-rows"></div>
+        </section>
+      </details>
+    </section>
     <div class="workspace-grid" id="draft-panel">
       <section class="card compose-card" aria-labelledby="compose-title">
         <header class="card-heading"><span class="step">01</span><div><p class="eyebrow">COMPOSE</p><h2 id="compose-title">Start with the review</h2></div></header>
