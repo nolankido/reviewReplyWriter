@@ -4,6 +4,17 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+## Submission Desk and judge handoff
+
+The browser now has a **Submission Desk** beside Draft workspace and Quality Lab.
+Save the hosted demo link, record only confirmations you actually checked, and
+export a DEV draft or a no-install judge packet. Extract the ZIP and open
+`START_HERE.html` to inspect recorded evidence without Python or Ollama.
+No publication, visibility change or automatic upload occurs. Private evaluations
+are excluded unless you explicitly include and review them. Details and CLI video
+packaging: [Submission Desk](docs/SUBMISSION_DESK.md).
+
+
 ## Quality Lab
 
 The browser now includes **Quality Lab**, a separate evaluation workspace. Run

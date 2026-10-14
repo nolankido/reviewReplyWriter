@@ -58,7 +58,7 @@ function setBusy(value) {
     else if ('wasDisabled' in control.dataset) { control.disabled = control.dataset.wasDisabled === 'true'; delete control.dataset.wasDisabled; }
   }
   $('generate').textContent = value ? 'Working...' : 'Generate draft ↗';
-  if (!value) { typeChanged(); updateButtons(); qualityButtons(); }
+  if (!value) { typeChanged(); updateButtons(); qualityButtons(); if (window.rrwSubmission) window.rrwSubmission.buttons(); }
 }
 async function run(task) {
   if (busy) return;
@@ -331,10 +331,12 @@ window.addEventListener('beforeunload', event => { if (dirty || busy || qualityD
 let qualityRun = null;
 let qualityCase = null;
 let qualityDirty = false;
-function showView(quality) {
-  $('quality-panel').hidden = !quality; $('draft-panel').hidden = quality;
-  for (const [id, active] of [['view-quality', quality], ['view-drafts', !quality]]) {
-    $(id).classList.toggle('active', active); $(id).setAttribute('aria-pressed', String(active));
+function showView(value) {
+  const selected = value === 'submission' ? 'submission' : (value ? 'quality' : 'drafts');
+  for (const [name, panel] of [['drafts', 'draft-panel'], ['quality', 'quality-panel'], ['submission', 'submission-panel']]) {
+    $(panel).hidden = selected !== name;
+    $('view-' + name).classList.toggle('active', selected === name);
+    $('view-' + name).setAttribute('aria-pressed', String(selected === name));
   }
 }
 function qualityDiscard() {

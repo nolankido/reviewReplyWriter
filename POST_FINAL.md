@@ -1,14 +1,16 @@
 ---
-title: A Local Review Writer That Does Not Invent Your Refund Policy
+title: An AI Can Write Your Review Reply. It Should Not Set Your Refund Policy.
 published: false
 tags: devchallenge, hf26challenge
 ---
 
 *This is a submission for the [Hacktoberfest Open-Source AI Challenge Week 2: Side Hustle](https://dev.to/challenges/hacktoberfest-week2-2026-10-12).*
 
+<!-- RRW:NOTICE:START -->
 > TODO before publication: insert a judge-accessible video URL, check repository
 > access and the original development window, review the final live evidence,
 > and remove this notice. This file is a draft, not a submitted entry.
+<!-- RRW:NOTICE:END -->
 
 ## What I Built
 
@@ -34,11 +36,13 @@ claim that someone has paid or that a time-saving target has been validated.
 
 ## Demo
 
+<!-- RRW:DEMO:START -->
 TODO: Replace this paragraph with the actual hosted video link after reviewing
 it. The recording script captures the running application, a fictional review,
 real engine labels, a deliberately unsafe edit, and approval/export controls.
 A template-only recording is explicitly marked as no AI. Demonstration clicks
 are not real customer approval or a first-user testimonial.
+<!-- RRW:DEMO:END -->
 
 The application starts with `py rrw_web.py` or the Windows launcher. Its browser
 interface requires no additional Python runtime packages. Ollama and downloaded
@@ -117,7 +121,7 @@ reply length fell from 64 to 38 words. The fixes target known cases, so this is
 not a blind benchmark or evidence that every reply is good. No human assessments
 or customer endorsements were manufactured.
 
-The deterministic suite now contains 247 tests, including targeted counterexamples
+The automated suite includes targeted counterexamples
 for authorization, omitted details, negation and rating conflicts. Browser tests
 exercise editing, stale tabs, clipboard copying and evidence export. Controlled
 model responses in unit tests are kept distinct from actual inference records.

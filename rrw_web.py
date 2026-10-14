@@ -25,13 +25,18 @@ HERE = Path(__file__).resolve().parent
 MAX_BODY = 128 * 1024
 ASSETS = {'/': ('index.html', 'text/html; charset=utf-8'),
           '/app.js': ('app.js', 'text/javascript; charset=utf-8'),
-          '/style.css': ('style.css', 'text/css; charset=utf-8')}
+          '/style.css': ('style.css', 'text/css; charset=utf-8'),
+          '/submission.js': ('submission.js', 'text/javascript; charset=utf-8')}
 ACTIONS = {'/api/generate': 'generate', '/api/reroll': 'reroll',
            '/api/get': 'get', '/api/profile': 'profile', '/api/edit': 'edit',
            '/api/validate': 'validate', '/api/decision': 'decision',
            '/api/approved-text': 'approved-text'}
 ACTIONS.update({f'/api/quality-{action}': f'quality-{action}' for action in
     ('diagnostics', 'list', 'get', 'start', 'step', 'assess', 'export')})
+
+
+ACTIONS.update({f'/api/submission-{action}': f'submission-{action}'
+                for action in ('state', 'save', 'export')})
 
 
 def strict_object(pairs):
@@ -53,6 +58,8 @@ class LocalServer(ThreadingHTTPServer):
 
     def __init__(self, workspace, port=8765):
         self.workspace = workspace
+        from rrw_submission import SubmissionDesk
+        self.submission = SubmissionDesk(workspace.root, workspace.lock)
         self.token = secrets.token_urlsafe(32)
         super().__init__(('127.0.0.1', port), Handler)
         self.origin = f'http://127.0.0.1:{self.server_port}'
@@ -159,7 +166,9 @@ class Handler(BaseHTTPRequestHandler):
                 raise WorkspaceError('Request body is incomplete.')
             data = json.loads(raw.decode('utf-8'), object_pairs_hook=strict_object,
                               parse_constant=reject_constant)
-            self._send(200, self.server.workspace.dispatch(ACTIONS[self.path], data))
+            action = ACTIONS[self.path]
+            target = self.server.submission if action.startswith('submission-') else self.server.workspace
+            self._send(200, target.dispatch(action, data))
         except Exception as exc:
             self._error(exc)
 
