@@ -404,3 +404,57 @@ Next useful pass: audit the final owner launch/demo and private evidence handoff
 for a concrete usability or freshness gap. Prefer a bounded tested repair over
 additional features or fabricated activation evidence. Honor the read-only final
 pass and hard stop; recheck active work and current refs before any new writes.
+
+## Ninth pass: supporting-document leases for private judge handoff
+
+Startup at 2026-10-14 16:54 UTC verified main
+`9101502c09e16a2a5ca089dbe161dc57f91f213b`, tree
+`e4780e0717031c71962cd0b3afc67f9d6bc67178`, merged PR #22. It matched the
+clean local tree. No AGENTS.md or new active PR needed repair; older candidates
+were not reapplied.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/23
+
+Tested feature commit: `e531699f11ec61f8c62fd62226da2147d900a038`.
+Feature tree: `cf929bafae264b9b4e5bed663506fd4af391fe7b`, compared equal
+to the complete locally tested tree before committing. The final candidate adds
+this receipt; exact final head/tree/merge are in the PR and must be read fresh.
+
+Observed handoff gap: existing article/engine/evaluation leases did not bind the
+supporting documents copied into a judge packet. Their fixed allowlist byte
+counts and SHA-256 fingerprints now bind claim review and export revisions.
+Changed documents clear current claim-review confirmation, stale saves/exports
+are refused, exact bytes copied must match the snapshot, and a change during
+browser export is rejected by its second snapshot. READINESS fingerprints match
+the manifest. Claim-review wording explicitly includes supporting documents.
+Only bounded single-link regular documents are read; file/parent symlinks,
+hard links, directories, FIFOs, oversized/missing inputs and ordinary read changes
+are refused. Binary reads preserve exact bytes. No allowlist expansion occurred.
+
+Private evaluations still require per-export consent; private notes, working
+copies, backups and unlisted project files stay excluded by default. Hashes do
+not identify secrets in ordinary public-document text or defeat local forgery.
+Manual inspection remains required. No posting, visibility, upload, model/server
+configuration or inference change was made. The handoff guide's old assertion
+of current bundled Gemma sources was corrected to their verified historical
+status. No fresh inference or external rules verification was manufactured.
+
+Executed locally: all 501 Python tests, including ten controlled document-lease
+regressions, real loopback stale/current export, changed review/revision, mid-
+export change, exact manifests, private exclusion and link/nonregular/size
+refusal; development checker; all seven Node state scripts; both real Python
+launcher HTTP workflows; offline CLI; compilation and whitespace checks. The
+main launcher now builds a working packet with bound documents, no selected
+private evaluation, no preflight readiness and no publication claim. Fixtures
+are controlled, not operator/judge feedback or fresh Gemma.
+
+Feature Actions run 38604138879 failed before all five jobs' steps (empty arrays).
+Final candidate steps are inspected in the PR, without workflow retries or
+weakened tests. Windows batch, current Chromium/mobile/screen-reader behavior,
+fresh Gemma and real operator feedback remain unverified. Historical receipts
+are preserved; local development checks are not contest eligibility proof.
+
+Next useful inspection: the explicitly named optional MP4 CLI input has size/
+header/symlink checks but lacks descriptor-bound regular-file checking. Reuse
+bounded read guarantees if repairing that observable gap; do not create footage
+or infer its validity. Keep the final occurrence read-only and honor the hard stop.
