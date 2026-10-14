@@ -14,6 +14,7 @@ if (typeof module !== 'undefined' && module.exports) module.exports = {InputTrac
 else (() => {
   let saved = null;
   let recoveredInputs = false;
+  let recoveredSettings = false;
   let previousProfile = $('profile-select').value;
   const settingsKeys = ['business', 'kind', 'tone', 'platform', 'offer', 'signoff', 'approved_actions'];
   function inputs() {
@@ -26,14 +27,14 @@ else (() => {
   const tracker = new InputTracker(inputs());
   function accept(keys) {
     tracker.accept(inputs(), keys); previousProfile = $('profile-select').value;
-    if (keys === undefined) recoveredInputs = false;
+    if (keys === undefined) { recoveredInputs = false; recoveredSettings = false; }
   }
   function hasInputChanges() { return recoveredInputs || tracker.changed(inputs()); }
   function canReplace() {
     return !hasInputChanges() || window.confirm('Replace changed review inputs? Saved drafts and recovery copies will be kept.');
   }
   function canLoadProfile() {
-    return !tracker.changed(inputs(), settingsKeys) || window.confirm('Replace changed business settings with this saved profile? Your review text will be kept.');
+    return (!recoveredSettings && !tracker.changed(inputs(), settingsKeys)) || window.confirm('Replace changed business settings with this saved profile? Your review text will be kept.');
   }
   function show(value) {
     saved = value;
@@ -87,7 +88,7 @@ else (() => {
       } else if (window.rrwFocus) {
         window.rrwFocus.request('review');
       }
-      accept(); recoveredInputs = true; show(value);
+      accept(); recoveredInputs = true; recoveredSettings = true; show(value);
       notify('Working copy recovered. Confirm owner policy again. Reply edits still need saving, checks and human review.');
     });
   });
@@ -100,7 +101,9 @@ else (() => {
     });
   });
   window.rrwRecovery = {accept, hasInputChanges, canReplace, canLoadProfile,
-    previousProfile: () => previousProfile, profileLoaded: () => accept(settingsKeys), buttons};
+    previousProfile: () => previousProfile,
+    profileSelected: () => { previousProfile = $('profile-select').value; },
+    profileLoaded: () => { accept(settingsKeys); recoveredSettings = false; }, buttons};
   // Initialize independently of workspace/model checks; a damaged optional copy must not block drafting.
   api('recovery-get', {}).then(show).catch(() => {
     $('recovery-status').textContent = 'Recovery copy could not be checked. Drafting still works; the saved file was preserved.';

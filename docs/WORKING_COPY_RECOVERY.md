@@ -9,6 +9,10 @@ Generating from the current form does not ask to discard the inputs it is using.
 Refreshing the library, saving an edit and approving a reply keep the compose
 form intact. Loading a profile protects changed settings while keeping review
 text. Starting a new review does not mark retained, unsaved policy inputs clean.
+Choosing **New / unsaved business** also keeps changed settings protected. It
+changes the profile selection; it does not save or accept the form. Loading a
+saved profile asks before replacing recovered business settings, even if they
+have not been edited again since recovery. The pending review stays in place.
 
 These checks are browser state protection. They are not automatic persistence.
 The normal leave-page warning now includes changed compose inputs. It cannot
@@ -74,3 +78,34 @@ The expanded Chromium smoke checks replacement warnings, reload recovery and
 unchecked owner authorization. Actual Chromium navigation and Windows batch
 execution still need their target environments. These controlled tests are not
 real operator feedback or fresh Gemma evidence.
+
+## October 14 profile-selection repair
+
+The owner's direct continuation verified main
+`f71490e5e2d53d3fc6ab6e19cadb6625e8f833c7`, tree
+`9efe7d926f20f9355ab8ba6a7e3fed0822f3ce58`, against clean local source.
+No AGENTS.md, new competing work or Actions workflows were present. The
+overnight automation stays paused; this is direct follow-up authorization.
+
+Executing the actual selection handler with controlled DOM/API data reproduced
+an edited owner statement becoming clean merely by choosing the blank profile
+option. The handler accepted business fields even though no profile was loaded
+or saved. Selection tracking now changes independently of accepted settings.
+Cancelling a later profile load returns to that blank selection and keeps the
+pending form. Recovered settings have their own pending marker, cleared only
+when explicitly accepted or replaced. Loading a profile still preserves a
+separately pending recovered review and leaves owner confirmation unchecked.
+
+All 555 Python tests passed. The actual local verifier passed the development
+checker, both real Python launcher HTTP workflows and all nine actual Node
+scripts with unchanged inventoried source. Expanded input checks execute actual
+selection/recovery handlers for blank selection, pending settings, replacement
+cancellation/acceptance, review-only changes, clean selection and recovered
+settings. They verify retained values, unchecked owner confirmation and only
+read requests. Syntax and whitespace checks passed. These are controlled Node
+fixtures, not browser navigation or operator observations. Real Windows,
+browser/mobile/screen-reader behavior, fresh Gemma and operator use remain
+unexecuted. No dependencies, backend writes, private data, workflow dispatch,
+posting, upload or contest submission were added. Exact candidate/tree and merge
+outcome are recorded in the PR. Next: current target-computer verification,
+actual local Gemma and a consenting operator trial.
