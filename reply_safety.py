@@ -98,7 +98,7 @@ _RULES = (
         r"\s+(?:has|have|was|were)\s+(?:been\s+)?"
         r"(?:dismissed|fired|terminated|disciplined|retrained|suspended)\b|"
         r"\b(?:the|our|a|an)\s+(?:coffee\s+)?(?:machine|system|equipment|shower|appliance)"
-        r"\s+(?:has\s+|have\s+)?(?:undergone|received|had)\s+(?:an?\s+)?"
+        r"\s+(?:has\s+|have\s+)?(?:underwent|undergone|received|had)\s+(?:an?\s+)?"
         r"(?:repair|repairs|servicing|replacement)\b|"
         r"\b(?:an?\s+)?investigation\s+(?:has\s+been\s+)?(?:opened|launched|completed|concluded)\b|"
         r"\b(?:never\s+happen\s+again|won't\s+happen\s+again|will\s+not\s+happen\s+again)\b", re.I)),
