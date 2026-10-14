@@ -142,3 +142,14 @@ profile saves wait for a successful read. Existing draft policy/approval is
 unaffected. See [profile-save recovery](PROFILE_SAVES.md) for exact behavior,
 540-test/local-verifier evidence and remaining platform/operator limits. This
 adds recoverability, not a new adoption result or independent policy attestation.
+
+## Continued repair: unsupported plans and team promises
+
+A subsequent direct continuation reproduced complete replies passing checks
+with unapproved plans, team promises and first-person ongoing actions. Shared
+policy checks now detect those forms while preserving neutral acknowledgments
+and exact owner statements. Older approvals require fresh review without
+rewriting private files on read. See [planned-action checks](PLANNED_ACTIONS.md)
+for the reproduction, 547-test/local-verifier evidence and conservative English
+pattern limits. The unexecuted target-machine/operator evidence remains the
+lowest-scoring item; this controlled repair does not raise that evidence score.

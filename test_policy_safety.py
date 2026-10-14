@@ -20,6 +20,37 @@ UNSAFE = GOOD_NEGATIVE_REPLY + "\nWe will give you a full refund."
 
 
 class AuthorizationTests(unittest.TestCase):
+    def test_planned_actions_and_business_subject_promises_need_authorization(self):
+        cases = ["We are going to fix the service.", "We're going to make changes.",
+                 "I am investigating your complaint.", "I'm investigating your complaint.",
+                 "I am about to call you.", "Our staff are planning to review procedures.",
+                 "Management is intending to update procedures.", "We plan to retrain our staff.",
+                 "Our manager plans to review this.", "We intend to resolve the issue.",
+                 "Our team will make sure this never happens.", "Our owner'll follow up.",
+                 "Management guarantees to address this.", "We’re going to fix it."]
+        for claim in cases:
+            with self.subTest(claim=claim):
+                self.assertTrue(any('business action or promise' in f for f in policy_gaps(claim)))
+                self.assertTrue(any('policy:' in f for f in rr.reply_gaps(
+                    GOOD_NEGATIVE_REPLY + '\n' + claim, ANGRY, BUSINESS, 2)))
+
+    def test_neutral_acknowledgments_and_customer_plans_are_not_business_promises(self):
+        for text in ["We are sorry about the service.", "I'm sorry about your wait.",
+                     "Our team appreciates your feedback.", "We hope to welcome you again.",
+                     "We understand you are going to visit another cafe.",
+                     "Your plan to return is appreciated."]:
+            with self.subTest(text=text):
+                self.assertEqual(policy_gaps(text), [])
+
+    def test_planned_action_passes_only_with_exact_owner_statement(self):
+        action = "Our team is going to review the service procedure."
+        self.assertTrue(policy_gaps(action))
+        self.assertEqual(policy_gaps(action, approved_actions=[action]), [])
+        for text in [action + '\n' + action, action[:-1] + ' and call you.',
+                     action.replace('service', 'billing')]:
+            with self.subTest(text=text):
+                self.assertTrue(policy_gaps(text, approved_actions=[action]))
+
     def test_common_unapproved_promises_blocked(self):
         cases = ["We will refund your payment.", "A complimentary breakfast awaits.",
                  "Your meal is free.", "The next one is on us.",
@@ -95,6 +126,30 @@ class AuthorizationTests(unittest.TestCase):
 
 
 class OutputBoundaryTests(unittest.TestCase):
+    def test_planned_action_model_stand_in_gets_coached_retry(self):
+        calls = []
+        def stand_in(prompt, *args):
+            calls.append(prompt)
+            return GOOD_NEGATIVE_REPLY + '\nWe plan to retrain our staff.' if len(calls) == 1 else GOOD_NEGATIVE_REPLY
+        text, engine = rr.generate_with_model(ANGRY, BUSINESS, 'warm', 2,
+            'cafe', 'controlled-test-model', caller=stand_in)
+        self.assertEqual(text, GOOD_NEGATIVE_REPLY); self.assertIn('retry', engine)
+        self.assertIn('unauthorized business action or promise', calls[1])
+
+    def test_followup_model_stand_in_cannot_reuse_unapproved_customer_or_previous_plans(self):
+        previous = 'We are going to fix the service.'
+        update = 'Update: the coffee is still cold. You plan to retrain your staff.'
+        good = rr.template_followup(ANGRY, previous, update, BUSINESS, 'warm',
+                                   'cafe', random.Random(0))
+        calls = []
+        def stand_in(prompt, *args):
+            calls.append(prompt)
+            return good + '\n' + previous if len(calls) == 1 else good
+        text, engine = rr.generate_followup(ANGRY, previous, update, BUSINESS,
+            'warm', 'cafe', 'controlled-test-model', caller=stand_in)
+        self.assertEqual(text, good); self.assertIn('retry', engine)
+        self.assertIn('unauthorized business action or promise', calls[1])
+
     def test_all_template_kinds_platforms_and_tiers_checked(self):
         for review, stars in ((ANGRY, 2), (MIXED, 3), (GLOWING, 5)):
             for kind in rr.KINDS:

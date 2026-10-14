@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v6-material-complaints"
+SAFETY_VERSION = "owner-policy-v7-planned-actions"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 
@@ -72,6 +72,9 @@ def _policy_text(text):
     return "\n".join(normalize(line) for line in text.splitlines())
 
 
+_BUSINESS_SUBJECT = r"(?:we|i|our\s+(?:team|staff|manager|owner)|management)"
+
+
 _RULES = (
     ("unauthorized compensation", re.compile(
         r"\b(?:refund(?:ed|s|ing)?|reimburs\w*|discount\w*|credit(?:s|ed)?|"
@@ -85,13 +88,18 @@ _RULES = (
         r"\b(?:comes?|available)\s+with\s+(?:our|my)\s+compliments\b|"
         r"\b\d+(?:\.\d+)?\s*%\s*(?:off|discount)\b", re.I)),
     ("unauthorized business action or promise", re.compile(
-        r"\b(?:we|i|our\s+(?:team|staff|manager|owner)|management)\s*"
-        r"(?:(?:'ve|'re|'ll)|(?:have|has|had|are|is|will|can|shall|promise\s+to|guarantee))?\s*"
+        r"\b" + _BUSINESS_SUBJECT + r"\s*"
+        r"(?:(?:'ve|'re|'ll|'m)|(?:have|has|had|am|are|is|will|can|shall|promise\s+to|guarantee))?\s*"
         r"(?:already\s+|now\s+|personally\s+|immediately\s+|just\s+|been\s+|are\s+)*"
         r"(?:fix\w*|repair\w*|replac\w*|refund\w*|address\w*|resolv\w*|train\w*|retrain\w*|"
         r"discuss\w*|talk\w*|forward\w*|investigat\w*|chang\w*|improv\w*|streamlin\w*|"
         r"contact\w*|call\w*|send\w*|sort\w*|escalat\w*|work\w*\s+on|look\w*\s+into|pass(?:ed)?\s+(?:this|it|your))\b|"
-        r"\b(?:we|i)\s*(?:'ll|will|shall|promise\s+to|guarantee)\b|"
+        r"\b" + _BUSINESS_SUBJECT + r"(?:\s*'ll|\s+(?:will|shall|promise\s+to|guarantee))\b|"
+        # Plans and intentions can create an unsupported commitment even when
+        # the eventual verb is unfamiliar. Hope and apologies are not plans.
+        r"\b" + _BUSINESS_SUBJECT + r"(?:\s+(?:(?:am|are|is)\s+)?|(?:'re|'m)\s+)"
+        r"(?:going|about|planning|intending)\s+to\b|"
+        r"\b" + _BUSINESS_SUBJECT + r"\s+(?:plans?|intends?|promises?|guarantees?)\s+to\b|"
         r"\b(?:has|have|is|are|was|were)\s+(?:already\s+|now\s+|been\s+)*"
         r"(?:fixed|repaired|replaced|resolved|retrained|addressed|refunded|sorted)\b|"
         r"\b(?:the|our|a|an)\s+(?:barista|employee|staff|manager|waiter|waitress|technician)"
