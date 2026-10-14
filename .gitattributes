@@ -2,3 +2,5 @@
 * text=auto eol=lf
 # The Windows launcher remains native CRLF; it is not model input.
 *.bat text eol=crlf
+# Temporary exact patch transport must never undergo text conversion.
+.development/audit-payload/*.bin -text
