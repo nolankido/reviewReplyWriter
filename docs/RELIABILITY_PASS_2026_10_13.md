@@ -59,3 +59,21 @@ customer endorsement, public video or DEV publication has been confirmed.
 5. Compare real Gemma CLI and browser outputs with completion/model receipts.
 
 This is technical regression evidence, not a human-customer trial.
+
+## Verified after regression repair
+
+Reconstructed the PR source against the archived exact main baseline
+`dc9938bb171002e4ec9c39659dad9e0b7e7ea0a2` and ran the suite on
+Linux/Python 3.13: **294 tests passed**. The development checker passed,
+`node --check` passed for the two browser JavaScript modules, and
+representative ordinary/manual-only/policy fixtures behaved as expected.
+The regression repair preserves the better-detail best-of-two selection and
+marks historic Gemma records as historical rather than falsely current.
+
+This is a development verification, not a published release certificate.
+The sandbox's Chromium browser is administratively blocked from reaching its
+loopback app, even with its installed browser executable. The Windows matrix
+and a fresh real Gemma inference were unavailable. Recent GitHub Actions
+jobs failed without executing test steps, so they are not reported as passing.
+Operator usability, contest eligibility and externally accessible demos remain
+unverified.
