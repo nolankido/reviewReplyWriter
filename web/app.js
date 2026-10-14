@@ -407,8 +407,9 @@ $('profile-select').addEventListener('change', () => {
     $('profile-select').value = window.rrwRecovery.previousProfile(); return;
   }
   if (key && workspace.profiles[key]) { fillSettings(workspace.profiles[key]); $('profile-name').value = key;
-    notify('Profile loaded. Confirm any owner commitments before generating a new reply.'); }
-  if (window.rrwRecovery) window.rrwRecovery.profileLoaded();
+    notify('Profile loaded. Confirm any owner commitments before generating a new reply.');
+    if (window.rrwRecovery) window.rrwRecovery.profileLoaded();
+  } else if (window.rrwRecovery) window.rrwRecovery.profileSelected();
 });
 for (const id of ['business', 'offer', 'approved-actions']) $(id).addEventListener('input', () => policyChanged());
 $('review').addEventListener('input', countReview);

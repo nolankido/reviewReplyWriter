@@ -47,6 +47,8 @@ refreshing the list. A failed list refresh cannot hide an acknowledged save.
 After an uncertain save, **Check saved profiles** reads the latest private list
 without replacing the current review/settings or restoring authorization. Further
 profile saves wait for that check. [Profile-save recovery](docs/PROFILE_SAVES.md).
+Choosing **New / unsaved business** keeps pending settings protected. Loading a
+profile asks before replacing recovered settings and keeps the pending review.
 
 ## Back up private review work
 

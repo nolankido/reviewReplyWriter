@@ -173,3 +173,13 @@ is sent; genuine write/lookup failures preserve their unresolved state. See
 [generation acknowledgement](GENERATION_ACKNOWLEDGEMENT.md) for the controlled
 reproduction, seven new Node scenarios and 555-test/local-verifier evidence.
 This repairs failure communication without adding platform or operator evidence.
+
+## Continued repair: preserve pending settings across profile selection
+
+Choosing the blank profile option could mark edited business settings clean
+without a save. Selection now changes independently of accepted values, and
+loading a profile asks before replacing recovered settings. Pending review text
+and unchecked owner authorization remain protected. The expanded actual Node
+handler checks and 555-test/local-verifier receipt are documented in
+[working-copy recovery](WORKING_COPY_RECOVERY.md). No platform/operator evidence
+score is raised by controlled fixtures.
