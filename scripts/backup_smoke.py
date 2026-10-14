@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlsplit
 HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
 from rrw_workspace import Workspace
+from rrw_backup import inventory
 
 
 def main():
@@ -25,6 +26,7 @@ def main():
                                               'stars': 2, 'mode': 'offline'})
         ref = {'id': view['id'], 'revision': view['revision']}
         workspace.dispatch('decision', dict(ref, status='approved', reviewed=True))
+        original_work = {name: (source / name).read_bytes() for name in inventory(source)}
         for arguments in (['create', '--data-dir', str(source), '--output', str(archive), '--confirm-private'],
                           ['inspect', '--archive', str(archive)],
                           ['recover', '--archive', str(archive), '--destination', str(restored), '--confirm-private']):
@@ -75,6 +77,8 @@ def main():
                 raise RuntimeError('Controlled approved export did not match')
             if workspace.dispatch('get', {'id': view['id']})['status'] != 'approved':
                 raise RuntimeError('Original workspace was changed')
+            if any((source / name).read_bytes() != data for name, data in original_work.items()):
+                raise RuntimeError('Original saved review-work bytes changed')
             print(json.dumps({'private_backup_cli': True, 'recovered_launcher_http': True,
                 'original_workspace_preserved': True, 'restored_approval_reset': True,
                 'explicit_review_approval_export': True, 'paths_with_spaces': True,
