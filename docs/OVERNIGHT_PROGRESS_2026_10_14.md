@@ -599,3 +599,34 @@ Tested attestation commit: `518fb9c822a5432f67a8927d89357c39eef357f2`.
 Tested full tree: `f565ba8c4a149aec9a6cff3b3cf34c980403d10c`, matched to the
 complete local candidate before committing. The final candidate adds only this
 review receipt; its final head/tree and merge outcome are recorded in PR #37.
+
+## Authorized DEV publication preparation and hosted historical demo
+
+On October 14 at 12:55 PM Hawaii time Nolan authorized posting the project to
+the hackathon through the signed-in DEV account. Fresh visible account evidence
+confirmed Nolan Kido, @kidon. The official template was used to save draft
+6206742 with both required tags and the Fully Autonomous writing disclosure.
+The saved editor content was compared exactly with the prepared body and its
+rendered preview inspected. No private preview capability is committed here.
+
+The previously reviewed, captioned historical video was uploaded to Nolan's
+connected Descript drive and published unlisted:
+https://share.descript.com/view/n1ZTnZpfNyB
+The share page showed Sign in; playback reached the end, 67.8 seconds, without
+a video error. The persistent historical banner and earlier cold-coffee case
+are disclosed in the article. This is not the current duplicate-billing video,
+a new Gemma run or an operator session. Descript project:
+https://web.descript.com/8d43d083-c906-4185-8805-7297c0cc6b25/cf1ba
+
+The release checker again executed all 569 Python tests successfully and
+correctly remained blocked by private repository access, missing current-source
+Gemma evidence, firsthand claim review and an assessed evaluation report.
+Those flags remain false and no checks, application code or Actions workflows
+were changed. No current Windows, application-browser or model result is inferred
+from successful DEV editing and Descript playback.
+
+Next: establish deliberate judge access to the still-private repository, complete
+the target-machine Gemma/assessment evidence, and publish the existing DEV draft
+under the existing authorization after its remaining claims and access are ready.
+The GitHub connector cannot change repository visibility; its browser settings
+page currently requires GitHub sign-in. Do not create a duplicate DEV entry.
