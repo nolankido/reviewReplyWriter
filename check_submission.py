@@ -103,9 +103,11 @@ def release_blockers(evidence, post_text):
         if evidence.get(key) is not True:
             blockers.append(f"owner evidence not confirmed: {key}")
     for heading in ("## Demo", "## Code", "## How I Built It",
-                    "## Why Open Innovation Matters", "## Prize Categories"):
+                    "## Prize Categories"):
         if heading not in post_text:
             blockers.append(f"missing submission section: {heading}")
+    if not any(h in post_text for h in ("## Why Open Innovation Matters", "## Why Does Open Innovation Matter?")):
+        blockers.append("missing submission section: Why Does Open Innovation Matter?")
     if "Best Use of Gemma" not in post_text:
         blockers.append("prize category is not identified")
     if re.search(r"\b(?:TODO|UNVERIFIED|REPLACE_ME)\b", post_text):

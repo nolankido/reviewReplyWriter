@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v1"
+SAFETY_VERSION = "owner-policy-v2-detail"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 
@@ -117,9 +117,19 @@ def policy_gaps(reply, offer=None, approved_actions=None):
     remainder = re.sub(r"\b(?:that's|that is|the mistake is) on us\b", "our mistake", remainder)
     findings = []
     for name, pattern in _RULES:
-        match = pattern.search(remainder)
-        if match:
+        for match in pattern.finditer(remainder):
+            # Only past counterfactuals: 'should have addressed' is regret,
+            # not a report that an action happened. Never exempt future or
+            # conditional promises; keep scanning later matches in the sentence.
+            before = remainder[max(0, match.start() - 35):match.start()]
+            if (name == "unauthorized business action or promise"
+                    and re.match(r"have\b", match.group(0), re.I)
+                    and re.search(r"\b(?:should|could|would)\s+(?:not\s+)?$", before)
+                    and not re.search(r"\b(?:tomorrow|next|tonight|soon)\b",
+                        re.split(r"[.!?;\n]", remainder[match.end():], maxsplit=1)[0])):
+                continue
             findings.append(f"policy: {name} ({match.group(0)[:80]})")
+            break
     return findings
 
 
