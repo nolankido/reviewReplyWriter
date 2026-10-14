@@ -4,6 +4,11 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+The [Week 2 Side Hustle entry](https://dev.to/kidon/the-model-writes-the-review-reply-the-owner-keeps-the-promises-57a2)
+was published on DEV on October 14, 2026, with the public code link and a labelled
+historical Gemma video. Current-source Gemma results and human assessments remain
+pending; publication does not mean the internal release evidence check passed.
+
 ## Review with the owner's judgment
 
 The editor shows the original review and its saved owner policy alongside the

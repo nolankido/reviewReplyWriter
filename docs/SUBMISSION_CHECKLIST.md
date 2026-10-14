@@ -1,25 +1,29 @@
 # Submission checklist: Week 2 Side Hustle
 
 Checked October 14, 2026. This document separates contest requirements from this
-project's stronger internal evidence checks. No entry has been published by this
-workflow and no repository visibility setting has been changed.
+project's stronger internal evidence checks. The existing DEV draft **6206742**
+has now been published under Nolan Kido's **@kidon** account, using the official
+template, both required tags, Best Use of Gemma and the Fully Autonomous writing
+disclosure. DEV displays the Week 2 Side Hustle Submission banner.
 
-October 14 follow-up: the entry is saved as DEV draft **6206742** under Nolan
-Kido's **@kidon** account, using the official template, both required tags and
-the Fully Autonomous writing disclosure. It is not a published entry.
+Published entry: https://dev.to/kidon/the-model-writes-the-review-reply-the-owner-keeps-the-promises-57a2
+
+After signing out, the canonical page rendered the full article with Log in
+and Create account visible. Independent command-line HTML/API requests returned
+404 and a search fetch could not retrieve it. Those external routes remain
+unconfirmed; the positive access evidence is the signed-out browser view.
 The [historical demo](https://share.descript.com/view/n1ZTnZpfNyB) is hosted
 unlisted in Descript and played through its 67.8-second duration in a browser
 showing **Sign in**, without a player error. The video labels the earlier source
 throughout; it does not clear current-source Gemma or human-assessment gates.
-Repository visibility is still private. Public code access and the four
-remaining internal release blockers below must not be reported as complete.
-
-Saved editor: https://dev.to/kidon/the-model-writes-the-review-reply-the-owner-keeps-the-promises-47bm-temp-slug-6206742/edit
-This account-specific editing link is not a public entry or judge-access link.
+The repository is public. Unauthenticated requests returned HTTP 200 for its
+metadata and an immutable README. Actions remain disabled repository-wide.
+Publication does not establish organizer acceptance or clear the remaining
+internal evidence gates. Do not create a duplicate DEV entry.
 
 Latest executed `python check_submission.py --release`: 569 Python tests green;
-blocked on repository access, current Gemma evidence, firsthand claim review and
-the selected assessed evaluation report. No checker was weakened to publish.
+blocked on current Gemma evidence, firsthand claim review and the selected
+assessed evaluation report. No checker or evidence flag was weakened to publish.
 
 ## Official entry requirements
 
@@ -46,7 +50,7 @@ they do not establish eligibility or authorize publishing private material.
 | Supplied archive imported October 13 at 22:27:51 UTC | Commit [`0bb612080f8d35ccbb70c0197845aa8b6f40a679`](https://github.com/nolankido/reviewReplyWriter/commit/0bb612080f8d35ccbb70c0197845aa8b6f40a679). All 17 supplied file contents were compared with the Git blobs and match exactly. The extra import-tree file is `.gitattributes`. |
 | Archive stored dates span October 12 at 19:28:14 through October 13 at 11:02:06 | ZIP timestamps have no timezone and can be rewritten. They do not prove when development began. |
 | Original archive fingerprint | SHA-256 `d1df2dc327c6266b9e514454289e6cd85620f29c486e284ced582fa21c21369c`. The original archive remains private and unchanged. |
-| Current repository is private and MIT licensed | Judge access is unconfirmed. The application license does not replace Gemma's separate terms. |
+| Current repository is public and MIT licensed | GitHub settings/metadata show public; unauthenticated metadata and README requests returned HTTP 200 on October 14. The application license does not replace Gemma's separate terms. |
 | Current tracked-path review | The inspected main at `568b8b8d60accff66cf318b8203311889422d7da` has 144 tracked files, no `.rrw/`, `replies/`, `evidence/`, local backup or environment paths, and no Actions workflow files. This is a path inventory, not a secret scan or a full history/artifact audit. |
 
 On October 14, Nolan confirmed that original coding began **October 13, 2026 at
@@ -55,26 +59,22 @@ development-window flag now records that owner statement. It is not independent
 certification of all contest eligibility, account, credit or licensing rules.
 The archive timestamps remain supporting provenance with the limits above.
 
-For judge access, the simplest route is the existing repository's public URL
-after a deliberate privacy review. Inspect current files, earlier commits,
-branches, PRs and historical Actions logs/artifacts first. The imported article
-contains superseded firsthand and privacy claims; it is historical material,
-not evidence for the current application. Check the original sample profiles
-and examples as well. Do not publish owner workspaces, customer identities,
-private policies, notes, backups or session links.
+Nolan explicitly authorized public repository access after being shown the
+visibility effects. GitHub now reports public, and unauthenticated code access
+was checked. The narrow current-file key/token scan and earlier path/history
+inventory do not establish a complete secret or historical-log audit. The
+imported article contains superseded firsthand and privacy claims; it is
+historical material, not evidence for the current application. Do not commit
+owner workspaces, customer identities, private policies, notes, backups or
+session capabilities.
 
 Only Nolan should decide to change visibility. GitHub documents that making a
 repository public also exposes Actions history and logs:
 https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility
 
-If keeping the repository private, first establish an organizer-approved access
-route and test the intended judge account. A private URL or a working packet
-alone does not show that judges can inspect the code. No collaborators have
-been invited and no repository setting has been changed by this workflow.
-
-`development_window_confirmed` now reflects Nolan's statement above. Leave
-`repository_accessible_to_judges` false until actual access is established and
-checked. Final publication must not claim that outstanding access is complete.
+No collaborators were invited. The recorded development-window flag reflects
+Nolan's statement above; the code-access flag reflects the actual public-access
+checks. Neither confirms all personal eligibility, licensing or judging rules.
 
 ## 2. Run current Gemma and assess the actual replies
 
