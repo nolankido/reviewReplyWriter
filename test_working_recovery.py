@@ -1,6 +1,7 @@
 """Private working copies are recoverable input, never posting authorization."""
 import base64
 import copy
+from datetime import datetime, timezone
 import http.client
 import io
 import json
@@ -12,7 +13,7 @@ from unittest.mock import patch
 from zipfile import ZipFile
 
 import review_reply as rr
-from rrw_recovery import MAX_BYTES, working_copy
+from rrw_recovery import MAX_BYTES, digest, working_copy
 from rrw_submission import SubmissionDesk
 from rrw_web import LocalServer
 from rrw_workspace import Workspace, WorkspaceError
@@ -99,6 +100,50 @@ class WorkingRecoveryTests(unittest.TestCase):
         self.view = cleared
         self.assertTrue(self.save()['available'])
 
+    def test_repeated_clock_cannot_reuse_a_cleared_revision_and_accept_a_stale_save(self):
+        class FrozenClock:
+            @staticmethod
+            def now(tz):
+                return datetime(2026, 10, 14, tzinfo=timezone.utc)
+        with patch('rrw_recovery.datetime', FrozenClock):
+            first = self.save()
+            cleared = self.w.dispatch('recovery-clear', {'revision': first['revision']})
+            second = self.save(revision=cleared['revision'])
+            cleared_again = self.w.dispatch('recovery-clear', {'revision': second['revision']})
+            self.assertNotEqual(cleared['revision'], cleared_again['revision'])
+            with self.assertRaises(WorkspaceError) as error:
+                self.save(revision=cleared['revision'])
+            self.assertEqual(error.exception.status, 409)
+            self.assertFalse(self.w.dispatch('recovery-get')['available'])
+
+    def test_legacy_copy_reads_unchanged_and_upgrades_only_after_explicit_save(self):
+        saved = self.save(); record = self.w.recovery._read()
+        record.pop('revision_id'); record['schema'] = 'rrw-working-copy-v1'
+        record['sha256'] = digest({k: v for k, v in record.items() if k != 'sha256'})
+        rr.atomic_json(str(self.w.recovery.path), record)
+        before = self.w.recovery.path.read_bytes()
+        legacy = self.w.dispatch('recovery-get')
+        self.assertEqual(legacy['payload'], saved['payload'])
+        self.assertEqual(legacy['revision'], record['sha256'])
+        self.assertEqual(self.w.recovery.path.read_bytes(), before)
+        current = self.save(revision=legacy['revision'])
+        self.assertEqual(self.w.recovery._read()['schema'], 'rrw-working-copy-v2')
+        self.assertNotEqual(current['revision'], legacy['revision'])
+        rr.atomic_json(str(self.w.recovery.path), record)
+        cleared = self.w.dispatch('recovery-clear', {'revision': legacy['revision']})
+        self.assertFalse(cleared['available'])
+        self.assertEqual(self.w.recovery._read()['schema'], 'rrw-working-copy-v2')
+
+    def test_invalid_revision_identifiers_are_preserved_and_rejected(self):
+        self.save(); record = self.w.recovery._read()
+        for value in (None, 'not-a-revision', 'a' * 31):
+            bad = dict(record, revision_id=value)
+            bad['sha256'] = digest({k: v for k, v in bad.items() if k != 'sha256'})
+            rr.atomic_json(str(self.w.recovery.path), bad)
+            before = self.w.recovery.path.read_bytes()
+            with self.assertRaises(WorkspaceError): self.w.dispatch('recovery-get')
+            self.assertEqual(self.w.recovery.path.read_bytes(), before)
+
     def test_null_and_missing_revisions_do_not_allow_overwrite(self):
         for request in ({}, {'revision': None}, {'revision': True}):
             with self.assertRaises(WorkspaceError): self.w.dispatch('recovery-clear', request)
@@ -132,6 +177,53 @@ class WorkingRecoveryTests(unittest.TestCase):
         with patch.object(rr, 'atomic_json', side_effect=OSError('Simulated storage failure')), self.assertRaises(OSError):
             self.save(dict(INPUTS, review='Another review.'))
         self.assertEqual((self.w.private / 'working-copy.json').read_bytes(), original)
+
+    def test_damaged_post_write_copy_is_not_acknowledged_as_saved(self):
+        original = rr.atomic_json
+        def damaged(path, record):
+            original(path, record)
+            Path(path).write_text('{CONTROLLED_POST_WRITE_DAMAGE', encoding='utf-8')
+        with patch.object(rr, 'atomic_json', side_effect=damaged), self.assertRaises(WorkspaceError) as error:
+            self.save()
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual((self.w.private / 'working-copy.json').read_text(encoding='utf-8'), '{CONTROLLED_POST_WRITE_DAMAGE')
+        self.assertEqual(self.w.dispatch('state')['drafts'], [])
+
+    def test_different_valid_post_write_copy_is_preserved_and_not_acknowledged(self):
+        original = rr.atomic_json
+        def replaced(path, record):
+            other = copy.deepcopy(record)
+            other['payload']['inputs']['review'] = 'CONTROLLED_OTHER_REVIEW'
+            other['sha256'] = digest({k: v for k, v in other.items() if k != 'sha256'})
+            original(path, other)
+        with patch.object(rr, 'atomic_json', side_effect=replaced), self.assertRaises(WorkspaceError) as error:
+            self.save()
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(self.w.dispatch('recovery-get')['payload']['inputs']['review'], 'CONTROLLED_OTHER_REVIEW')
+
+    def test_failed_post_write_read_keeps_the_written_copy_for_explicit_check(self):
+        original = self.w.recovery._read
+        count = 0
+        def unreadable():
+            nonlocal count
+            count += 1
+            if count == 2:
+                raise OSError('CONTROLLED_READ_FAILURE')
+            return original()
+        with patch.object(self.w.recovery, '_read', side_effect=unreadable), self.assertRaises(WorkspaceError) as error:
+            self.save()
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(self.w.dispatch('recovery-get')['payload']['inputs']['review'], INPUTS['review'])
+
+    def test_clear_cannot_claim_success_when_a_different_copy_is_written(self):
+        saved = self.save(); original = rr.atomic_json
+        record = self.w.recovery._read()
+        def replaced(path, tombstone):
+            original(path, record)
+        with patch.object(rr, 'atomic_json', side_effect=replaced), self.assertRaises(WorkspaceError) as error:
+            self.w.dispatch('recovery-clear', {'revision': saved['revision']})
+        self.assertEqual(error.exception.status, 409)
+        self.assertEqual(self.w.dispatch('recovery-get')['payload'], saved['payload'])
 
     def test_corrupt_copy_is_preserved_and_cannot_be_overwritten(self):
         self.save()
@@ -173,6 +265,27 @@ class WorkingRecoveryTests(unittest.TestCase):
             self.assertEqual(request()[0], 409)
         finally:
             server.shutdown(); server.server_close(); thread.join(2)
+
+    def test_real_http_clear_rejects_mismatched_readback_without_removing_the_copy(self):
+        saved = self.save(); original = rr.atomic_json
+        record = self.w.recovery._read()
+        server = LocalServer(self.w, 0)
+        thread = threading.Thread(target=server.serve_forever, kwargs={'poll_interval': .01}, daemon=True)
+        thread.start()
+        connection = http.client.HTTPConnection('127.0.0.1', server.server_port, timeout=3)
+        def replaced(path, tombstone):
+            original(path, record)
+        try:
+            with patch.object(rr, 'atomic_json', side_effect=replaced):
+                connection.request('POST', '/api/recovery-clear', json.dumps({'revision': saved['revision']}),
+                    {'Content-Type': 'application/json', 'Origin': server.origin, 'X-RRW-Token': server.token})
+                response = connection.getresponse(); body = json.loads(response.read())
+            self.assertEqual(response.status, 409)
+            self.assertIn('could not be confirmed', body['error'])
+            self.assertNotIn(INPUTS['review'], json.dumps(body))
+            self.assertEqual(self.w.dispatch('recovery-get')['payload'], saved['payload'])
+        finally:
+            connection.close(); server.shutdown(); server.server_close(); thread.join(2)
 
 
 if __name__ == '__main__': unittest.main()

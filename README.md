@@ -49,6 +49,9 @@ without replacing the current review/settings or restoring authorization. Furthe
 profile saves wait for that check. [Profile-save recovery](docs/PROFILE_SAVES.md).
 Choosing **New / unsaved business** keeps pending settings protected. Loading a
 profile asks before replacing recovered settings and keeps the pending review.
+Working-copy saves and discards require matching readback. After an uncertain
+change, **Check saved copy** before another action; current form and reply text
+stay in place. Earlier copies remain readable without automatic rewriting.
 
 ## Back up private review work
 

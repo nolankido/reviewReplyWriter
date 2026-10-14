@@ -5,11 +5,13 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import re
+import secrets
 
 import review_reply as rr
 from rrw_workspace import WorkspaceError, text
 
-SCHEMA = 'rrw-working-copy-v1'
+SCHEMA = 'rrw-working-copy-v2'
+LEGACY_SCHEMA = 'rrw-working-copy-v1'
 MAX_BYTES = 96 * 1024
 INPUT_FIELDS = {'business', 'kind', 'tone', 'platform', 'offer', 'signoff', 'approved_actions',
                 'review', 'stars', 'followup', 'original', 'previous', 'mode'}
@@ -78,9 +80,14 @@ class Recovery:
         from rrw_web import strict_object, reject_constant
         record = json.loads(self.path.read_text(encoding='utf-8'), object_pairs_hook=strict_object,
                             parse_constant=reject_constant)
-        if (not isinstance(record, dict) or set(record) != {'schema', 'saved_at', 'payload', 'sha256'}
-                or record['schema'] != SCHEMA or not isinstance(record['saved_at'], str)
+        fields = {'schema', 'saved_at', 'payload', 'sha256'}
+        if isinstance(record, dict) and record.get('schema') == SCHEMA:
+            fields.add('revision_id')
+        if (not isinstance(record, dict) or set(record) != fields
+                or record['schema'] not in (SCHEMA, LEGACY_SCHEMA) or not isinstance(record['saved_at'], str)
                 or len(record['saved_at']) > 80
+                or (record['schema'] == SCHEMA and (not isinstance(record.get('revision_id'), str)
+                    or not re.fullmatch(r'[0-9a-f]{32}', record['revision_id'])))
                 or record['sha256'] != digest({k: v for k, v in record.items() if k != 'sha256'})):
             raise WorkspaceError('Working copy integrity failed; the file was preserved.')
         if record['payload'] is not None:
@@ -116,8 +123,16 @@ class Recovery:
             if data.get('revision') != expected:
                 raise WorkspaceError('Recovery copy changed elsewhere. Check the saved copy before replacing it.', 409)
             payload = working_copy(data.get('payload')) if action == 'recovery-save' else None
-            record = {'schema': SCHEMA, 'saved_at': datetime.now(timezone.utc).isoformat(), 'payload': payload}
+            record = {'schema': SCHEMA, 'saved_at': datetime.now(timezone.utc).isoformat(),
+                      'revision_id': secrets.token_hex(16), 'payload': payload}
             record['sha256'] = digest(record)
             # Retain a content-free revision after clearing, so stale tabs cannot resurrect an old copy.
             rr.atomic_json(str(self.path), record)
-            return self._view(record)
+            try:
+                saved = self._read()
+                if saved != record:
+                    raise ValueError('Working copy readback differs')
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                raise WorkspaceError('The working-copy change could not be confirmed. Keep your current inputs '
+                                     'and check the saved copy. Existing files were preserved; no retry was sent.', 409) from exc
+            return self._view(saved)

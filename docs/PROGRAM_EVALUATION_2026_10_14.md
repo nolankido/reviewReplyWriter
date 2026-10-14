@@ -203,3 +203,14 @@ inputs and unreadable reloads, and preserves newer edits after an acknowledged
 save. See [review feedback](REVIEW_FEEDBACK.md) for six new Python regressions,
 561-test/local-verifier evidence and controlled actual-handler checks. Posting
 approval remains separate, with no new operator or model evidence inferred.
+
+## Continued repair: confirm working-copy changes and unique revisions
+
+A working-copy save could report success despite immediate unreadable storage.
+Save/clear now require matching readback, and uncertain browser results require
+a fresh check while retaining current work. A controlled repeated-clock case
+also exposed reused clear revisions; new random identifiers prevent that
+sequence, with read-only compatibility for earlier copies. See
+[working-copy recovery](WORKING_COPY_RECOVERY.md) for eight new regressions,
+569-test/final-verifier evidence and controlled handler checks. No real platform,
+Gemma or operator result is inferred.
