@@ -34,6 +34,14 @@ Requests have browser deadlines; a timeout does not cancel the server. Blocked
 browser session storage no longer prevents drafting from a current launcher link.
 See [Connection and generation recovery](docs/CONNECTION_RECOVERY.md).
 
+After a lost edit/approval response, **Check latest saved reply** compares the
+current saved version without replacing your editor. **Keep my editor text**
+retains further changes against the freshly checked revision; **Use checked saved
+reply** asks before replacing different text. Neither action saves or approves a
+reply, and recovered review/authorization checkboxes stay unchecked. A failed
+library refresh no longer hides an acknowledged edit or approval.
+See [Saved-change reconciliation](docs/SAVE_RECONCILIATION.md).
+
 ## Inspect edits and record review feedback
 
 New browser drafts retain the starting reply for their current generation.
