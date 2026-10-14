@@ -103,7 +103,9 @@ The implementation environment passed its Python, file, storage, loopback and
 template checks; Ollama was unavailable, so no actual model call was made.
 The Windows batch file and expanded Chromium setup-guide interactions still
 require execution on their target runtimes. They are included in the existing
-Windows/Linux and browser checks. An Actions run that executes no steps cannot
+local verification scripts. Run `py rrw_verify.py` on the target computer;
+add `--browser` only with Playwright/Chromium already installed. GitHub Actions
+workflows were removed at the owner's request. An old Actions run that executed no steps cannot
 validate them. Do not substitute these local checks for a real owner trial.
 
 `python scripts/launcher_smoke.py` exercises the actual setup launcher, a data

@@ -271,6 +271,19 @@ minimum length and return invitations are editorial choices.
 ## Verification and submission
 
 ```powershell
+py rrw_verify.py
+```
+
+One command runs the existing development suite, real launcher/backup HTTP
+workflows and seven Node checks, then saves an explicit local receipt under
+ignored `.rrw/verification/`. Missing tools and changed source cannot claim a
+complete pass. Browser checks require an already installed development runtime
+and an explicit `--browser`; no tools or models are installed. Receipts exclude
+private state and raw logs. [Commands, scope and exit codes](docs/LOCAL_VERIFICATION.md).
+
+Individual development and release checks remain available:
+
+```powershell
 py -m unittest -v
 py check_submission.py
 py check_submission.py --release
