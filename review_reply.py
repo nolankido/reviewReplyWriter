@@ -12,6 +12,7 @@ import random
 import re
 import sys
 import tempfile
+import review_quality as quality
 import urllib.error
 import urllib.request
 from datetime import date, datetime, timezone
@@ -123,29 +124,8 @@ def _tokens(text):
 
 
 def review_tier(review, stars=None):
-    """Grade the review: 'negative', 'mixed', or 'positive'.
-
-    Stars rule when given (3 stars is mixed, unless the words hold no
-    praise at all). Without stars the words decide: no complaints is
-    positive, no praise is negative, both together is mixed unless the
-    complaints swamp the praise.
-    """
-    toks = _tokens(review)
-    neg = sum(1 for t in toks if t in NEGATIVE_WORDS)
-    pos = sum(1 for t in toks if t in POSITIVE_WORDS)
-    if stars is not None:
-        if stars <= 2:
-            return "negative"
-        if stars == 3:
-            return "negative" if pos == 0 else "mixed"
-        return "positive"
-    if neg == 0:
-        return "positive"
-    if pos == 0:
-        return "negative"
-    if neg - pos >= 2:
-        return "negative"
-    return "mixed"
+    """Bounded wording checks with explicit handling of rating conflicts."""
+    return quality.analyze(review, stars)['tier']
 
 
 def is_negative(review, stars=None):
@@ -283,6 +263,7 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
     if specs and not any(_mentions(body, s) for s in specs):
         gaps.append("a specific detail from the review (e.g. %s)"
                     % ", ".join(specs[:2]))
+    gaps.extend(quality.detail_gaps(body, review, stars))
     tier = review_tier(review, stars)
     if tier == "negative":
         if not any(m in low for m in APOLOGY_MARKERS):
@@ -293,7 +274,7 @@ def reply_gaps(reply, review, business, stars=None, offer=None,
                             f"('{offer}')")
 
     elif tier == "mixed":
-        if not any(m in low for m in APOLOGY_MARKERS + FIX_MARKERS):
+        if not any(m in low for m in APOLOGY_MARKERS + ("disappoint", "frustrat", "fell short")):
             gaps.append("an honest acknowledgment of the problem")
         if offer and _norm(offer) not in low:
             gaps.append("your standing offer, word for word "
@@ -392,7 +373,8 @@ def build_prompt(review, business, tone, stars, kind, offer=None,
         f"- {lo} to {hi} words (this reply is for {platform}). "
         "No brackets, no placeholders, no subject line.\n"
         + sign_line +
-        "Write only the reply." + policy_instructions(offer, approved_actions))
+        "Write only the reply." + quality.prompt_brief(review, stars)
+        + policy_instructions(offer, approved_actions))
 
 
 def call_ollama(prompt, model, temperature=0.8):
@@ -501,28 +483,28 @@ def _signoff_line(business, signoff):
     return f"- The {who} team"
 
 
+def _finish_template(parts, statements, business, signoff, platform):
+    closing = "We hope you'll visit again and have a better experience." if any('sorry' in p for p in parts) else "We hope you'll visit again soon."
+    def assemble():
+        return "\n\n".join([" ".join(parts)] + statements + [closing, _signoff_line(business, signoff)])
+    lo, _ = PLATFORMS[platform]
+    for extra in ("Your feedback helps us understand what mattered to you.",
+                  "We value the perspective you have shared about your experience.",
+                  "Your perspective matters to us."):
+        if len(assemble().split()) >= lo:
+            break
+        parts.append(extra)
+    return assemble()
+
+
 def template_reply(review, business, tone, stars, kind, rng, offer=None,
                    signoff=None, platform="generic", approved_actions=None):
     """Conservative fallback, checked with the same rules as model output."""
     validate_input(review, stars, platform, offer, approved_actions)
-    spec = (specifics(review) or ["experience"])[0]
-    who = business or "our business"
     tier = review_tier(review, stars)
-    opener = "Mahalo" if tone == "warm" else "Thank you"
-    parts = [f"{opener} for sharing your feedback about {who}.",
-             f"Your comments about the {spec} help us understand your experience."]
-    if tier == "positive":
-        parts.append("We appreciate hearing what you enjoyed and the time you "
-                     "took to describe it. Your perspective is valuable to us.")
-    else:
-        parts.append("We are sorry that parts of your experience did not meet "
-                     "your expectations. Thank you for explaining what mattered "
-                     "to you in your own words.")
-    body = " ".join(parts)
+    parts = quality.fallback_body(review, business, tone, stars)
     statements = ([offer] if offer and tier != "positive" else []) + list(approved_actions or [])
-    reply = "\n\n".join([body] + statements + [
-        "We hope you'll visit again. Thank you for taking the time to share your perspective.",
-        _signoff_line(business, signoff)])
+    reply = _finish_template(parts, statements, business, signoff, platform)
     require_valid(reply_gaps(reply, review, business, stars, offer, signoff,
                              platform, approved_actions))
     return reply
@@ -572,6 +554,7 @@ def followup_gaps(reply, original, previous, update, business,
         gaps.append("an acknowledgment of the update in the opening "
                     "(this is a continuing conversation, not a fresh "
                     "reply)")
+    gaps.extend(quality.detail_gaps(body, update))
     tier = review_tier(update)
     offer_spent = bool(offer) and _norm(offer) in _norm(previous)
     if tier == "negative":
@@ -679,7 +662,7 @@ def build_followup_prompt(original, previous, update, business, tone,
         f"- {lo} to {hi} words (this reply is for {platform}). "
         "No brackets, no placeholders.\n"
         + sign_line +
-        "Write only the follow-up reply." + policy_instructions(
+        "Write only the follow-up reply." + quality.prompt_brief(update) + policy_instructions(
             None if offer_spent else offer, approved_actions))
 
 
@@ -731,20 +714,11 @@ def template_followup(original, previous, update, business, tone, kind,
                       approved_actions=None):
     """Never escalate or repeat an already used offer without authorization."""
     validate_input(update, None, platform, offer, approved_actions)
-    spec = (specifics(update) or specifics(original) or ["experience"])[0]
     tier = review_tier(update)
     spent = bool(offer) and _norm(offer) in _norm(previous)
-    parts = [f"Thank you for the update about your experience at {business or 'our business'}.",
-             f"Your comments about the {spec} help us understand how things went this time."]
-    if tier == "positive":
-        parts.append("We appreciate hearing what you enjoyed and the time you took to explain it.")
-    else:
-        parts.append("We are sorry that you are still disappointed. Thank you for explaining "
-                     "your concerns and what matters to you.")
+    parts = quality.fallback_body(update, business, tone, followup=True)
     statements = ([offer] if offer and not spent and tier == "negative" else []) + list(approved_actions or [])
-    reply = "\n\n".join([" ".join(parts)] + statements + [
-        "We hope you'll visit again. Thank you for sharing your perspective.",
-        _signoff_line(business, signoff)])
+    reply = _finish_template(parts, statements, business, signoff, platform)
     require_valid(followup_gaps(reply, original, previous, update, business,
                                 offer, signoff, platform, approved_actions))
     return reply

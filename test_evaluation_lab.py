@@ -115,12 +115,12 @@ class EvaluationTests(unittest.TestCase):
         self.assertFalse(self.workspace.profiles.exists())
         self.assertFalse(self.workspace.ledger.exists())
 
-    def test_full_run_retains_known_rubric_failures_and_blocked_policy(self):
+    def test_full_run_preserves_corpus_and_records_fixed_wording_cases(self):
         report = self.finish(self.start(suite='full'))
         rows = {r['case_id']: r for r in report['results']}
         self.assertEqual(rows['long-owner-policy']['status'], 'blocked')
-        self.assertTrue(rows['high-stars-complaint']['rubric_findings'])
-        self.assertTrue(rows['negation']['rubric_findings'])
+        self.assertEqual(rows['high-stars-complaint']['rubric_findings'], [])
+        self.assertEqual(rows['negation']['rubric_findings'], [])
         self.assertEqual(report['summary']['human_reviewed'], 0)
 
     def test_controlled_model_responses_are_not_real_evidence(self):

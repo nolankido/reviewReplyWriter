@@ -165,7 +165,6 @@ def prompt_brief(review, stars=None):
     return '\n'.join(lines) + '\n'
 
 
-
 def describe_issue(topic, review):
     """Retain a few explicit modifiers without copying arbitrary instructions."""
     for clause in CLAUSES.split(norm(review)):

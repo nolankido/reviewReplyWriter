@@ -148,3 +148,16 @@ visibility change is performed by running the app.
 Local state is plaintext, not encrypted. Use one writer at a time; external CLI
 processes do not share the browser process lock. Do not host this prototype on
 the public internet. MIT covers this source, not third-party model terms.
+
+## Reply-quality update and submission
+
+The current checker preserves detected complaint topics and explicit wait durations,
+handles selected negation and rating conflicts, and distinguishes past regret from
+completed-action claims. Fallbacks are shorter and more specific. This is still a
+heuristic drafting aid, not autonomous customer service. Existing approvals need
+a fresh review under the updated policy version.
+
+See [the measured quality pass](docs/REPLY_QUALITY_PASS.md) and the
+[submission checklist](docs/SUBMISSION_CHECKLIST.md). The earlier live smoke remains
+historical evidence. Current-code evaluations and actual human assessments are
+still required by the internal release check.
