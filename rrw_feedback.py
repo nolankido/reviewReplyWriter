@@ -126,6 +126,10 @@ class ReviewNotes:
                     'error': 'Saved notes need recovery. The file was preserved; draft approval is separate.'}
         if record is None:
             return {'revision': 'new', 'assessment': None, 'current': False}
+        return self._record_view(record, revision)
+
+    @staticmethod
+    def _record_view(record, revision):
         return {'revision': record['sha256'], 'assessment': record['assessment'],
                 'current': record['draft_revision'] == revision,
                 'recorded_at': record['recorded_at'], 'target': record['target']}
@@ -148,7 +152,15 @@ class ReviewNotes:
         self.folder.mkdir(exist_ok=True)
         self.workspace._revision(name, data['revision'])
         rr.atomic_json(str(path), record)
-        return self.view(name, data['revision'])
+        try:
+            saved = self._read(name)
+            if saved != record:
+                raise ValueError('Assessment readback differs')
+            self.workspace._revision(name, data['revision'])
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            raise WorkspaceError('The assessment save could not be confirmed. Keep your current notes; '
+                                 'the saved files were preserved. Check them before another save.', 409) from exc
+        return self._record_view(saved, data['revision'])
 
     def summary(self):
         report = {

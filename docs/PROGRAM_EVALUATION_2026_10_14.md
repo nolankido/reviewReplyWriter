@@ -193,3 +193,13 @@ failed reply lookup leaves a labelled Review draft path. Genuine generation
 failures stay failures, with no retry or approval. See [review inbox](REVIEW_INBOX.md)
 for controlled handler scenarios and 555-test/local-verifier evidence. Real
 platform, Gemma and operator evidence remain outstanding.
+
+## Continued repair: assessment save readback and pending notes
+
+Post-write damage could return an empty successful assessment and clear the
+browser's typed notes. Save acknowledgement now requires exact readback and
+the checked draft version. The browser validates its receipt, retains uncertain
+inputs and unreadable reloads, and preserves newer edits after an acknowledged
+save. See [review feedback](REVIEW_FEEDBACK.md) for six new Python regressions,
+561-test/local-verifier evidence and controlled actual-handler checks. Posting
+approval remains separate, with no new operator or model evidence inferred.
