@@ -556,3 +556,10 @@ Next action: Nolan verifies the original start and code-access route, then runs
 the checklist's current-source Gemma steps on the intended computer. Assess the
 actual outputs before recording and reviewing the final article. Source/PR/tree
 publication receipts for this focused pass are recorded in its review.
+
+Review: https://github.com/nolankido/reviewReplyWriter/pull/36
+
+Tested preparation commit: `8a36b883fd423758f0a900810ae33d743331b556`.
+Tested preparation tree: `4891992a9d04699cffb7518f6b9d02e02ec08d3f`, verified
+equal to the complete local tree before committing. The final candidate adds
+this publication receipt only; its head/tree and merge outcome are in PR #36.
