@@ -83,18 +83,29 @@ unknown, even when automatic checks pass. See [the Quality Lab guide](docs/QUALI
 Requires Python 3.10 or newer. No extra runtime packages, framework installation,
 account, API key, or paid hosting are needed to try the template workflow.
 
-**Windows:** double-click `start_windows.bat`, or run:
+**Windows:** extract the complete ZIP into a writable folder, then double-click
+`start_windows.bat`, or run:
 
 ```powershell
-py rrw_web.py
+py -3 rrw_setup.py --launch
 ```
 
-**macOS/Linux:** `python3 rrw_web.py`.
+**macOS/Linux:** `python3 rrw_setup.py --launch`.
+
+The setup launcher checks Python, application files, writable storage, the
+loopback connection and a template reply before opening the app. It selects a
+free port by default and allows templates when Ollama is unavailable. The
+Windows launcher tries a supported `py -3` interpreter, then a supported
+`python` interpreter. No software or models are installed automatically.
+
+Open **Getting started** in the app to load a fictional example, check Gemma
+installation and move to Quality Lab. [Setup and target-machine verification](docs/LOCAL_SETUP.md).
 
 The launcher opens a session link on `127.0.0.1`. Keep the terminal open and
 press Ctrl+C to stop. Do not share its link or expose the port. Use `--port 0`
 when the default port is occupied; `--no-browser` prints the link without
-opening a tab. `--data-dir PATH` selects a separate local workspace.
+opening a tab. `--data-dir PATH` selects a separate local workspace. The direct
+`rrw_web.py` entry point remains available with its existing default port.
 
 Start with a fictional example in **Template preview (no AI)**. Read the draft,
 edit it, use **Save & recheck**, then confirm human review and approve. Only the
@@ -116,14 +127,19 @@ in the browser's drafting-engine control:
 
 ```powershell
 ollama pull gemma3:4b
-py review_reply.py --doctor
-py rrw_web.py
+py -3 rrw_setup.py
+py -3 rrw_setup.py --verify-gemma
+py -3 rrw_setup.py --launch
 ```
 
 The browser starts in template mode deliberately. Engine credits and generation
 details distinguish real model calls, coached retries, and template fallbacks.
-A connection badge means the named model was listed, not that a live inference
-or a network-privacy audit passed.
+A connection badge now uses the same digest, downloaded-size, model-family and
+cloud-metadata checks as Quality Lab. It only reports installation. The explicit
+`--verify-gemma` command runs three fictional reviews and saves the evaluation
+for human assessment in Quality Lab. Fallbacks, missing receipts, interruptions,
+changed model identity, stale drafting sources and rubric flags cannot produce
+a passed smoke test. Neither check is a network-privacy audit.
 
 Use Ollama's local-only setting. The first model download needs internet access.
 A loopback request does not by itself prove local inference: model aliases and

@@ -382,11 +382,20 @@ $('refresh-queue').addEventListener('click', () => run(async () => {
 }));
 async function checkModel() {
   const result = await api('model');
-  $('model-status').textContent = result.message;
-  $('model-status').className = 'badge ' + (result.ready ? 'approved' : 'neutral');
+  const labels = {installed: 'Gemma installed · installation check only', missing: 'Gemma missing · templates ready',
+    unavailable: 'Ollama offline · templates ready', unverified: 'Model needs attention · templates ready'};
+  $('model-status').textContent = labels[result.state] || 'Check model setup';
+  $('model-status').className = 'badge neutral';
+  $('setup-model-message').textContent = result.message;
   return result;
 }
 $('refresh-model').addEventListener('click', () => run(checkModel));
+$('setup-recheck').addEventListener('click', () => run(checkModel));
+$('setup-example').addEventListener('click', () => {
+  $('view-drafts').click();
+  document.querySelector('[data-sample="negative"]').click();
+});
+$('setup-quality').addEventListener('click', () => $('view-quality').click());
 $('engine-mode').addEventListener('change', () => {
   $('engine-note').textContent = $('engine-mode').value === 'gemma'
     ? 'Uses gemma3:4b through local Ollama. Enable Ollama local-only mode. Rejected or unavailable output falls back to a labelled template.'

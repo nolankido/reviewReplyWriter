@@ -33,6 +33,8 @@ jobs:
         run: python check_submission.py
       - name: Exercise offline CLI
         run: python review_reply.py --file examples/02-angry-cafe.txt --profile moes --offline --seed 0
+      - name: Exercise setup launcher and approval through real loopback HTTP
+        run: python scripts/launcher_smoke.py
 
   browser:
     runs-on: ubuntu-latest
