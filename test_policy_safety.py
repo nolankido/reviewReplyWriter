@@ -289,6 +289,18 @@ class ApprovalAndStateTests(unittest.TestCase):
             Path(path).write_text(Path(path).read_text() + "\nWe will refund you.")
             self.assertEqual(rr.load_triage(tmp)[Path(path).name]["status"], "pending")
 
+    def test_previous_checker_version_approval_requires_fresh_human_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self.make_draft(tmp)
+            name = Path(path).name
+            rr.triage(tmp, "test", True, input_fn=lambda _: "a",
+                      print_fn=lambda _: None)
+            state = rr.load_triage(tmp)
+            self.assertEqual(state[name]["safety_version"], SAFETY_VERSION)
+            state[name]["safety_version"] = "owner-policy-v8-fractional-durations"
+            rr.save_triage(tmp, state)
+            self.assertEqual(rr.load_triage(tmp)[name]["status"], "pending")
+
     def test_legacy_unbound_approval_returns_to_pending(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = self.make_draft(tmp)
