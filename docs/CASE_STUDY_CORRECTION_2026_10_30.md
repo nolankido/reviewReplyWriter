@@ -17,7 +17,7 @@ Those archived responses are intentionally **not changed**. Their JSON digest, c
 
 **Follow-up opener:** Deterministic follow-ups now say "Thank you for your update about Demo Cafe." rather than "Thank you for the update of Demo Cafe." Ordinary first-review wording remains "Thank you for your review of Demo Cafe."
 
-**Version boundary:** The detail-check version advances from `review-detail-v4-fractional-durations` to `review-detail-v5-room-noise`. Saved draft checks or approvals from the earlier version must not be treated as current without explicit rechecking. The separate owner-authorization safety version remains unchanged; there are no new offers, external requests, or automatic postings.
+**Version boundary:** The detail-check version advances from `review-detail-v4-fractional-durations` to `review-detail-v5-room-noise`. Saved draft checks or approvals from the earlier version must not be treated as current without explicit rechecking. The saved-approval safety version also advances from `owner-policy-v8-fractional-durations` to `owner-policy-v9-room-noise`, so previously approved drafts return to pending and require fresh human review. The owner-authorization rules themselves are unchanged; there are no new offers, external requests, or automatic postings.
 
 ## Before and after for fixed fictional inputs
 
