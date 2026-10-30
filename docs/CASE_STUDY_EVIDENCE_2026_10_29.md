@@ -106,3 +106,7 @@ A separate [AI-assisted editorial audit of all 30 cases](CASE_STUDY_EDITORIAL_AU
 ### Executable evidence cross-check
 
 A [read-only phrase probe](../scripts/case_study_probes.py), explained in the [30-case editorial audit](CASE_STUDY_EDITORIAL_AUDIT_2026_10_30.md), checks the frozen archive's SHA-256 integrity and 17 explicitly selected, retrospective text observations. It does not generate new replies, certify semantic quality, or estimate a safety rate. Run `python3 scripts/case_study_probes.py --json` for structured observations.
+
+### Subsequent source correction, not an amended result
+
+The [later correction record](CASE_STUDY_CORRECTION_2026_10_30.md) documents changes intended to preserve an explicit loud-room complaint and improve the template follow-up opening. This does not modify the 30-case October 29 report or its historical model comparisons; the later code requires separate fresh verification.

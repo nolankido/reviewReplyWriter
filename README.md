@@ -361,6 +361,8 @@ the public internet. MIT covers this source, not third-party model terms.
 
 ## Reply-quality update and submission
 
+The archived Review Reply Writer case study has a [source-preserving follow-up correction](docs/CASE_STUDY_CORRECTION_2026_10_30.md): the current template retains an explicitly reported loud-room complaint and uses more natural wording when answering a review update. The detail-check and saved-approval versions advance so old approvals require another human decision. The October 29 evidence remains historical; this patch is not a new Gemma or operator study.
+
 The current checker preserves detected complaint topics and explicit wait durations,
 handles selected negation and rating conflicts, and distinguishes past regret from
 completed-action claims. Fallbacks are shorter and more specific. This is still a

@@ -103,3 +103,7 @@ On Windows, substitute `py -3 -B` for `python3 -B`. The program produces a fresh
 For a stronger future experiment, freeze a new evaluation sample and rubric first, use the same cases for current model and template systems, retain all attempts and fallbacks, and ask independent human reviewers to assess factual coverage, unauthorized business commitments and necessary edits. Keep actual owner decisions distinct from developer or AI-assisted observations.
 
 **Bottom line:** a checker saying *pass* and a person deciding *ready to post* are different outcomes. AI Works Human Decides.
+
+## Forward correction to the implementation
+
+Two findings above led to a distinct [source-code correction](CASE_STUDY_CORRECTION_2026_10_30.md): the current deterministic draft now aims to preserve an explicit *loud room* complaint and to use a natural *your update about Demo Cafe* opening. The old archived replies and the 17 retrospective phrase probes are deliberately unchanged. This is a subsequent implementation change, not a revision of the October 29 measurements. A new-source evaluation and real owner assessments remain separate work.

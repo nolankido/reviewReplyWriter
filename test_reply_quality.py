@@ -211,6 +211,63 @@ class FractionalDurationTests(unittest.TestCase):
         self.assertIn('reported 1.5 hour', calls[1])
 
 
+class AuditedPhraseCorrectionsTests(unittest.TestCase):
+    """New-source corrections motivated by the retained synthetic case audit."""
+
+    def test_loud_room_is_acknowledged_and_generic_room_does_not_suffice(self):
+        review = 'The wifi was weak and the room was loud.'
+        reply = rr.template_reply(review, 'Demo Stay', 'professional', 2,
+                                  'stay', random.Random(0), platform='google')
+        self.assertIn('weak wifi', reply)
+        self.assertIn('loud room', reply)
+        self.assertEqual(rr.reply_gaps(reply, review, 'Demo Stay', 2, platform='google'), [])
+        generic = reply.replace('loud room', 'room')
+        self.assertTrue(any('loud room' in item for item in
+                            rr.reply_gaps(generic, review, 'Demo Stay', 2, platform='google')))
+        checks = q.coverage(generic, review, 2)['checks']
+        room = next(item for item in checks if item['label'] == 'loud room')
+        self.assertFalse(room['covered'])
+        self.assertTrue(next(item for item in q.coverage(reply, review, 2)['checks']
+                             if item['label'] == 'loud room')['covered'])
+
+    def test_noise_synonym_is_accepted_without_weakening_the_room_requirement(self):
+        review = 'The room was loud and the wifi was weak.'
+        good = 'Thank you for your review of Demo Stay. We are sorry about the noisy room and weak wifi you described.'
+        self.assertEqual(q.detail_gaps(good, review, 2), [])
+        self.assertTrue(any('loud room' in item for item in
+                            q.detail_gaps(good.replace('noisy room', 'room'), review, 2)))
+        self.assertEqual(q.describe_issue('room', review), 'loud room')
+
+    def test_local_model_stand_in_must_retry_if_room_noise_is_lost(self):
+        review = 'The wifi was weak and the room was loud.'
+        good = rr.template_reply(review, 'Demo Stay', 'professional', 2,
+                                 'stay', random.Random(0), platform='google')
+        calls = []
+        def stand_in(prompt, *args):
+            calls.append(prompt)
+            return good.replace('loud room', 'room') if len(calls) == 1 else good
+        reply, engine = rr.generate_with_model(review, 'Demo Stay', 'professional',
+            2, 'stay', 'stand-in-model', caller=stand_in, platform='google')
+        self.assertEqual(reply, good)
+        self.assertEqual(len(calls), 2)
+        self.assertIn('retry', engine)
+        self.assertIn('loud room', calls[1])
+
+    def test_followup_openers_are_natural_and_still_rechecked(self):
+        for update in (
+            'Update: I returned and the coffee was great. Quick service this time.',
+            'Update: the coffee was still cold and the wait was terrible.',
+        ):
+            with self.subTest(update=update):
+                reply = rr.template_followup(ANGRY, GOOD_NEGATIVE_REPLY, update,
+                    'Demo Cafe', 'professional', 'cafe', random.Random(0),
+                    platform='google')
+                self.assertIn('Thank you for your update about Demo Cafe.', reply)
+                self.assertNotIn('the update of Demo Cafe', reply)
+                self.assertEqual(rr.followup_gaps(reply, ANGRY, GOOD_NEGATIVE_REPLY,
+                    update, 'Demo Cafe', platform='google'), [])
+
+
 class FallbackQualityTests(unittest.TestCase):
     def test_fallback_covers_both_complaints_without_repeated_thanks(self):
         reply = rr.template_reply(MIXED, 'Kai Loft', 'professional', 3, 'stay', random.Random(0), platform='google')
