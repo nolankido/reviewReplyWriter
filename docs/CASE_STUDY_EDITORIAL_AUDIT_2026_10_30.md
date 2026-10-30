@@ -71,6 +71,19 @@ This is an editorial checklist, not an independently calibrated scoring instrume
 
 Other smaller editorial limitations include omitted praise about an ocean view and packaging, generic wording in praise replies, and an awkward opening in both follow-up drafts. None of those was recorded by the original limited automated rubric.
 
+## Repeat the selected phrase observations without a model
+
+For readers who want an executable check rather than just a prose audit, run:
+
+```shell
+python3 scripts/case_study_probes.py
+python3 scripts/case_study_probes.py --json
+```
+
+On Windows, use `py -3` instead of `python3`. The [read-only probe script](../scripts/case_study_probes.py) verifies the preserved report-level SHA-256 fingerprint and all 30 individual result digests. It then checks **17 explicitly listed, retrospectively selected phrases** against the archived fictional inputs and template replies, including six missing specifics, three retained details, four authorization-related observations, three editorial wording issues and one unanswered question. [Its regression tests](../test_case_study_probes.py) check that altered archive evidence is rejected and that the observations are described accurately.
+
+These are exact-string matches and nonmatches. A missing string may be an acceptable paraphrase, and the presence of a string does not prove correctness. **The 17 are not a randomized sample, a success denominator, a human owner assessment or a validated quality measure.** No model call, network request or change to the historical report occurs when the script runs.
+
 ## What the evidence supports
 
 The archived templates are capable of preserving many explicitly named issues and can avoid some unsupported compensation requests in the selected fictional examples. They also omit details and sometimes produce awkward or potentially misleading replies. The owner's presence is not an optional flourish: it is needed to verify every factual and operational claim, resolve ambiguity, and decide whether a public response is appropriate.
