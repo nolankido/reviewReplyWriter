@@ -98,3 +98,7 @@ A simpler non-AI template can preserve some exact facts more reliably than a mor
 5. To inspect historical actual model behavior without making model calls, use `python3 -B rrw_evaluate.py --report examples/evaluation/live-smoke-2026-10-13.json` and the analogous later report.
 
 This documentation is an AI-assisted editorial analysis of public synthetic data and recorded software output. It is not an independent business-user study or an endorsement by an outside evaluator. No private visitor metrics, customer records, credentials, or confidential business policies are included.
+
+## October 30 case-by-case editorial follow-up
+
+A separate [AI-assisted editorial audit of all 30 cases](CASE_STUDY_EDITORIAL_AUDIT_2026_10_30.md) inspects the actual archived replies one by one. It identifies specific omitted details, awkward wording, unsupported assumptions to check, and owner-authorized policy boundaries. The audit does not change the October 29 machine-generated evidence, does not run Gemma, and does not constitute an independent human assessment.
