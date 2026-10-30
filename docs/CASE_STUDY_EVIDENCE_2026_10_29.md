@@ -102,3 +102,7 @@ This documentation is an AI-assisted editorial analysis of public synthetic data
 ## October 30 case-by-case editorial follow-up
 
 A separate [AI-assisted editorial audit of all 30 cases](CASE_STUDY_EDITORIAL_AUDIT_2026_10_30.md) inspects the actual archived replies one by one. It identifies specific omitted details, awkward wording, unsupported assumptions to check, and owner-authorized policy boundaries. The audit does not change the October 29 machine-generated evidence, does not run Gemma, and does not constitute an independent human assessment.
+
+### Executable evidence cross-check
+
+A [read-only phrase probe](../scripts/case_study_probes.py), explained in the [30-case editorial audit](CASE_STUDY_EDITORIAL_AUDIT_2026_10_30.md), checks the frozen archive's SHA-256 integrity and 17 explicitly selected, retrospective text observations. It does not generate new replies, certify semantic quality, or estimate a safety rate. Run `python3 scripts/case_study_probes.py --json` for structured observations.
