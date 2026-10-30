@@ -232,7 +232,7 @@ def _room_noise_required(brief, review):
 
 def _room_noise_mentioned(body):
     """Allow a few plain noise synonyms without pretending to read meaning."""
-    return bool(re.search(r'\\b(?:loud|noise|noisy)\\b', norm(body)))
+    return bool(re.search(r'\b(?:loud|noise|noisy)\b', norm(body)))
 
 
 def detail_gaps(body, review, stars=None):
