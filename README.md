@@ -9,6 +9,10 @@ was published on DEV on October 14, 2026, with the public code link and a labell
 historical Gemma video. Current-source Gemma results and human assessments remain
 pending; publication does not mean the internal release evidence check passed.
 
+## Published reproducible case study
+
+The [public Review Reply Writer case study](https://nolankido.com/technology/local-ai-review-replies/) examines the recorded 30-case offline template evaluation separately from earlier three-case Gemma smoke tests. The [source-linked evidence report](docs/CASE_STUDY_EVIDENCE_2026_10_29.md) retains the measurements and caveats; an [AI-assisted case-by-case editorial audit](docs/CASE_STUDY_EDITORIAL_AUDIT_2026_10_30.md) examines all 30 archived outcomes and documents details the automatic checks did not flag. Neither is a human operator study, a safety certification, or a claim of business time savings.
+
 ## Review with the owner's judgment
 
 The editor shows the original review and its saved owner policy alongside the
