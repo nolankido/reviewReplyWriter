@@ -54,3 +54,7 @@ feedback remain unexecuted. No Actions job, installation, paid inference,
 posting, upload or contest submission occurred. Exact candidate/tree and merge
 outcome are recorded in the PR. The next evidence priority remains current
 target-computer verification, actual local Gemma and consenting owner use.
+
+### Later source version
+
+This report records the earlier `review-detail-v4-fractional-durations` and `owner-policy-v8-fractional-durations` release. A subsequent [case-study-driven correction](CASE_STUDY_CORRECTION_2026_10_30.md) advances current detail checks to `review-detail-v5-room-noise` and saved approval checks to `owner-policy-v9-room-noise`. This note preserves the historical release and does not claim new model or operator evidence.
