@@ -9,7 +9,7 @@ import re
 import unicodedata
 import hashlib
 
-QUALITY_VERSION = 'review-detail-v4-fractional-durations'
+QUALITY_VERSION = 'review-detail-v5-room-noise'
 NEGATIVE = set('terrible awful horrible worst rude slow cold dirty broken disappointed disappointing waste overpriced stale bland soggy burnt bitter wait waited waiting forever ignored wrong missing never avoid meh underwhelming mediocre pricey expensive tasteless watery loud cramped uncomfortable late weak delayed delay damaged poor bad unhelpful failed overcharged duplicate twice'.split())
 POSITIVE = set('amazing great excellent wonderful fantastic delicious friendly fresh cozy perfect loved love best beautiful helpful quick fast attentive generous spotless clean charming delightful tasty smooth rich lovely favorite favourite gem welcoming relaxing stunning comfortable incredible good'.split())
 # Most-specific alternatives precede their general topics. Overlapping matches
@@ -225,6 +225,16 @@ def mentions(text, topic):
     return bool(PATTERNS[topic].search(norm(text)))
 
 
+def _room_noise_required(brief, review):
+    """A narrowly recognized loud-room complaint, not arbitrary loud sounds."""
+    return 'room' in required_topics(brief) and describe_issue('room', review) == 'loud room'
+
+
+def _room_noise_mentioned(body):
+    """Allow a few plain noise synonyms without pretending to read meaning."""
+    return bool(re.search(r'\\b(?:loud|noise|noisy)\\b', norm(body)))
+
+
 def detail_gaps(body, review, stars=None):
     """Check three initial topics plus billing/response and two wait durations.
 
@@ -235,6 +245,8 @@ def detail_gaps(body, review, stars=None):
     missing = [t for t in required_topics(brief) if not mentions(body, t)]
     if missing:
         gaps.append('review detail: acknowledge the complaint about ' + ', '.join(missing))
+    if _room_noise_required(brief, review) and not _room_noise_mentioned(body):
+        gaps.append('review detail: acknowledge the loud room complaint, not just the room')
     if brief['tier'] == 'mixed' and brief['praise'] and not any(mentions(body, t) for t in brief['praise']):
         gaps.append('review detail: also acknowledge the praise about ' + brief['praise'][0])
     present = duration_keys(body)
@@ -253,8 +265,11 @@ def coverage(body, review, stars=None):
     fact = next((f for f in brief['facts'] if f['kind'] == 'duplicate_charge'), None)
     for topic in required_topics(brief):
         source = next((e for e in brief['evidence'] if e.get('topic') == topic and e['polarity'] == 'complaint'), None)
+        covered = _duplicate_charge(body) if topic == 'billing' and fact else mentions(body, topic)
+        if topic == 'room' and _room_noise_required(brief, review):
+            covered = covered and _room_noise_mentioned(body)
         checks.append(dict(label=describe_issue(topic, review), required=True,
-                           covered=_duplicate_charge(body) if topic == 'billing' and fact else mentions(body, topic), source=source))
+                           covered=covered, source=source))
     if brief['tier'] == 'mixed' and brief['praise']:
         topic = next((t for t in brief['praise'] if mentions(body, t)), brief['praise'][0])
         source = next((e for e in brief['evidence'] if e.get('topic') == topic and e['polarity'] == 'praise'), None)
@@ -296,7 +311,7 @@ def describe_issue(topic, review):
             return 'duplicate billing'
         if topic == 'response' and _unanswered(clause):
             return 'unanswered question' if 'question' in clause else 'unanswered message'
-        for adjective in ('cold', 'soggy', 'weak', 'broken', 'dirty', 'rude', 'slow', 'late', 'damaged'):
+        for adjective in ('cold', 'soggy', 'weak', 'broken', 'dirty', 'rude', 'slow', 'late', 'damaged', 'loud'):
             literal = PATTERNS[topic].pattern[2:-2]
             if re.search(r'\b' + adjective + r'\s+(?:' + literal + r')\b', clause) or re.search(
                     r'(?:' + literal + r')\s+(?:was|were|is|are)\s+(?:still\s+)?' + adjective + r'\b', clause):
