@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v8-fractional-durations"
+SAFETY_VERSION = "owner-policy-v9-room-noise"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 
