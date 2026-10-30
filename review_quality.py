@@ -332,8 +332,8 @@ def _join(topics):
 def fallback_body(review, business, tone, stars=None, followup=False):
     brief = analyze(review, stars)
     opener = 'Thanks' if tone in ('warm', 'playful') else 'Thank you'
-    subject = 'the update' if followup else 'your review'
-    sentences = [f'{opener} for {subject} of {business or "our business"}.']
+    subject = 'your update about' if followup else 'your review of'
+    sentences = [f'{opener} for {subject} {business or "our business"}.']
     if brief['tier'] == 'positive':
         topics = (brief['praise'] + brief['neutral'])[:2]
         sentences.append(f'We appreciate your comments about the {_join(topics)}.' if topics else 'We appreciate you taking the time to share your experience.')
