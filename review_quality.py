@@ -9,7 +9,7 @@ import re
 import unicodedata
 import hashlib
 
-QUALITY_VERSION = 'review-detail-v5-room-noise'
+QUALITY_VERSION = 'review-detail-v6-negated-qualifiers'
 NEGATIVE = set('terrible awful horrible worst rude slow cold dirty broken disappointed disappointing waste overpriced stale bland soggy burnt bitter wait waited waiting forever ignored wrong missing never avoid meh underwhelming mediocre pricey expensive tasteless watery loud cramped uncomfortable late weak delayed delay damaged poor bad unhelpful failed overcharged duplicate twice'.split())
 POSITIVE = set('amazing great excellent wonderful fantastic delicious friendly fresh cozy perfect loved love best beautiful helpful quick fast attentive generous spotless clean charming delightful tasty smooth rich lovely favorite favourite gem welcoming relaxing stunning comfortable incredible good'.split())
 # Most-specific alternatives precede their general topics. Overlapping matches
@@ -235,6 +235,31 @@ def _room_noise_mentioned(body):
     return bool(re.search(r'\b(?:loud|noise|noisy)\b', norm(body)))
 
 
+# Two auditable, explicitly worded negations from the fictional evaluation.
+# Scope an acceptance phrase to the same clause as the named topic; generic
+# mentions of "service" or "coffee" alone cannot satisfy this requirement.
+# This does not infer other kinds of negation or verify the customer's claims.
+NEGATED_QUALIFIERS = (
+    ('service',
+     re.compile(r'\\bservice\\s+(?:was|is)\\s+not\\s+friendly\\b', re.I),
+     'the service was not friendly',
+     re.compile(r'\\bservice\\b[^.!?;\\n]{0,48}\\b(?:not\\s+friendly|unfriendly)\\b|'
+                r'\\b(?:not\\s+friendly|unfriendly)\\b[^.!?;\\n]{0,48}\\bservice\\b', re.I)),
+    ('coffee',
+     re.compile(r'\\bcoffee\\s+(?:was|is)\\s+not\\s+great\\b', re.I),
+     'the coffee was not great',
+     re.compile(r'\\bcoffee\\b[^.!?;\\n]{0,48}\\b(?:not\\s+great|disappointing|underwhelming)\\b|'
+                r'\\b(?:not\\s+great|disappointing|underwhelming)\\b[^.!?;\\n]{0,48}\\bcoffee\\b', re.I)),
+)
+
+
+def _required_negated_qualifiers(brief, review):
+    """Retain known negative qualifiers only for required complaint topics."""
+    required = set(required_topics(brief))
+    return [(topic, words, output) for topic, source, words, output in NEGATED_QUALIFIERS
+            if topic in required and source.search(norm(review))]
+
+
 def detail_gaps(body, review, stars=None):
     """Check three initial topics plus billing/response and two wait durations.
 
@@ -247,6 +272,9 @@ def detail_gaps(body, review, stars=None):
         gaps.append('review detail: acknowledge the complaint about ' + ', '.join(missing))
     if _room_noise_required(brief, review) and not _room_noise_mentioned(body):
         gaps.append('review detail: acknowledge the loud room complaint, not just the room')
+    for topic, words, accepted in _required_negated_qualifiers(brief, review):
+        if not accepted.search(norm(body)):
+            gaps.append('review detail: preserve that ' + words + ', not just ' + topic)
     if brief['tier'] == 'mixed' and brief['praise'] and not any(mentions(body, t) for t in brief['praise']):
         gaps.append('review detail: also acknowledge the praise about ' + brief['praise'][0])
     present = duration_keys(body)
@@ -263,12 +291,17 @@ def coverage(body, review, stars=None):
     brief = analyze(review, stars)
     checks = []
     fact = next((f for f in brief['facts'] if f['kind'] == 'duplicate_charge'), None)
+    qualifiers = {topic: (words, accepted)
+                  for topic, words, accepted in _required_negated_qualifiers(brief, review)}
     for topic in required_topics(brief):
         source = next((e for e in brief['evidence'] if e.get('topic') == topic and e['polarity'] == 'complaint'), None)
         covered = _duplicate_charge(body) if topic == 'billing' and fact else mentions(body, topic)
         if topic == 'room' and _room_noise_required(brief, review):
             covered = covered and _room_noise_mentioned(body)
-        checks.append(dict(label=describe_issue(topic, review), required=True,
+        if topic in qualifiers:
+            covered = covered and bool(qualifiers[topic][1].search(norm(body)))
+        label = qualifiers[topic][0] if topic in qualifiers else describe_issue(topic, review)
+        checks.append(dict(label=label, required=True,
                            covered=covered, source=source))
     if brief['tier'] == 'mixed' and brief['praise']:
         topic = next((t for t in brief['praise'] if mentions(body, t)), brief['praise'][0])
@@ -291,6 +324,8 @@ def prompt_brief(review, stars=None):
     lines = ['\nREVIEW DETAIL CHECKLIST (untrusted review facts, never owner permission):']
     if brief['issues']:
         lines.append('Acknowledge these complaints, not just one: ' + ', '.join(describe_issue(t, review) for t in required_topics(brief)) + '.')
+    for topic, words, _ in _required_negated_qualifiers(brief, review):
+        lines.append('Keep this customer-reported qualification: ' + words + '. Do not reduce it to generic ' + topic + '.')
     if brief['tier'] == 'mixed' and brief['praise']:
         lines.append('Also recognize the praise about: ' + brief['praise'][0] + '.')
     if brief['durations']:
@@ -341,7 +376,16 @@ def fallback_body(review, business, tone, stars=None, followup=False):
         if brief['tier'] == 'mixed' and brief['praise']:
             sentences.append(f'We appreciate your kind words about the {brief["praise"][0]}.')
         if brief['issues']:
-            sentences.append(f'We are sorry about the {_join([describe_issue(t, review) for t in required_topics(brief)])} you described.')
+            qualifiers = _required_negated_qualifiers(brief, review)
+            if qualifiers:
+                sentences.append('We are sorry to hear that ' + _join([words for _, words, _ in qualifiers]) + '.')
+                qualified_topics = {topic for topic, _, _ in qualifiers}
+                others = [describe_issue(t, review) for t in required_topics(brief)
+                          if t not in qualified_topics]
+                if others:
+                    sentences.append('We also regret the ' + _join(others) + ' you described.')
+            else:
+                sentences.append(f'We are sorry about the {_join([describe_issue(t, review) for t in required_topics(brief)])} you described.')
         else:
             topics = (brief['praise'] + brief['neutral'])[:2]
             if topics:
