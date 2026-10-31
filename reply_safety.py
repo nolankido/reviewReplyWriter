@@ -12,7 +12,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-SAFETY_VERSION = "owner-policy-v9-room-noise"
+SAFETY_VERSION = "owner-policy-v10-negated-qualifiers"
 MAX_REVIEW_CHARS = 20000
 MAX_POLICY_CHARS = 2000
 
