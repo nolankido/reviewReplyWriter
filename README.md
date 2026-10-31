@@ -361,6 +361,8 @@ the public internet. MIT covers this source, not third-party model terms.
 
 ## Reply-quality update and submission
 
+A later [negative-qualifier correction](docs/CASE_STUDY_NEGATION_CORRECTION_2026_10_30.md) targets the archived case in which a reply mentioned service and coffee but lost the customer's exact *not friendly* and *not great* wording. Its limited checks and template preserve those qualifiers while requiring fresh approval under the new version. The historical data is still preserved, and new model/operator quality is not claimed.
+
 The archived Review Reply Writer case study has a [source-preserving follow-up correction](docs/CASE_STUDY_CORRECTION_2026_10_30.md): the current template retains an explicitly reported loud-room complaint and uses more natural wording when answering a review update. The detail-check and saved-approval versions advance so old approvals require another human decision. The October 29 evidence remains historical; this patch is not a new Gemma or operator study.
 
 The current checker preserves detected complaint topics and explicit wait durations,

@@ -145,6 +145,84 @@ class DetailCoverageTests(unittest.TestCase):
         self.assertEqual(rr.reply_gaps(body, MIXED, 'Kai Loft', 3), [])
 
 
+class NegatedQualificationFidelityTests(unittest.TestCase):
+    """Regressions from the archived synthetic 'negation' case, not owner ratings."""
+
+    CASE = 'The service was not friendly and the coffee was not great.'
+
+    def test_template_preserves_explicit_negative_qualifiers(self):
+        for platform in rr.PLATFORMS:
+            with self.subTest(platform=platform):
+                draft = rr.template_reply(self.CASE, 'Demo Cafe', 'professional',
+                    None, 'cafe', random.Random(0), platform=platform)
+                self.assertIn('the service was not friendly', draft.lower())
+                self.assertIn('the coffee was not great', draft.lower())
+                self.assertEqual(rr.reply_gaps(draft, self.CASE, 'Demo Cafe',
+                    platform=platform), [])
+                self.assertEqual(policy_gaps(draft), [])
+
+    def test_generic_topic_mentions_do_not_satisfy_reported_qualifiers(self):
+        generic = ('Thank you for your review of Demo Cafe. '
+                   'We are sorry about the service and coffee you described.')
+        issues = q.detail_gaps(generic, self.CASE)
+        self.assertTrue(any('service was not friendly' in msg for msg in issues))
+        self.assertTrue(any('coffee was not great' in msg for msg in issues))
+        checks = q.coverage(generic, self.CASE)['checks']
+        qualifier_rows = [r for r in checks if r['label'] in
+                          ('the service was not friendly', 'the coffee was not great')]
+        self.assertEqual(len(qualifier_rows), 2)
+        self.assertTrue(all(not row['covered'] for row in qualifier_rows))
+
+    def test_recognizable_paraphrases_pass_without_cross_topic_leakage(self):
+        good = ('Thank you for your review of Demo Cafe. '
+                'We are sorry about the unfriendly service and underwhelming coffee.')
+        self.assertEqual(q.detail_gaps(good, self.CASE), [])
+        self.assertTrue(all(row['covered'] for row in
+            q.coverage(good, self.CASE)['checks'] if row['required']))
+        unrelated = ('Thank you for your review of Demo Cafe. '
+                     'We are sorry about the service and coffee. '
+                     'The chairs were not friendly and the lighting was underwhelming.')
+        self.assertTrue(any('not friendly' in gap for gap in
+                            q.detail_gaps(unrelated, self.CASE)))
+        self.assertTrue(any('not great' in gap for gap in
+                            q.detail_gaps(unrelated, self.CASE)))
+
+    def test_model_candidate_without_qualifiers_gets_coached_retry(self):
+        correct = rr.template_reply(self.CASE, 'Demo Cafe', 'professional',
+                                    None, 'cafe', random.Random(0), platform='google')
+        bland = correct.replace('the service was not friendly and the coffee was not great',
+                                'the service and coffee')
+        calls = []
+        def caller(prompt, *args):
+            calls.append(prompt)
+            return bland if len(calls) == 1 else correct
+        result, engine = rr.generate_with_model(self.CASE, 'Demo Cafe',
+            'professional', None, 'cafe', 'stand-in-model', caller=caller,
+            platform='google')
+        self.assertEqual(result, correct)
+        self.assertEqual(len(calls), 2)
+        self.assertIn('retry', engine)
+        self.assertIn('service was not friendly', calls[1])
+        self.assertIn('coffee was not great', calls[1])
+
+    def test_no_false_negative_for_unnegated_praise(self):
+        positive = 'The service was friendly and the coffee was great.'
+        self.assertEqual(q._required_negated_qualifiers(
+            q.analyze(positive, 5), positive), [])
+        draft = rr.template_reply(positive, 'Demo Cafe', 'professional',
+                                  5, 'cafe', random.Random(0))
+        self.assertNotIn('not friendly', draft)
+        self.assertNotIn('not great', draft)
+
+    def test_old_archive_is_still_the_old_unchanged_result(self):
+        old = json.loads(Path('examples/evaluation/template-full-2026-10-29.json')
+                         .read_text(encoding='utf-8'))
+        row = next(r for r in old['results'] if r['case_id'] == 'negation')
+        self.assertEqual(row['status'], 'template')
+        self.assertIn('service and coffee you described', row['reply'])
+        self.assertNotIn('service was not friendly', row['reply'])
+
+
 class FractionalDurationTests(unittest.TestCase):
     def test_decimal_durations_keep_the_whole_reported_number(self):
         for spelling, unit in [('1.5', 'hour'), ('2.25', 'hour'), ('10.5', 'minute'),
