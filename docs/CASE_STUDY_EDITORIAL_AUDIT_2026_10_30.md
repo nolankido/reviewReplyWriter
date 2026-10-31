@@ -84,6 +84,11 @@ On Windows, use `py -3` instead of `python3`. The [read-only probe script](../sc
 
 These are exact-string matches and nonmatches. A missing string may be an acceptable paraphrase, and the presence of a string does not prove correctness. **The 17 are not a randomized sample, a success denominator, a human owner assessment or a validated quality measure.** No model call, network request or change to the historical report occurs when the script runs.
 
+
+### Subsequent negation-fidelity code correction
+
+A separately documented [forward source correction](CASE_STUDY_NEGATION_CORRECTION_2026_10_30.md) now checks for the two explicitly worded qualifications *service was not friendly* and *coffee was not great* in current drafts. The archived October 29 reply above still shows what the older template actually produced; neither its status nor its source digest has been edited. This change is narrow and not a measured general model-quality result.
+
 ## What the evidence supports
 
 The archived templates are capable of preserving many explicitly named issues and can avoid some unsupported compensation requests in the selected fictional examples. They also omit details and sometimes produce awkward or potentially misleading replies. The owner's presence is not an optional flourish: it is needed to verify every factual and operational claim, resolve ambiguity, and decide whether a public response is appropriate.
