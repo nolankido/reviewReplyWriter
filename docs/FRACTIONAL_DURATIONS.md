@@ -58,3 +58,5 @@ target-computer verification, actual local Gemma and consenting owner use.
 ### Later source version
 
 This report records the earlier `review-detail-v4-fractional-durations` and `owner-policy-v8-fractional-durations` release. A subsequent [case-study-driven correction](CASE_STUDY_CORRECTION_2026_10_30.md) advances current detail checks to `review-detail-v5-room-noise` and saved approval checks to `owner-policy-v9-room-noise`. This note preserves the historical release and does not claim new model or operator evidence.
+
+A further [negated-detail correction](CASE_STUDY_NEGATION_CORRECTION_2026_10_30.md) introduced `review-detail-v6-negated-qualifiers` and `owner-policy-v10-negated-qualifiers`. Earlier version labels above are historical records. New source and approval revisions must be checked separately; the October 29 template and old Gemma data were not rerun or rewritten.
