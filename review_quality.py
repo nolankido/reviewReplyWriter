@@ -241,15 +241,15 @@ def _room_noise_mentioned(body):
 # This does not infer other kinds of negation or verify the customer's claims.
 NEGATED_QUALIFIERS = (
     ('service',
-     re.compile(r'\\bservice\\s+(?:was|is)\\s+not\\s+friendly\\b', re.I),
+     re.compile(r'\bservice\s+(?:was|is)\s+not\s+friendly\b', re.I),
      'the service was not friendly',
-     re.compile(r'\\bservice\\b[^.!?;\\n]{0,48}\\b(?:not\\s+friendly|unfriendly)\\b|'
-                r'\\b(?:not\\s+friendly|unfriendly)\\b[^.!?;\\n]{0,48}\\bservice\\b', re.I)),
+     re.compile(r'\bservice\b[^.!?;\n]{0,48}\b(?:not\s+friendly|unfriendly)\b|'
+                r'\b(?:not\s+friendly|unfriendly)\b[^.!?;\n]{0,48}\bservice\b', re.I)),
     ('coffee',
-     re.compile(r'\\bcoffee\\s+(?:was|is)\\s+not\\s+great\\b', re.I),
+     re.compile(r'\bcoffee\s+(?:was|is)\s+not\s+great\b', re.I),
      'the coffee was not great',
-     re.compile(r'\\bcoffee\\b[^.!?;\\n]{0,48}\\b(?:not\\s+great|disappointing|underwhelming)\\b|'
-                r'\\b(?:not\\s+great|disappointing|underwhelming)\\b[^.!?;\\n]{0,48}\\bcoffee\\b', re.I)),
+     re.compile(r'\bcoffee\b[^.!?;\n]{0,48}\b(?:not\s+great|disappointing|underwhelming)\b|'
+                r'\b(?:not\s+great|disappointing|underwhelming)\b[^.!?;\n]{0,48}\bcoffee\b', re.I)),
 )
 
 
