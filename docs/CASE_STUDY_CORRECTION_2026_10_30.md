@@ -49,3 +49,7 @@ The focused tests added in `test_reply_quality.py` cover specificity and synonym
 The checker remains English-oriented and lexical. It may accept misleading context, miss paraphrases or negation, and cannot establish whether a hotel repaired the room. The 30 examples are synthetic developer fixtures. The owner's judgment, authorization and exact saved-text approval remain necessary before any public response.
 
 **Next evidence step:** after the new code is verified, run a fresh offline evaluation separately, review both old and new results by case ID, and do not attribute any difference to a language model. A later model comparison would need independently frozen tasks, a scoring rubric and human assessments.
+
+### Subsequent negative-qualifier source change
+
+The [next source correction](CASE_STUDY_NEGATION_CORRECTION_2026_10_30.md) addresses the archived `negation` fixture, in which the old draft identified service and coffee without retaining *not friendly* or *not great*. This adds bounded checking in later code and a fresh approval version, not a retrospective change to the original October 29 results.
