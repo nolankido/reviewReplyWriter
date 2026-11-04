@@ -4,6 +4,8 @@ Local-model review drafts, explicit owner authorization, and human approval.
 Now includes a local browser workspace alongside the existing Python CLI.
 Nothing is posted to review platforms automatically.
 
+**Author and wider work:** [Nolan Kido](https://nolankido.com/about/) documents practical AI workflows, review boundaries, and public source records at [nolankido.com/technology](https://nolankido.com/technology/). The evaluation below concerns historical fictional examples, not verified client deployment or business impact.
+
 The [Week 2 Side Hustle entry](https://dev.to/kidon/the-model-writes-the-review-reply-the-owner-keeps-the-promises-57a2)
 was published on DEV on October 14, 2026, with the public code link and a labelled
 historical Gemma video. Current-source Gemma results and human assessments remain
